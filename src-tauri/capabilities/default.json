@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.2.0",
+  "identifier": "default",
+  "description": "Default capabilities for Tracy desktop app",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:webview:default",
+    "fs:default",
+    "shell:default",
+    "dialog:default"
+  ]
+}

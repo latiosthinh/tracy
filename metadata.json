@@ -1,0 +1,6 @@
+{
+  "name": "Tracy",
+  "description": "Tracy — Vintage-styled Agentic E2E Web Automation Studio & Playwright Test Runner.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

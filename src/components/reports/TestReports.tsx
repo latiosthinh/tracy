@@ -1,0 +1,228 @@
+import React, { useState } from 'react';
+import {
+  BarChart3,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Download,
+  FileSpreadsheet,
+  Film,
+  Image as ImageIcon,
+  Network,
+  Maximize2,
+  ShieldCheck,
+  Zap
+} from 'lucide-react';
+import { TestRunResult } from '../../types/autoflow';
+
+interface TestReportsProps {
+  lastResult?: TestRunResult | null;
+}
+
+export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
+  const [activeArtifactTab, setActiveArtifactTab] = useState<'summary' | 'screenshots' | 'video' | 'network'>('summary');
+
+  if (!lastResult) {
+    return (
+      <div className="p-8 bg-stone-950 text-stone-400 text-center rounded-[6px] border border-stone-800 space-y-3 font-sans">
+        <BarChart3 className="w-12 h-12 text-stone-600 mx-auto animate-pulse" />
+        <h3 className="text-base font-bold text-stone-200">No Test Execution Reports Yet</h3>
+        <p className="text-xs max-w-sm mx-auto">
+          Run your E2E test suite from the runner toolbar to generate interactive HTML/JUnit reports, screenshots, and trace logs.
+        </p>
+      </div>
+    );
+  }
+
+  const passRate = Math.round((lastResult.passedCount / (lastResult.totalCount || 1)) * 100);
+
+  const handleExportReport = (format: 'html' | 'json' | 'junit') => {
+    let content = '';
+    let filename = `tracy-report.${format === 'junit' ? 'xml' : format}`;
+    let mimeType = 'text/plain';
+
+    if (format === 'json') {
+      content = JSON.stringify(lastResult, null, 2);
+      mimeType = 'application/json';
+    } else if (format === 'html') {
+      content = `<!DOCTYPE html><html><head><title>Tracy E2E Test Report</title></head><body><h1>Tracy Test Report: ${lastResult.flowName}</h1><p>Status: ${lastResult.status}</p><p>Passed: ${lastResult.passedCount}/${lastResult.totalCount}</p></body></html>`;
+      mimeType = 'text/html';
+    } else {
+      content = `<testsuites><testsuite name="${lastResult.flowName}" tests="${lastResult.totalCount}" failures="${lastResult.failedCount}"></testsuite></testsuites>`;
+      mimeType = 'application/xml';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-stone-950 text-stone-100 p-4 font-sans text-xs overflow-y-auto space-y-4">
+      {/* Report Header */}
+      <div className="bg-stone-900 p-4 rounded-[6px] border border-stone-800 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center space-x-2">
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                lastResult.status === 'PASSED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              }`}
+            >
+              {lastResult.status}
+            </span>
+            <h2 className="font-bold text-amber-100 text-sm">{lastResult.flowName}</h2>
+          </div>
+          <p className="text-stone-400 text-[11px] mt-1">Executed at {lastResult.timestamp}</p>
+        </div>
+
+        {/* Export Buttons */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleExportReport('html')}
+            className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export HTML</span>
+          </button>
+          <button
+            onClick={() => handleExportReport('junit')}
+            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs rounded-[6px] border border-stone-700 flex items-center space-x-1"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>JUnit XML</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Summary KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
+          <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-[6px]">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">Passed Steps</span>
+            <span className="text-lg font-bold text-emerald-400">{lastResult.passedCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
+          <div className="p-2 bg-rose-500/10 text-rose-400 rounded-[6px]">
+            <XCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">Failed Steps</span>
+            <span className="text-lg font-bold text-rose-400">{lastResult.failedCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
+          <div className="p-2 bg-amber-500/10 text-amber-400 rounded-[6px]">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">Pass Rate</span>
+            <span className="text-lg font-bold text-amber-400">{passRate}%</span>
+          </div>
+        </div>
+
+        <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
+          <div className="p-2 bg-amber-500/10 text-amber-400 rounded-[6px]">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">Execution Time</span>
+            <span className="text-lg font-bold text-amber-400">{(lastResult.durationMs / 1000).toFixed(2)}s</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Artifact Subtabs */}
+      <div className="bg-stone-900 p-2 rounded-[6px] border border-stone-800 flex items-center space-x-2 text-xs font-semibold">
+        <button
+          onClick={() => setActiveArtifactTab('summary')}
+          className={`px-3 py-1.5 rounded-[6px] transition-all ${
+            activeArtifactTab === 'summary' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
+          }`}
+        >
+          Step Execution Breakdown
+        </button>
+        <button
+          onClick={() => setActiveArtifactTab('screenshots')}
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+            activeArtifactTab === 'screenshots' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
+          }`}
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          <span>Failure Screenshots</span>
+        </button>
+        <button
+          onClick={() => setActiveArtifactTab('video')}
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+            activeArtifactTab === 'video' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
+          }`}
+        >
+          <Film className="w-3.5 h-3.5" />
+          <span>Playwright Recording</span>
+        </button>
+        <button
+          onClick={() => setActiveArtifactTab('network')}
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+            activeArtifactTab === 'network' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
+          }`}
+        >
+          <Network className="w-3.5 h-3.5" />
+          <span>HAR Network Logs</span>
+        </button>
+      </div>
+
+      {/* Artifact Tab Content */}
+      <div className="bg-stone-900 p-4 rounded-[6px] border border-stone-800 flex-1">
+        {activeArtifactTab === 'summary' ? (
+          <div className="space-y-2 font-mono">
+            {lastResult.steps.map((step, idx) => (
+              <div key={idx} className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800/80 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] text-stone-500 w-4">{idx + 1}.</span>
+                  <span className="font-bold text-amber-400">{step.command}</span>
+                  <span className="text-stone-300 truncate max-w-xs">{typeof step.target === 'string' ? step.target : JSON.stringify(step.target)}</span>
+                </div>
+                <span className={`text-[10px] font-bold uppercase ${step.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {step.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : activeArtifactTab === 'screenshots' ? (
+          <div className="text-center py-6 space-y-3">
+            <div className="w-full h-48 bg-stone-950 rounded-[6px] border border-stone-800 flex items-center justify-center text-stone-500 font-mono">
+              [Captured Screen Snapshot at Failure Point]
+            </div>
+            <p className="text-stone-400 text-xs">Screenshots automatically saved under <code className="text-amber-400 font-mono">./test-results/screenshots/</code></p>
+          </div>
+        ) : activeArtifactTab === 'video' ? (
+          <div className="text-center py-6 space-y-3">
+            <div className="w-full h-48 bg-stone-950 rounded-[6px] border border-stone-800 flex items-center justify-center text-stone-500 font-mono">
+              [Playwright MP4 Video Replay Stream]
+            </div>
+            <p className="text-stone-400 text-xs">Full video recording saved under <code className="text-amber-400 font-mono">./test-results/video.webm</code></p>
+          </div>
+        ) : (
+          <div className="space-y-2 font-mono text-[11px]">
+            <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between text-stone-300">
+              <span className="text-emerald-400 font-bold">GET /products</span>
+              <span>200 OK (14ms)</span>
+            </div>
+            <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between text-stone-300">
+              <span className="text-emerald-400 font-bold">POST /api/checkout/apply-coupon</span>
+              <span>200 OK (42ms)</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
