@@ -61,7 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // AI Agent Settings State
   const [settingsAgentTab, setSettingsAgentTab] = useState<'local-agent-cli' | 'byok'>('local-agent-cli');
   const [agentProvider, setAgentProvider] = useState<string>(selectedAgentId);
-  const [geminiApiKey, setGeminiApiKey] = useState('AIzaSyD-sample-key-ghostflow-gemini');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [systemPrompt, setSystemPrompt] = useState(
@@ -80,11 +80,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [allowAnyHost, setAllowAnyHost] = useState(true);
 
   // Environment Variables State
-  const [envVars, setEnvVars] = useState<{ key: string; value: string; masked: boolean }[]>([
-    { key: 'TEST_USER_EMAIL', value: 'qa-tester@example.com', masked: false },
-    { key: 'TEST_USER_PASS', value: 'supersecretpass123', masked: true },
-    { key: 'API_STAGING_KEY', value: 'sk_test_9988112233', masked: true },
-  ]);
+  const [envVars, setEnvVars] = useState<{ key: string; value: string; masked: boolean }[]>([]);
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvVal, setNewEnvVal] = useState('');
 

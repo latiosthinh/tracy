@@ -1,8 +1,56 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+// Whitelist of allowed IPC channels — only these can be invoked from the renderer.
+// This prevents arbitrary channel access that would defeat contextIsolation.
+const ALLOWED_INVOKE_CHANNELS = [
+  // Playwright engine
+  'launch_browser',
+  'navigate_browser',
+  'get_browser_screenshot',
+  'get_browser_dom_tree',
+  'mine_batch_urls',
+  'inspect_element_at_point',
+  'interact_browser',
+  'set_browser_mode',
+  'run_flow',
+  // File system
+  'list_projects',
+  'scan_agent_clis',
+  'run_agent_cli_stream',
+  'parse_yaml_flow',
+  'save_project',
+  'save_project_to_disk',
+  'load_project_from_disk',
+  'save_flow_to_disk',
+  'save_dom_snapshot',
+  'load_dom_snapshots',
+  'save_playwright_code',
+  // Webview management
+  'open_child_webview',
+  'resize_child_webview',
+  'set_child_webview_visible',
+  'close_child_webview',
+];
+
+const ALLOWED_ON_CHANNELS = [
+  'browser-event',
+  'mine_progress',
+  'step-update',
+  'execution-log',
+  'ai-stream-chunk',
+];
+
 contextBridge.exposeInMainWorld('tracyAPI', {
-  invoke: (channel: string, args: any) => ipcRenderer.invoke(channel, args),
+  invoke: (channel: string, args: any) => {
+    if (!ALLOWED_INVOKE_CHANNELS.includes(channel)) {
+      throw new Error(`IPC invoke blocked: channel "${channel}" is not whitelisted`);
+    }
+    return ipcRenderer.invoke(channel, args);
+  },
   on: (channel: string, listener: (event: any, ...args: any[]) => void) => {
+    if (!ALLOWED_ON_CHANNELS.includes(channel)) {
+      throw new Error(`IPC listen blocked: channel "${channel}" is not whitelisted`);
+    }
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
   },

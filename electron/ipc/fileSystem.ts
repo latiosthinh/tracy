@@ -3,10 +3,30 @@ import fs from 'fs/promises';
 import path from 'path';
 import * as yaml from 'js-yaml';
 
+function assertSafePath(basePath: string, ...segments: string[]): string {
+  if (!basePath || typeof basePath !== 'string') {
+    throw new Error('Invalid base path specified');
+  }
+  const resolvedBase = path.resolve(basePath);
+  const resolvedTarget = path.resolve(resolvedBase, ...segments);
+  if (!resolvedTarget.startsWith(resolvedBase)) {
+    throw new Error(`Path traversal blocked: target "${resolvedTarget}" is outside base directory "${resolvedBase}"`);
+  }
+  return resolvedTarget;
+}
+
 export function registerFileSystemHandlers() {
   ipcMain.handle('list_projects', async () => {
     // Stub or implementation
     return [];
+  });
+
+  ipcMain.handle('save_project', async (event, { project }) => {
+    if (!project || !project.saveLocation) return;
+    const targetFile = assertSafePath(project.saveLocation, 'project.json');
+    const data = JSON.stringify(project, null, 2);
+    await fs.mkdir(project.saveLocation, { recursive: true });
+    await fs.writeFile(targetFile, data, 'utf-8');
   });
 
   ipcMain.handle('scan_agent_clis', async () => {
@@ -30,7 +50,7 @@ export function registerFileSystemHandlers() {
 
   ipcMain.handle('parse_yaml_flow', async (event, { yamlContent }) => {
     try {
-      const parsed = yaml.load(yamlContent) as any;
+      const parsed = yaml.load(yamlContent, { schema: yaml.JSON_SCHEMA }) as any;
       if (!parsed) return { steps: [], metadata: {} };
 
       const steps: any[] = [];
@@ -67,38 +87,43 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('save_project_to_disk', async (event, { projectId, saveLocation, data }) => {
+    const targetFile = assertSafePath(saveLocation, 'project.json');
     await fs.mkdir(saveLocation, { recursive: true });
-    await fs.writeFile(path.join(saveLocation, 'project.json'), data, 'utf-8');
+    await fs.writeFile(targetFile, data, 'utf-8');
     return saveLocation;
   });
 
   ipcMain.handle('load_project_from_disk', async (event, { projectId, saveLocation }) => {
-    return await fs.readFile(path.join(saveLocation, 'project.json'), 'utf-8');
+    const targetFile = assertSafePath(saveLocation, 'project.json');
+    return await fs.readFile(targetFile, 'utf-8');
   });
 
   ipcMain.handle('save_flow_to_disk', async (event, { projectId, saveLocation, flowName, yamlContent }) => {
-    const flowsDir = path.join(saveLocation, 'flows');
+    const flowsDir = assertSafePath(saveLocation, 'flows');
+    const targetFile = assertSafePath(flowsDir, flowName);
     await fs.mkdir(flowsDir, { recursive: true });
-    await fs.writeFile(path.join(flowsDir, flowName), yamlContent, 'utf-8');
-    return path.join(flowsDir, flowName);
+    await fs.writeFile(targetFile, yamlContent, 'utf-8');
+    return targetFile;
   });
 
   ipcMain.handle('save_dom_snapshot', async (event, { projectId, saveLocation, pagePath, snapshotData }) => {
-    const snapsDir = path.join(saveLocation, 'snapshots');
+    const snapsDir = assertSafePath(saveLocation, 'snapshots');
     await fs.mkdir(snapsDir, { recursive: true });
     const filename = pagePath.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
-    await fs.writeFile(path.join(snapsDir, filename), snapshotData, 'utf-8');
-    return path.join(snapsDir, filename);
+    const targetFile = assertSafePath(snapsDir, filename);
+    await fs.writeFile(targetFile, snapshotData, 'utf-8');
+    return targetFile;
   });
 
   ipcMain.handle('load_dom_snapshots', async (event, { projectId, saveLocation }) => {
-    const snapsDir = path.join(saveLocation, 'snapshots');
+    const snapsDir = assertSafePath(saveLocation, 'snapshots');
     try {
       const files = await fs.readdir(snapsDir);
       const results: Array<[string, string]> = [];
       for (const file of files) {
         if (file.endsWith('.json')) {
-          const data = await fs.readFile(path.join(snapsDir, file), 'utf-8');
+          const filePath = assertSafePath(snapsDir, file);
+          const data = await fs.readFile(filePath, 'utf-8');
           results.push([file.replace('.json', ''), data]);
         }
       }
@@ -109,9 +134,10 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('save_playwright_code', async (event, { projectId, saveLocation, fileName, code }) => {
-    const testsDir = path.join(saveLocation, 'tests');
+    const testsDir = assertSafePath(saveLocation, 'tests');
+    const targetFile = assertSafePath(testsDir, fileName);
     await fs.mkdir(testsDir, { recursive: true });
-    await fs.writeFile(path.join(testsDir, fileName), code, 'utf-8');
-    return path.join(testsDir, fileName);
+    await fs.writeFile(targetFile, code, 'utf-8');
+    return targetFile;
   });
 }

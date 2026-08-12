@@ -147,7 +147,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, currentSt
         {/* Footer */}
         <div className="text-center space-y-1">
           <p className="text-[10px] text-stone-600 font-mono">
-            v1.0.0 • Tauri 2 • Chromium Engine
+            v1.0.0 • Electron • Chromium Engine
           </p>
           <p className="text-[10px] text-stone-700">
             Loading your workspace{dots}

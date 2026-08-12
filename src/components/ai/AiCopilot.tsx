@@ -24,7 +24,7 @@ import {
   File
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
-import { tracyApi } from '@/src/lib/ipc';
+import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
 import { useAgentStore } from '@/src/stores/agentStore';
 
 export type AgentProvider =
@@ -144,7 +144,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     }
 
     try {
-      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      if (isElectronEnv()) {
         const streamYaml = await tracyApi.runAgentStream(agentProvider, finalPrompt);
         if (streamYaml) {
           setGeneratedYaml(streamYaml);

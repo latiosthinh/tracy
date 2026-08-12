@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="./src-tauri/icons/128x128.png" width="128" height="128" alt="Tracy Icon" />
   <h1>Tracy</h1>
   <p><strong>The modern, AI-powered IDE for End-to-End browser testing</strong></p>
 </div>

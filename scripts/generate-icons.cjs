@@ -164,7 +164,7 @@ function generateTracyLogo(size) {
 }
 
 const sizes = [32, 128, 256];
-const iconsDir = path.join(__dirname, 'src-tauri', 'icons');
+const iconsDir = path.join(__dirname, '..', 'electron', 'icons');
 
 for (const size of sizes) {
   const pixels = generateTracyLogo(size);

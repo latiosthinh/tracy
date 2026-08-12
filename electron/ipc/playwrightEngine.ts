@@ -267,4 +267,284 @@ export function registerPlaywrightHandlers() {
       }, mode);
     }
   });
+
+  // ── run_flow: Execute a full flow step-by-step ──────────────────────────
+  ipcMain.handle('run_flow', async (event, { flow, targetBaseUrl, speedMs }: { flow: any; targetBaseUrl: string; speedMs: number }) => {
+    let currentPage = await getActivePage();
+    if (!currentPage) {
+      // Auto-launch if not already connected
+      if (!browser) {
+        browser = await chromium.connectOverCDP('http://localhost:9222');
+      }
+      context = browser.contexts()[0];
+      currentPage = await getActivePage();
+    }
+    if (!currentPage) throw new Error('Browser not launched — cannot execute flow');
+
+    const steps: any[] = flow.steps || [];
+    const sender = event.sender;
+
+    const sendLog = (level: string, stepIndex: number, message: string) => {
+      sender.send('execution-log', {
+        id: `log-${Date.now()}-${stepIndex}`,
+        timestamp: new Date().toLocaleTimeString(),
+        level,
+        stepIndex,
+        message,
+      });
+    };
+
+    const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string) => {
+      sender.send('step-update', { stepIndex, status, durationMs, errorMessage });
+    };
+
+    /**
+     * Resolve the selector/locator for a step target.
+     */
+    const resolveLocator = (target: any) => {
+      if (!target || !currentPage) return null;
+
+      if (typeof target === 'string') {
+        if (target.startsWith('#') || target.startsWith('.') || target.startsWith('/') || target.startsWith('css=') || target.startsWith('xpath=')) {
+          return currentPage.locator(target);
+        }
+        return currentPage.getByText(target, { exact: false });
+      }
+
+      if (target.type && target.value) {
+        switch (target.type) {
+          case 'testId': return currentPage.getByTestId(target.value);
+          case 'role': return currentPage.getByRole(target.value as any, { name: target.name });
+          case 'label': return currentPage.getByLabel(target.value);
+          case 'placeholder': return currentPage.getByPlaceholder(target.value);
+          case 'text': return currentPage.getByText(target.value, { exact: target.exact ?? false });
+          case 'css': return currentPage.locator(target.value);
+          case 'xpath': return currentPage.locator(`xpath=${target.value}`);
+          case 'id': return currentPage.locator(`#${target.value}`);
+        }
+      }
+
+      if (target.testId) return currentPage.getByTestId(target.testId);
+      if (target.role && target.name) return currentPage.getByRole(target.role, { name: target.name });
+      if (target.role) return currentPage.getByRole(target.role);
+      if (target.label) return currentPage.getByLabel(target.label);
+      if (target.placeholder) return currentPage.getByPlaceholder(target.placeholder);
+      if (target.text) return currentPage.getByText(target.text, { exact: target.exact ?? false });
+      if (target.css) return currentPage.locator(target.css);
+      if (target.xpath) return currentPage.locator(`xpath=${target.xpath}`);
+      if (target.id) return currentPage.locator(`#${target.id}`);
+
+      return null;
+    };
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const stepStart = Date.now();
+      const cmd = step.command;
+
+      sendStepUpdate(i, 'running');
+      sendLog('info', i, `▶ Step ${i + 1}: ${cmd}`);
+
+      try {
+        const timeout = step.timeout || 10000;
+
+        switch (cmd) {
+          case 'navigate': {
+            const url = step.value || step.target || '/';
+            const fullUrl = url.startsWith('http') ? url : `${targetBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+            await currentPage.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout });
+            break;
+          }
+
+          case 'leftClick':
+          case 'tap': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.click({ timeout });
+            else if (step.value) await currentPage.getByText(step.value).click({ timeout });
+            break;
+          }
+
+          case 'doubleClick': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.dblclick({ timeout });
+            break;
+          }
+
+          case 'rightClick': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.click({ button: 'right', timeout });
+            break;
+          }
+
+          case 'hover': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.hover({ timeout });
+            break;
+          }
+
+          case 'fill': {
+            const loc = resolveLocator(step.target);
+            const text = step.value || '';
+            if (loc) await loc.fill(text, { timeout });
+            break;
+          }
+
+          case 'eraseText': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.fill('', { timeout });
+            break;
+          }
+
+          case 'press': {
+            const key = step.value || step.target || 'Enter';
+            await currentPage.keyboard.press(key);
+            break;
+          }
+
+          case 'selectOption': {
+            const loc = resolveLocator(step.target);
+            if (loc && step.value) await loc.selectOption(step.value, { timeout });
+            break;
+          }
+
+          case 'uploadFile': {
+            const loc = resolveLocator(step.target);
+            if (loc && step.value) await loc.setInputFiles(step.value, { timeout });
+            break;
+          }
+
+          case 'waitFor': {
+            const val = step.value || step.target;
+            if (val === 'networkIdle' || val === 'load') {
+              await currentPage.waitForLoadState(val === 'networkIdle' ? 'networkidle' : 'load', { timeout });
+            } else if (typeof val === 'number' || /^\d+$/.test(val)) {
+              await currentPage.waitForTimeout(Number(val));
+            } else {
+              await currentPage.waitForSelector(val, { timeout });
+            }
+            break;
+          }
+
+          case 'wait': {
+            const ms = Number(step.value || step.target || 1000);
+            await currentPage.waitForTimeout(ms);
+            break;
+          }
+
+          case 'waitForNetwork': {
+            await currentPage.waitForLoadState('networkidle', { timeout });
+            break;
+          }
+
+          case 'assertVisible': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.waitFor({ state: 'visible', timeout });
+            break;
+          }
+
+          case 'assertNotVisible': {
+            const loc = resolveLocator(step.target || step.value);
+            if (loc) await loc.waitFor({ state: 'hidden', timeout });
+            break;
+          }
+
+          case 'assertTitle': {
+            const expected = step.value || step.target || '';
+            const title = await currentPage.title();
+            if (!title.includes(expected)) {
+              throw new Error(`Title "${title}" does not contain "${expected}"`);
+            }
+            break;
+          }
+
+          case 'assertUrl': {
+            const expected = step.value || step.target || '';
+            const url = currentPage.url();
+            if (!url.includes(expected)) {
+              throw new Error(`URL "${url}" does not contain "${expected}"`);
+            }
+            break;
+          }
+
+          case 'assertTrue': {
+            const expr = step.value || step.target || 'true';
+            const result = await currentPage.evaluate(expr);
+            if (!result) throw new Error(`Assertion failed for expression: ${expr}`);
+            break;
+          }
+
+          case 'copyTextFrom': {
+            const loc = resolveLocator(step.target);
+            if (loc) {
+              const content = await loc.innerText({ timeout });
+              sendLog('info', i, `Copied text from element: "${content}"`);
+            }
+            break;
+          }
+
+          case 'scroll': {
+            const distance = Number(step.args?.distance || step.value || 300);
+            const direction = step.args?.direction || 'down';
+            const deltaY = direction === 'up' ? -distance : distance;
+            await currentPage.mouse.wheel(0, deltaY);
+            break;
+          }
+
+          case 'setViewport': {
+            const width = step.args?.width || 1280;
+            const height = step.args?.height || 720;
+            await currentPage.setViewportSize({ width, height });
+            break;
+          }
+
+          case 'takeScreenshot': {
+            await currentPage.screenshot({ type: 'png' });
+            break;
+          }
+
+          case 'clearCookies': {
+            if (context) await context.clearCookies();
+            break;
+          }
+
+          case 'clearStorage': {
+            await currentPage.evaluate(() => {
+              localStorage.clear();
+              sessionStorage.clear();
+            });
+            break;
+          }
+
+          case 'evalScript': {
+            const script = step.value || step.target || '';
+            await currentPage.evaluate(script);
+            break;
+          }
+
+          default:
+            sendLog('warn', i, `⚠ Step ${i + 1}: Command "${cmd}" not yet implemented — skipping`);
+            sendStepUpdate(i, 'skipped', Date.now() - stepStart);
+            continue;
+        }
+
+        const durationMs = Date.now() - stepStart;
+        sendStepUpdate(i, 'passed', durationMs);
+        sendLog('assertion', i, `✅ Step ${i + 1} PASSED (${durationMs}ms)`);
+
+      } catch (err: any) {
+        const durationMs = Date.now() - stepStart;
+        const errorMessage = err.message || 'Unknown error';
+        sendStepUpdate(i, 'failed', durationMs, errorMessage);
+        sendLog('error', i, `❌ Step ${i + 1} FAILED: ${errorMessage}`);
+
+        // Stop on failure unless continueOnFailure is set
+        if (!flow.metadata?.continueOnFailure) break;
+      }
+
+      // Inter-step delay
+      if (speedMs > 0) {
+        await new Promise(r => setTimeout(r, speedMs));
+      }
+    }
+  });
 }

@@ -1,288 +1,209 @@
-import { createRequire } from "node:module";
-import { BrowserWindow, WebContentsView, app, ipcMain } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs/promises";
-import * as yaml from "js-yaml";
-import { chromium } from "playwright-core";
+import { createRequire as e } from "node:module";
+import { BrowserWindow as t, WebContentsView as n, app as r, ipcMain as i } from "electron";
+import a from "path";
+import { fileURLToPath as o } from "url";
+import s from "fs/promises";
+import * as c from "js-yaml";
+import { chromium as l } from "playwright-core";
 //#region \0rolldown/runtime.js
-var __require = /* #__PURE__ */ (() => createRequire(import.meta.url))();
+var u = /* @__PURE__ */ e(import.meta.url);
 //#endregion
 //#region electron/ipc/fileSystem.ts
-function registerFileSystemHandlers() {
-	ipcMain.handle("list_projects", async () => {
-		return [];
-	});
-	ipcMain.handle("scan_agent_clis", async () => {
-		return [{
-			id: "gemini-3.6-flash",
-			name: "Gemini 3.6 Flash (Direct API)",
-			cli_binary: "gemini-api",
-			installed: true,
-			icon_name: "Sparkles",
-			category: "cloud-api",
-			description: "Direct Gemini API call server side"
-		}];
-	});
-	ipcMain.handle("run_agent_cli_stream", async (event, { agentId, prompt, systemInstruction }) => {
-		return "This is a stub for the AI agent in Electron.";
-	});
-	ipcMain.handle("parse_yaml_flow", async (event, { yamlContent }) => {
+function d() {
+	i.handle("list_projects", async () => []), i.handle("save_project", async (e, { project: t }) => {
+		if (!t || !t.saveLocation) return;
+		let n = JSON.stringify(t, null, 2);
+		await s.mkdir(t.saveLocation, { recursive: !0 }), await s.writeFile(a.join(t.saveLocation, "project.json"), n, "utf-8");
+	}), i.handle("scan_agent_clis", async () => [{
+		id: "gemini-3.6-flash",
+		name: "Gemini 3.6 Flash (Direct API)",
+		cli_binary: "gemini-api",
+		installed: !0,
+		icon_name: "Sparkles",
+		category: "cloud-api",
+		description: "Direct Gemini API call server side"
+	}]), i.handle("run_agent_cli_stream", async (e, { agentId: t, prompt: n, systemInstruction: r }) => "This is a stub for the AI agent in Electron."), i.handle("parse_yaml_flow", async (e, { yamlContent: t }) => {
 		try {
-			const parsed = yaml.load(yamlContent);
-			if (!parsed) return {
+			let e = c.load(t);
+			if (!e) return {
 				steps: [],
 				metadata: {}
 			};
-			const steps = [];
-			const metadata = {
-				url: parsed.url,
-				name: parsed.name
+			let n = [], r = {
+				url: e.url,
+				name: e.name
 			};
-			if (Array.isArray(parsed)) parsed.forEach((item, i) => {
-				const command = Object.keys(item)[0];
-				steps.push({
-					id: `step-${Date.now()}-${i}`,
-					command,
-					target: item[command],
+			return Array.isArray(e) ? e.forEach((e, t) => {
+				let r = Object.keys(e)[0];
+				n.push({
+					id: `step-${Date.now()}-${t}`,
+					command: r,
+					target: e[r],
 					status: "pending"
 				});
-			});
-			else if (parsed.steps && Array.isArray(parsed.steps)) parsed.steps.forEach((item, i) => {
-				const command = Object.keys(item)[0];
-				steps.push({
-					id: `step-${Date.now()}-${i}`,
-					command,
-					target: item[command],
+			}) : e.steps && Array.isArray(e.steps) && e.steps.forEach((e, t) => {
+				let r = Object.keys(e)[0];
+				n.push({
+					id: `step-${Date.now()}-${t}`,
+					command: r,
+					target: e[r],
 					status: "pending"
 				});
-			});
-			return {
-				steps,
-				metadata
+			}), {
+				steps: n,
+				metadata: r
 			};
 		} catch (e) {
-			console.error("Yaml parsing error", e);
-			return {
+			return console.error("Yaml parsing error", e), {
 				steps: [],
 				metadata: {}
 			};
 		}
-	});
-	ipcMain.handle("save_project_to_disk", async (event, { projectId, saveLocation, data }) => {
-		await fs.mkdir(saveLocation, { recursive: true });
-		await fs.writeFile(path.join(saveLocation, "project.json"), data, "utf-8");
-		return saveLocation;
-	});
-	ipcMain.handle("load_project_from_disk", async (event, { projectId, saveLocation }) => {
-		return await fs.readFile(path.join(saveLocation, "project.json"), "utf-8");
-	});
-	ipcMain.handle("save_flow_to_disk", async (event, { projectId, saveLocation, flowName, yamlContent }) => {
-		const flowsDir = path.join(saveLocation, "flows");
-		await fs.mkdir(flowsDir, { recursive: true });
-		await fs.writeFile(path.join(flowsDir, flowName), yamlContent, "utf-8");
-		return path.join(flowsDir, flowName);
-	});
-	ipcMain.handle("save_dom_snapshot", async (event, { projectId, saveLocation, pagePath, snapshotData }) => {
-		const snapsDir = path.join(saveLocation, "snapshots");
-		await fs.mkdir(snapsDir, { recursive: true });
-		const filename = pagePath.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
-		await fs.writeFile(path.join(snapsDir, filename), snapshotData, "utf-8");
-		return path.join(snapsDir, filename);
-	});
-	ipcMain.handle("load_dom_snapshots", async (event, { projectId, saveLocation }) => {
-		const snapsDir = path.join(saveLocation, "snapshots");
+	}), i.handle("save_project_to_disk", async (e, { projectId: t, saveLocation: n, data: r }) => (await s.mkdir(n, { recursive: !0 }), await s.writeFile(a.join(n, "project.json"), r, "utf-8"), n)), i.handle("load_project_from_disk", async (e, { projectId: t, saveLocation: n }) => await s.readFile(a.join(n, "project.json"), "utf-8")), i.handle("save_flow_to_disk", async (e, { projectId: t, saveLocation: n, flowName: r, yamlContent: i }) => {
+		let o = a.join(n, "flows");
+		return await s.mkdir(o, { recursive: !0 }), await s.writeFile(a.join(o, r), i, "utf-8"), a.join(o, r);
+	}), i.handle("save_dom_snapshot", async (e, { projectId: t, saveLocation: n, pagePath: r, snapshotData: i }) => {
+		let o = a.join(n, "snapshots");
+		await s.mkdir(o, { recursive: !0 });
+		let c = r.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".json";
+		return await s.writeFile(a.join(o, c), i, "utf-8"), a.join(o, c);
+	}), i.handle("load_dom_snapshots", async (e, { projectId: t, saveLocation: n }) => {
+		let r = a.join(n, "snapshots");
 		try {
-			const files = await fs.readdir(snapsDir);
-			const results = [];
-			for (const file of files) if (file.endsWith(".json")) {
-				const data = await fs.readFile(path.join(snapsDir, file), "utf-8");
-				results.push([file.replace(".json", ""), data]);
+			let e = await s.readdir(r), t = [];
+			for (let n of e) if (n.endsWith(".json")) {
+				let e = await s.readFile(a.join(r, n), "utf-8");
+				t.push([n.replace(".json", ""), e]);
 			}
-			return results;
-		} catch (e) {
+			return t;
+		} catch {
 			return [];
 		}
-	});
-	ipcMain.handle("save_playwright_code", async (event, { projectId, saveLocation, fileName, code }) => {
-		const testsDir = path.join(saveLocation, "tests");
-		await fs.mkdir(testsDir, { recursive: true });
-		await fs.writeFile(path.join(testsDir, fileName), code, "utf-8");
-		return path.join(testsDir, fileName);
+	}), i.handle("save_playwright_code", async (e, { projectId: t, saveLocation: n, fileName: r, code: i }) => {
+		let o = a.join(n, "tests");
+		return await s.mkdir(o, { recursive: !0 }), await s.writeFile(a.join(o, r), i, "utf-8"), a.join(o, r);
 	});
 }
 //#endregion
 //#region node_modules/.pnpm/dom-miner@0.1.4/node_modules/dom-miner/dist/lib/compact-observe.js
-/**
-* Compact DOM trees for QA workflows — not raw HTML, not interactive-only.
-*
-* Includes:
-* - landmarks / regions (header, nav, main, footer, overlay, body)
-* - text-holders (headings, paragraphs, list items, labels, captions) — truncated
-* - interactive controls with numeric IDs (+ optional collapsed nav children)
-*
-* Site-level URL inventory remains separate (sitemap urls-full.json).
-* This module is the per-page "agent page map".
-*/
-function buildCompactDomScript() {
-	return (opts) => {
-		const includeCollapsedNav = opts?.includeCollapsedNav !== false;
-		const maxTextHolders = opts?.maxTextHolders ?? 80;
-		const maxTextLen = opts?.maxTextLen ?? 120;
-		const INTERACTIVE = "a[href], button, input:not([type=\"hidden\"]), select, textarea, summary, [role=\"button\"], [role=\"link\"], [role=\"tab\"], [role=\"menuitem\"], [role=\"textbox\"], [role=\"combobox\"], [role=\"switch\"]";
-		const TEXT_HOLDERS = "h1, h2, h3, h4, h5, h6, p, li, label, figcaption, th, td, [role=\"heading\"]";
-		function isVisible(el) {
-			const rect = el.getBoundingClientRect();
-			const style = getComputedStyle(el);
-			return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0" && !el.closest("[hidden], [aria-hidden=\"true\"]");
+function f() {
+	return (e) => {
+		let t = e?.includeCollapsedNav !== !1, n = e?.maxTextHolders ?? 80, r = e?.maxTextLen ?? 120, i = "a[href], button, input:not([type=\"hidden\"]), select, textarea, summary, [role=\"button\"], [role=\"link\"], [role=\"tab\"], [role=\"menuitem\"], [role=\"textbox\"], [role=\"combobox\"], [role=\"switch\"]";
+		function a(e) {
+			let t = e.getBoundingClientRect(), n = getComputedStyle(e);
+			return t.width > 0 && t.height > 0 && n.visibility !== "hidden" && n.display !== "none" && n.opacity !== "0" && !e.closest("[hidden], [aria-hidden=\"true\"]");
 		}
-		function inNavChrome(el) {
-			return Boolean(el.closest("nav, [role=\"navigation\"], header, [class*=\"menu\" i], [class*=\"submenu\" i]"));
+		function o(e) {
+			return !!e.closest("nav, [role=\"navigation\"], header, [class*=\"menu\" i], [class*=\"submenu\" i]");
 		}
-		function region(el) {
-			if (el.closest("[role=\"dialog\"], [class*=\"modal\" i], [class*=\"drawer\" i]")) return "overlay";
-			if (el.closest("nav, [role=\"navigation\"]")) return "nav";
-			if (el.closest("header")) return "header";
-			if (el.closest("footer")) return "footer";
-			if (el.closest("main, [role=\"main\"]")) return "main";
-			if (el.closest("aside, [role=\"complementary\"]")) return "aside";
-			return "body";
+		function s(e) {
+			return e.closest("[role=\"dialog\"], [class*=\"modal\" i], [class*=\"drawer\" i]") ? "overlay" : e.closest("nav, [role=\"navigation\"]") ? "nav" : e.closest("header") ? "header" : e.closest("footer") ? "footer" : e.closest("main, [role=\"main\"]") ? "main" : e.closest("aside, [role=\"complementary\"]") ? "aside" : "body";
 		}
-		function normText(el, max) {
-			const t = (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ");
-			if (!t) return "";
-			return t.length > max ? t.slice(0, max - 1) + "…" : t;
+		function c(e, t) {
+			let n = (e.innerText || e.textContent || "").trim().replace(/\s+/g, " ");
+			return n ? n.length > t ? n.slice(0, t - 1) + "…" : n : "";
 		}
-		function roleOf(el) {
-			const explicit = el.getAttribute("role");
-			if (explicit) return explicit;
-			const tag = el.tagName.toLowerCase();
-			if (tag === "a") return "link";
-			if (tag === "button" || tag === "summary") return "button";
-			if (tag === "select") return "combobox";
-			if (tag === "textarea") return "textbox";
-			if (tag === "input") {
-				const t = (el.getAttribute("type") || "text").toLowerCase();
-				if (t === "checkbox") return "checkbox";
-				if (t === "radio") return "radio";
-				if (t === "submit" || t === "button") return "button";
-				return "textbox";
+		function l(e) {
+			let t = e.getAttribute("role");
+			if (t) return t;
+			let n = e.tagName.toLowerCase();
+			if (n === "a") return "link";
+			if (n === "button" || n === "summary") return "button";
+			if (n === "select") return "combobox";
+			if (n === "textarea") return "textbox";
+			if (n === "input") {
+				let t = (e.getAttribute("type") || "text").toLowerCase();
+				return t === "checkbox" ? "checkbox" : t === "radio" ? "radio" : t === "submit" || t === "button" ? "button" : "textbox";
 			}
-			return tag;
+			return n;
 		}
-		function accessibleName(el) {
-			const labelledBy = el.getAttribute("aria-labelledby");
-			if (labelledBy) {
-				const t = labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent?.trim()).filter(Boolean).join(" ");
-				if (t) return t.replace(/\s+/g, " ").slice(0, 80);
+		function u(e) {
+			let t = e.getAttribute("aria-labelledby");
+			if (t) {
+				let e = t.split(/\s+/).map((e) => document.getElementById(e)?.textContent?.trim()).filter(Boolean).join(" ");
+				if (e) return e.replace(/\s+/g, " ").slice(0, 80);
 			}
-			const aria = el.getAttribute("aria-label");
-			if (aria) return aria.trim().replace(/\s+/g, " ").slice(0, 80);
-			if (el.id) {
-				const label = document.querySelector("label[for=\"" + CSS.escape(el.id) + "\"]");
-				if (label?.textContent) return label.textContent.trim().replace(/\s+/g, " ").slice(0, 80);
+			let n = e.getAttribute("aria-label");
+			if (n) return n.trim().replace(/\s+/g, " ").slice(0, 80);
+			if (e.id) {
+				let t = document.querySelector("label[for=\"" + CSS.escape(e.id) + "\"]");
+				if (t?.textContent) return t.textContent.trim().replace(/\s+/g, " ").slice(0, 80);
 			}
-			const parentLabel = el.closest("label");
-			if (parentLabel?.textContent) return parentLabel.textContent.trim().replace(/\s+/g, " ").slice(0, 80);
-			if (el.placeholder) return String(el.placeholder).trim().slice(0, 80);
-			const text = (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ");
-			if (text) return text.slice(0, 80);
-			return el.getAttribute("name") || el.getAttribute("title") || "";
+			let r = e.closest("label");
+			if (r?.textContent) return r.textContent.trim().replace(/\s+/g, " ").slice(0, 80);
+			if (e.placeholder) return String(e.placeholder).trim().slice(0, 80);
+			let i = (e.innerText || e.textContent || "").trim().replace(/\s+/g, " ");
+			return i ? i.slice(0, 80) : e.getAttribute("name") || e.getAttribute("title") || "";
 		}
-		function suggestLocator(el, role, name) {
-			const testId = el.getAttribute("data-testid");
-			if (testId) return {
+		function d(e, t, n) {
+			let r = e.getAttribute("data-testid");
+			return r ? {
 				kind: "getByTestId",
-				testId
-			};
-			if (name && (role === "button" || role === "link" || role === "tab" || role === "menuitem")) return {
+				testId: r
+			} : n && (t === "button" || t === "link" || t === "tab" || t === "menuitem") ? {
 				kind: "getByRole",
-				role,
-				name
-			};
-			if (name && (role === "textbox" || role === "combobox" || role === "checkbox" || role === "radio")) return {
+				role: t,
+				name: n
+			} : n && (t === "textbox" || t === "combobox" || t === "checkbox" || t === "radio") ? {
 				kind: "getByLabel",
-				name
-			};
-			if (el.getAttribute("placeholder")) return {
+				name: n
+			} : e.getAttribute("placeholder") ? {
 				kind: "getByPlaceholder",
-				name: el.getAttribute("placeholder")
-			};
-			if (el.id && !/^(react|ember|mui|css|radix)/i.test(el.id)) return {
+				name: e.getAttribute("placeholder")
+			} : e.id && !/^(react|ember|mui|css|radix)/i.test(e.id) ? {
 				kind: "locator",
-				selector: "#" + CSS.escape(el.id)
-			};
-			return null;
+				selector: "#" + CSS.escape(e.id)
+			} : null;
 		}
-		const textSeen = /* @__PURE__ */ new Set();
-		const textHolders = [];
-		for (const el of document.querySelectorAll(TEXT_HOLDERS)) {
-			if (!(el instanceof HTMLElement) || !isVisible(el)) continue;
-			if (el.closest("a[href], button, [role=\"button\"]") && !/^H[1-6]$/.test(el.tagName)) continue;
-			if (el.tagName === "LI") {
-				const links = el.querySelectorAll("a[href], button");
-				if (links.length === 1 && normText(el, maxTextLen) === normText(links[0], maxTextLen)) continue;
+		let f = /* @__PURE__ */ new Set(), p = [];
+		for (let e of document.querySelectorAll("h1, h2, h3, h4, h5, h6, p, li, label, figcaption, th, td, [role=\"heading\"]")) {
+			if (!(e instanceof HTMLElement) || !a(e) || e.closest("a[href], button, [role=\"button\"]") && !/^H[1-6]$/.test(e.tagName)) continue;
+			if (e.tagName === "LI") {
+				let t = e.querySelectorAll("a[href], button");
+				if (t.length === 1 && c(e, r) === c(t[0], r)) continue;
 			}
-			const text = normText(el, maxTextLen);
-			if (!text || text.length < 2) continue;
-			const tag = el.tagName.toLowerCase();
-			const key = tag + "|" + text;
-			if (textSeen.has(key)) continue;
-			textSeen.add(key);
-			textHolders.push({
+			let t = c(e, r);
+			if (!t || t.length < 2) continue;
+			let i = e.tagName.toLowerCase(), o = i + "|" + t;
+			if (!f.has(o) && (f.add(o), p.push({
 				kind: "text",
-				tag,
-				role: el.getAttribute("role") || (/^h[1-6]$/.test(tag) ? "heading" : tag),
-				level: /^h[1-6]$/.test(tag) ? Number(tag[1]) : void 0,
-				text,
-				region: region(el)
-			});
-			if (textHolders.length >= maxTextHolders) break;
+				tag: i,
+				role: e.getAttribute("role") || (/^h[1-6]$/.test(i) ? "heading" : i),
+				level: /^h[1-6]$/.test(i) ? Number(i[1]) : void 0,
+				text: t,
+				region: s(e)
+			}), p.length >= n)) break;
 		}
-		const seen = /* @__PURE__ */ new Set();
-		const interactables = [];
-		let nextId = 1;
-		function pushInteractive(el, collapsed) {
-			if (!(el instanceof HTMLElement)) return;
-			const role = roleOf(el);
-			const name = accessibleName(el);
-			const href = el.tagName === "A" ? el.getAttribute("href") : null;
-			if (!name && !href) return;
-			if (href && (href.startsWith("javascript:") || href === "#")) {
-				if (!name) return;
-			}
-			const key = [
-				role,
-				name,
-				href || "",
-				el.id || "",
-				collapsed ? "c" : "v"
+		let m = /* @__PURE__ */ new Set(), h = [], g = 1;
+		function _(e, t) {
+			if (!(e instanceof HTMLElement)) return;
+			let n = l(e), r = u(e), i = e.tagName === "A" ? e.getAttribute("href") : null;
+			if (!r && !i || i && (i.startsWith("javascript:") || i === "#") && !r) return;
+			let a = [
+				n,
+				r,
+				i || "",
+				e.id || "",
+				t ? "c" : "v"
 			].join("|");
-			if (seen.has(key)) return;
-			seen.add(key);
-			interactables.push({
+			m.has(a) || (m.add(a), h.push({
 				kind: "interactive",
-				id: nextId++,
-				role,
-				name: name || "(unnamed)",
-				region: region(el),
-				href,
-				collapsed: !!collapsed,
-				disabled: !!el.disabled || el.getAttribute("aria-disabled") === "true",
-				playwrightLocator: suggestLocator(el, role, name)
-			});
+				id: g++,
+				role: n,
+				name: r || "(unnamed)",
+				region: s(e),
+				href: i,
+				collapsed: !!t,
+				disabled: !!e.disabled || e.getAttribute("aria-disabled") === "true",
+				playwrightLocator: d(e, n, r)
+			}));
 		}
-		document.querySelectorAll(INTERACTIVE).forEach((el) => {
-			if (!isVisible(el)) return;
-			pushInteractive(el, false);
+		document.querySelectorAll(i).forEach((e) => {
+			a(e) && _(e, !1);
+		}), t && document.querySelectorAll(i).forEach((e) => {
+			a(e) || !o(e) && !e.closest("[class*=\"submenu\" i], [class*=\"dropdown\" i]") || e.closest("footer") || _(e, !0);
 		});
-		if (includeCollapsedNav) document.querySelectorAll(INTERACTIVE).forEach((el) => {
-			if (isVisible(el)) return;
-			if (!inNavChrome(el) && !el.closest("[class*=\"submenu\" i], [class*=\"dropdown\" i]")) return;
-			if (el.closest("footer")) return;
-			pushInteractive(el, true);
-		});
-		const regionOrder = [
+		let v = [
 			"header",
 			"nav",
 			"main",
@@ -290,441 +211,511 @@ function buildCompactDomScript() {
 			"body",
 			"footer",
 			"overlay"
-		];
-		const byRegion = {};
-		for (const t of textHolders) (byRegion[t.region] ||= {
+		], y = {};
+		for (let e of p) (y[e.region] ||= {
 			text: [],
 			interactive: []
-		}).text.push(t);
-		for (const i of interactables) (byRegion[i.region] ||= {
+		}).text.push(e);
+		for (let e of h) (y[e.region] ||= {
 			text: [],
 			interactive: []
-		}).interactive.push(i);
-		const lines = [];
-		lines.push("Page map: " + (document.title || "(no title)"));
-		lines.push("URL: " + location.href);
-		lines.push("Nodes: text-holders " + textHolders.length + ", interactive " + interactables.length + " (visible " + interactables.filter((i) => !i.collapsed).length + ", collapsed-nav " + interactables.filter((i) => i.collapsed).length + ")");
-		lines.push("─".repeat(60));
-		for (const reg of regionOrder) {
-			const bucket = byRegion[reg];
-			if (!bucket || !bucket.text.length && !bucket.interactive.length) continue;
-			lines.push("[" + reg + "]");
-			for (const t of bucket.text) if (t.level) lines.push("  text:heading" + t.level + " \"" + t.text + "\"");
-			else lines.push("  text:" + t.tag + " \"" + t.text + "\"");
-			for (const item of bucket.interactive) {
-				const hrefBit = item.href ? " href=" + item.href.slice(0, 80) : "";
-				const dis = item.disabled ? " disabled" : "";
-				const col = item.collapsed ? " (collapsed)" : "";
-				lines.push("  [" + item.id + "] " + item.role + " \"" + item.name + "\"" + col + hrefBit + dis);
+		}).interactive.push(e);
+		let b = [];
+		b.push("Page map: " + (document.title || "(no title)")), b.push("URL: " + location.href), b.push("Nodes: text-holders " + p.length + ", interactive " + h.length + " (visible " + h.filter((e) => !e.collapsed).length + ", collapsed-nav " + h.filter((e) => e.collapsed).length + ")"), b.push("─".repeat(60));
+		for (let e of v) {
+			let t = y[e];
+			if (!(!t || !t.text.length && !t.interactive.length)) {
+				b.push("[" + e + "]");
+				for (let e of t.text) e.level ? b.push("  text:heading" + e.level + " \"" + e.text + "\"") : b.push("  text:" + e.tag + " \"" + e.text + "\"");
+				for (let e of t.interactive) {
+					let t = e.href ? " href=" + e.href.slice(0, 80) : "", n = e.disabled ? " disabled" : "", r = e.collapsed ? " (collapsed)" : "";
+					b.push("  [" + e.id + "] " + e.role + " \"" + e.name + "\"" + r + t + n);
+				}
 			}
 		}
 		return {
 			mode: "compact-dom",
-			includeCollapsedNav: !!includeCollapsedNav,
+			includeCollapsedNav: !!t,
 			url: location.href,
 			title: document.title,
-			textHolderCount: textHolders.length,
-			textHolders,
-			interactableCount: interactables.length,
-			visibleCount: interactables.filter((i) => !i.collapsed).length,
-			collapsedNavCount: interactables.filter((i) => i.collapsed).length,
-			interactables,
-			headingCount: textHolders.filter((t) => t.level).length,
-			headings: textHolders.filter((t) => t.level).map((t) => ({
-				level: t.level,
-				text: t.text
+			textHolderCount: p.length,
+			textHolders: p,
+			interactableCount: h.length,
+			visibleCount: h.filter((e) => !e.collapsed).length,
+			collapsedNavCount: h.filter((e) => e.collapsed).length,
+			interactables: h,
+			headingCount: p.filter((e) => e.level).length,
+			headings: p.filter((e) => e.level).map((e) => ({
+				level: e.level,
+				text: e.text
 			})),
-			treeText: lines.join("\n")
+			treeText: b.join("\n")
 		};
 	};
 }
-async function runCompactObserve(page, { includeCollapsedNav = true, maxTextHolders = 80, maxTextLen = 120 } = {}) {
-	return page.evaluate(buildCompactDomScript(), {
-		includeCollapsedNav,
-		maxTextHolders,
-		maxTextLen
+async function p(e, { includeCollapsedNav: t = !0, maxTextHolders: n = 80, maxTextLen: r = 120 } = {}) {
+	return e.evaluate(f(), {
+		includeCollapsedNav: t,
+		maxTextHolders: n,
+		maxTextLen: r
 	});
 }
-function formatCompactTree(result) {
-	if (result?.treeText) return result.treeText;
-	return JSON.stringify(result, null, 2);
+function m(e) {
+	return e?.treeText ? e.treeText : JSON.stringify(e, null, 2);
 }
 //#endregion
 //#region node_modules/.pnpm/dom-miner@0.1.4/node_modules/dom-miner/dist/lib/authenticate.js
-/**
-* Handle authenticated login flow before DOM exploration.
-* Supports auto-detection of common login forms and explicit login URLs.
-*/
-/**
-* @param {import('playwright-core').Page} page
-* @param {{ username: string, password: string }} credential
-* @param {{ loginUrl?: string, usernameSelector?: string, passwordSelector?: string, submitSelector?: string }} opts
-*/
-async function authenticate(page, credential, opts = {}) {
-	const { loginUrl, usernameSelector = "input[name=\"username\"], input[name=\"email\"], input[type=\"email\"], input[type=\"text\"]", passwordSelector = "input[type=\"password\"]", submitSelector = "button[type=\"submit\"], input[type=\"submit\"], button:has-text(\"Sign In\"), button:has-text(\"Log In\"), button:has-text(\"Login\")" } = opts;
-	if (loginUrl) {
-		await page.goto(loginUrl, {
-			waitUntil: "domcontentloaded",
-			timeout: 3e4
-		});
-		await page.waitForTimeout(1e3);
-	}
-	const result = {
-		ok: false,
+async function h(e, t, n = {}) {
+	let { loginUrl: r, usernameSelector: i = "input[name=\"username\"], input[name=\"email\"], input[type=\"email\"], input[type=\"text\"]", passwordSelector: a = "input[type=\"password\"]", submitSelector: o = "button[type=\"submit\"], input[type=\"submit\"], button:has-text(\"Sign In\"), button:has-text(\"Log In\"), button:has-text(\"Login\")" } = n;
+	r && (await e.goto(r, {
+		waitUntil: "domcontentloaded",
+		timeout: 3e4
+	}), await e.waitForTimeout(1e3));
+	let s = {
+		ok: !1,
 		method: "none",
 		errors: []
 	};
 	try {
-		const usernameInput = await findFirst(page, usernameSelector);
-		const passwordInput = await page.$(passwordSelector);
-		if (usernameInput && passwordInput) {
-			await usernameInput.fill(credential.username);
-			await passwordInput.fill(credential.password);
-			const submitBtn = await findFirst(page, submitSelector);
-			if (submitBtn) await submitBtn.click();
-			else await passwordInput.press("Enter");
-			await page.waitForTimeout(2e3);
-			result.ok = true;
-			result.method = "form";
-			return result;
+		let n = await g(e, i), r = await e.$(a);
+		if (n && r) {
+			await n.fill(t.username), await r.fill(t.password);
+			let i = await g(e, o);
+			return i ? await i.click() : await r.press("Enter"), await e.waitForTimeout(2e3), s.ok = !0, s.method = "form", s;
 		}
-		const anyText = await page.$("input[type=\"text\"]:visible, input[type=\"email\"]:visible");
-		const anyPassword = await page.$("input[type=\"password\"]:visible");
-		if (anyText && anyPassword) {
-			await anyText.fill(credential.username);
-			await anyPassword.fill(credential.password);
-			await anyPassword.press("Enter");
-			await page.waitForTimeout(2e3);
-			result.ok = true;
-			result.method = "form-fallback";
-			return result;
-		}
-		result.errors.push("No login form detected");
-		return result;
-	} catch (err) {
-		result.errors.push(String(err?.message || err));
-		return result;
+		let c = await e.$("input[type=\"text\"]:visible, input[type=\"email\"]:visible"), l = await e.$("input[type=\"password\"]:visible");
+		return c && l ? (await c.fill(t.username), await l.fill(t.password), await l.press("Enter"), await e.waitForTimeout(2e3), s.ok = !0, s.method = "form-fallback", s) : (s.errors.push("No login form detected"), s);
+	} catch (e) {
+		return s.errors.push(String(e?.message || e)), s;
 	}
 }
-/** Find the first visible element matching any of the comma-separated selectors. */
-async function findFirst(page, selectorStr) {
-	for (const sel of selectorStr.split(",").map((s) => s.trim())) {
-		const el = await page.$(sel);
-		if (el && await el.isVisible()) return el;
+async function g(e, t) {
+	for (let n of t.split(",").map((e) => e.trim())) {
+		let t = await e.$(n);
+		if (t && await t.isVisible()) return t;
 	}
 	return null;
 }
 //#endregion
 //#region electron/ipc/playwrightEngine.ts
-var browser = null;
-var context = null;
-var page = null;
-function registerPlaywrightHandlers() {
-	ipcMain.handle("launch_browser", async (event, { headless }) => {
-		if (!browser) browser = await chromium.connectOverCDP("http://localhost:9222");
-		context = browser.contexts()[0];
-		page = null;
+var _ = null, v = null, y = null;
+function b() {
+	i.handle("launch_browser", async (e, { headless: t }) => {
+		_ ||= await l.connectOverCDP("http://localhost:9222"), v = _.contexts()[0], y = null;
 	});
-	const getActivePage = async () => {
-		if (!context) return null;
-		const pages = context.pages();
-		return pages.find((p) => !p.url().includes("localhost:5173") && !p.url().startsWith("file://")) || pages[0];
+	let e = async () => {
+		if (!v) return null;
+		let e = v.pages();
+		return e.find((e) => !e.url().includes("localhost:5173") && !e.url().startsWith("file://")) || e[0];
 	};
-	ipcMain.handle("navigate_browser", async (event, { url }) => {
-		page = await getActivePage();
-		if (!page) throw new Error("Browser not launched or page not found");
-		if (page.url() !== url) await page.goto(url, { waitUntil: "domcontentloaded" }).catch(() => {});
-		const title = await page.title();
-		const screenshot = await page.screenshot({ type: "png" });
+	i.handle("navigate_browser", async (t, { url: n }) => {
+		if (y = await e(), !y) throw Error("Browser not launched or page not found");
+		y.url() !== n && await y.goto(n, { waitUntil: "domcontentloaded" }).catch(() => {});
+		let r = await y.title(), i = await y.screenshot({ type: "png" });
 		return {
-			url: page.url(),
-			title,
-			image: screenshot.toString("base64"),
+			url: y.url(),
+			title: r,
+			image: i.toString("base64"),
 			mimeType: "image/png"
 		};
-	});
-	ipcMain.handle("get_browser_screenshot", async () => {
-		page = await getActivePage();
-		if (!page) throw new Error("Browser not launched");
-		return (await page.screenshot({ type: "png" })).toString("base64");
-	});
-	ipcMain.handle("get_browser_dom_tree", async () => {
-		page = await getActivePage();
-		if (!page) throw new Error("Browser not launched");
-		const compactData = await runCompactObserve(page);
-		const treeText = formatCompactTree(compactData);
+	}), i.handle("get_browser_screenshot", async () => {
+		if (y = await e(), !y) throw Error("Browser not launched");
+		return (await y.screenshot({ type: "png" })).toString("base64");
+	}), i.handle("get_browser_dom_tree", async () => {
+		if (y = await e(), !y) throw Error("Browser not launched");
+		let t = await p(y), n = m(t);
 		return {
-			url: compactData.url,
-			title: compactData.title,
-			tree: treeText,
+			url: t.url,
+			title: t.title,
+			tree: n,
 			stats: {
-				totalNodes: compactData.textHolderCount + compactData.interactableCount,
-				interactiveNodes: compactData.interactableCount,
-				textHolders: compactData.textHolderCount,
-				visibleNodes: compactData.visibleCount
+				totalNodes: t.textHolderCount + t.interactableCount,
+				interactiveNodes: t.interactableCount,
+				textHolders: t.textHolderCount,
+				visibleNodes: t.visibleCount
 			}
 		};
-	});
-	ipcMain.handle("mine_batch_urls", async (event, { targets, returnToUrl }) => {
-		let currentPage = await getActivePage();
-		if (!currentPage) throw new Error("Browser not launched");
-		const results = [];
-		for (let i = 0; i < targets.length; i++) {
-			const target = targets[i];
-			event.sender.send("mine_progress", `Mining page ${i + 1}/${targets.length}: ${target.url}`);
+	}), i.handle("mine_batch_urls", async (t, { targets: n, returnToUrl: r }) => {
+		let i = await e();
+		if (!i) throw Error("Browser not launched");
+		let a = [];
+		for (let e = 0; e < n.length; e++) {
+			let r = n[e];
+			t.sender.send("mine_progress", `Mining page ${e + 1}/${n.length}: ${r.url}`);
 			try {
-				await currentPage.goto(target.url, {
+				if (await i.goto(r.url, {
 					waitUntil: "load",
 					timeout: 2e4
-				});
-				if (target.credential?.username || target.credential?.password) {
-					event.sender.send("mine_progress", `Authenticating on ${target.url}...`);
+				}), r.credential?.username || r.credential?.password) {
+					t.sender.send("mine_progress", `Authenticating on ${r.url}...`);
 					try {
-						await authenticate(currentPage, target.credential);
-						await new Promise((r) => setTimeout(r, 3e3));
-					} catch (authErr) {
-						console.error(`Auth failed for ${target.url}:`, authErr);
+						await h(i, r.credential), await new Promise((e) => setTimeout(e, 3e3));
+					} catch (e) {
+						console.error(`Auth failed for ${r.url}:`, e);
 					}
-				} else await new Promise((r) => setTimeout(r, 2e3));
-				const compactData = await runCompactObserve(currentPage);
-				const treeText = formatCompactTree(compactData);
-				results.push({
-					url: compactData.url,
-					title: compactData.title,
-					tree: treeText,
+				} else await new Promise((e) => setTimeout(e, 2e3));
+				let e = await p(i), n = m(e);
+				a.push({
+					url: e.url,
+					title: e.title,
+					tree: n,
 					stats: {
-						totalNodes: compactData.textHolderCount + compactData.interactableCount,
-						interactiveNodes: compactData.interactableCount,
-						textHolders: compactData.textHolderCount,
-						visibleNodes: compactData.visibleCount
+						totalNodes: e.textHolderCount + e.interactableCount,
+						interactiveNodes: e.interactableCount,
+						textHolders: e.textHolderCount,
+						visibleNodes: e.visibleCount
 					}
 				});
-			} catch (err) {
-				console.error(`Failed to mine ${target.url}:`, err);
+			} catch (e) {
+				console.error(`Failed to mine ${r.url}:`, e);
 			}
 		}
-		if (returnToUrl) {
-			event.sender.send("mine_progress", `Restoring original page...`);
+		if (r) {
+			t.sender.send("mine_progress", "Restoring original page...");
 			try {
-				await currentPage.goto(returnToUrl, {
+				await i.goto(r, {
 					waitUntil: "load",
 					timeout: 15e3
 				});
-			} catch (e) {}
+			} catch {}
 		}
-		return results;
-	});
-	ipcMain.handle("inspect_element_at_point", async (event, { x, y }) => {
-		page = await getActivePage();
-		if (!page) throw new Error("Browser not launched");
-		return { element: await page.evaluate(({ x, y }) => {
-			const el = document.elementFromPoint(x, y);
-			if (!el) return null;
-			const rect = el.getBoundingClientRect();
+		return a;
+	}), i.handle("inspect_element_at_point", async (t, { x: n, y: r }) => {
+		if (y = await e(), !y) throw Error("Browser not launched");
+		return { element: await y.evaluate(({ x: e, y: t }) => {
+			let n = document.elementFromPoint(e, t);
+			if (!n) return null;
+			let r = n.getBoundingClientRect();
 			return {
-				tagName: el.tagName,
-				text: el.textContent,
-				id: el.id,
-				testId: el.getAttribute("data-testid"),
-				role: el.getAttribute("role"),
-				label: el.getAttribute("aria-label"),
-				placeholder: el.getAttribute("placeholder"),
-				className: el.className,
+				tagName: n.tagName,
+				text: n.textContent,
+				id: n.id,
+				testId: n.getAttribute("data-testid"),
+				role: n.getAttribute("role"),
+				label: n.getAttribute("aria-label"),
+				placeholder: n.getAttribute("placeholder"),
+				className: n.className,
 				rect: {
-					x: rect.x,
-					y: rect.y,
-					width: rect.width,
-					height: rect.height
+					x: r.x,
+					y: r.y,
+					width: r.width,
+					height: r.height
 				}
 			};
 		}, {
-			x,
-			y
+			x: n,
+			y: r
 		}) };
-	});
-	ipcMain.handle("interact_browser", async (event, params) => {
-		page = await getActivePage();
-		if (!page) throw new Error("Browser not launched");
-		const { action, x, y, key, deltaX, deltaY } = params;
-		if (action === "click" && x != null && y != null) await page.mouse.click(x, y);
-		else if (action === "keydown" && key) await page.keyboard.press(key);
-		else if (action === "scroll" && deltaX != null && deltaY != null) await page.mouse.wheel(deltaX, deltaY);
-		await page.waitForTimeout(500);
-		const title = await page.title();
-		const screenshot = await page.screenshot({ type: "png" });
+	}), i.handle("interact_browser", async (t, n) => {
+		if (y = await e(), !y) throw Error("Browser not launched");
+		let { action: r, x: i, y: a, key: o, deltaX: s, deltaY: c } = n;
+		r === "click" && i != null && a != null ? await y.mouse.click(i, a) : r === "keydown" && o ? await y.keyboard.press(o) : r === "scroll" && s != null && c != null && await y.mouse.wheel(s, c), await y.waitForTimeout(500);
+		let l = await y.title(), u = await y.screenshot({ type: "png" });
 		return {
-			url: page.url(),
-			title,
-			image: screenshot.toString("base64"),
+			url: y.url(),
+			title: l,
+			image: u.toString("base64"),
 			mimeType: "image/png"
 		};
-	});
-	ipcMain.handle("set_browser_mode", async (event, { mode }) => {
-		page = await getActivePage();
-		if (!page) return;
-		try {
-			await page.evaluate(() => {
-				if (window.__tracyCleanup) window.__tracyCleanup();
-			});
-		} catch (e) {}
-		if (mode === "inspect" || mode === "record") {
+	}), i.handle("set_browser_mode", async (t, { mode: n }) => {
+		if (y = await e(), y) {
 			try {
-				await page.exposeFunction("__tracyEmitEvent", (type, data) => {
-					const wins = __require("electron").BrowserWindow.getAllWindows();
-					if (wins[0]) wins[0].webContents.send("browser-event", {
-						type,
-						data
-					});
+				await y.evaluate(() => {
+					window.__tracyCleanup && window.__tracyCleanup();
 				});
-			} catch (e) {}
-			await page.evaluate((currentMode) => {
-				let lastHighlighted = null;
-				const over = (e) => {
-					if (lastHighlighted) lastHighlighted.style.outline = "";
-					lastHighlighted = e.target;
-					if (lastHighlighted) {
-						lastHighlighted.style.outline = "2px solid #3b82f6";
-						lastHighlighted.style.outlineOffset = "-2px";
-						lastHighlighted.style.cursor = "crosshair";
-					}
-				};
-				const out = (e) => {
-					if (lastHighlighted) {
-						lastHighlighted.style.outline = "";
-						lastHighlighted.style.cursor = "";
-						lastHighlighted = null;
-					}
-				};
-				const click = (e) => {
-					if (currentMode === "inspect") {
-						e.preventDefault();
-						e.stopPropagation();
-					}
-					if (lastHighlighted) lastHighlighted.style.outline = "";
-					const target = e.target;
-					const rect = target.getBoundingClientRect();
-					window.__tracyEmitEvent(currentMode === "inspect" ? "inspect-click" : "record-click", {
-						tagName: target.tagName,
-						text: target.textContent,
-						id: target.id,
-						className: target.className,
-						testId: target.getAttribute("data-testid"),
-						role: target.getAttribute("role"),
-						placeholder: target.getAttribute("placeholder"),
-						label: target.getAttribute("aria-label"),
-						rect: {
-							x: rect.x,
-							y: rect.y,
-							width: rect.width,
-							height: rect.height
-						}
+			} catch {}
+			if (n === "inspect" || n === "record") {
+				try {
+					await y.exposeFunction("__tracyEmitEvent", (e, t) => {
+						let n = u("electron").BrowserWindow.getAllWindows();
+						n[0] && n[0].webContents.send("browser-event", {
+							type: e,
+							data: t
+						});
 					});
-				};
-				document.addEventListener("mouseover", over, true);
-				document.addEventListener("mouseout", out, true);
-				document.addEventListener("click", click, true);
-				window.__tracyCleanup = () => {
-					document.removeEventListener("mouseover", over, true);
-					document.removeEventListener("mouseout", out, true);
-					document.removeEventListener("click", click, true);
-					if (lastHighlighted) {
-						lastHighlighted.style.outline = "";
-						lastHighlighted.style.cursor = "";
+				} catch {}
+				await y.evaluate((e) => {
+					let t = null, n = (e) => {
+						t && (t.style.outline = ""), t = e.target, t && (t.style.outline = "2px solid #3b82f6", t.style.outlineOffset = "-2px", t.style.cursor = "crosshair");
+					}, r = (e) => {
+						t &&= (t.style.outline = "", t.style.cursor = "", null);
+					}, i = (n) => {
+						e === "inspect" && (n.preventDefault(), n.stopPropagation()), t && (t.style.outline = "");
+						let r = n.target, i = r.getBoundingClientRect();
+						window.__tracyEmitEvent(e === "inspect" ? "inspect-click" : "record-click", {
+							tagName: r.tagName,
+							text: r.textContent,
+							id: r.id,
+							className: r.className,
+							testId: r.getAttribute("data-testid"),
+							role: r.getAttribute("role"),
+							placeholder: r.getAttribute("placeholder"),
+							label: r.getAttribute("aria-label"),
+							rect: {
+								x: i.x,
+								y: i.y,
+								width: i.width,
+								height: i.height
+							}
+						});
+					};
+					document.addEventListener("mouseover", n, !0), document.addEventListener("mouseout", r, !0), document.addEventListener("click", i, !0), window.__tracyCleanup = () => {
+						document.removeEventListener("mouseover", n, !0), document.removeEventListener("mouseout", r, !0), document.removeEventListener("click", i, !0), t && (t.style.outline = "", t.style.cursor = "");
+					};
+				}, n);
+			}
+		}
+	}), i.handle("run_flow", async (t, { flow: n, targetBaseUrl: r, speedMs: i }) => {
+		let a = await e();
+		if (a ||= (_ ||= await l.connectOverCDP("http://localhost:9222"), v = _.contexts()[0], await e()), !a) throw Error("Browser not launched — cannot execute flow");
+		let o = n.steps || [], s = t.sender, c = (e, t, n) => {
+			s.send("execution-log", {
+				id: `log-${Date.now()}-${t}`,
+				timestamp: (/* @__PURE__ */ new Date()).toLocaleTimeString(),
+				level: e,
+				stepIndex: t,
+				message: n
+			});
+		}, u = (e, t, n, r) => {
+			s.send("step-update", {
+				stepIndex: e,
+				status: t,
+				durationMs: n,
+				errorMessage: r
+			});
+		}, d = (e) => {
+			if (!e || !a) return null;
+			if (typeof e == "string") return e.startsWith("#") || e.startsWith(".") || e.startsWith("/") || e.startsWith("css=") || e.startsWith("xpath=") ? a.locator(e) : a.getByText(e, { exact: !1 });
+			if (e.type && e.value) switch (e.type) {
+				case "testId": return a.getByTestId(e.value);
+				case "role": return a.getByRole(e.value, { name: e.name });
+				case "label": return a.getByLabel(e.value);
+				case "placeholder": return a.getByPlaceholder(e.value);
+				case "text": return a.getByText(e.value, { exact: e.exact ?? !1 });
+				case "css": return a.locator(e.value);
+				case "xpath": return a.locator(`xpath=${e.value}`);
+				case "id": return a.locator(`#${e.value}`);
+			}
+			return e.testId ? a.getByTestId(e.testId) : e.role && e.name ? a.getByRole(e.role, { name: e.name }) : e.role ? a.getByRole(e.role) : e.label ? a.getByLabel(e.label) : e.placeholder ? a.getByPlaceholder(e.placeholder) : e.text ? a.getByText(e.text, { exact: e.exact ?? !1 }) : e.css ? a.locator(e.css) : e.xpath ? a.locator(`xpath=${e.xpath}`) : e.id ? a.locator(`#${e.id}`) : null;
+		};
+		for (let e = 0; e < o.length; e++) {
+			let t = o[e], s = Date.now(), l = t.command;
+			u(e, "running"), c("info", e, `▶ Step ${e + 1}: ${l}`);
+			try {
+				let n = t.timeout || 1e4;
+				switch (l) {
+					case "navigate": {
+						let e = t.value || t.target || "/", i = e.startsWith("http") ? e : `${r.replace(/\/$/, "")}${e.startsWith("/") ? "" : "/"}${e}`;
+						await a.goto(i, {
+							waitUntil: "domcontentloaded",
+							timeout: n
+						});
+						break;
 					}
-				};
-			}, mode);
+					case "leftClick":
+					case "tap": {
+						let e = d(t.target || t.value);
+						e ? await e.click({ timeout: n }) : t.value && await a.getByText(t.value).click({ timeout: n });
+						break;
+					}
+					case "doubleClick": {
+						let e = d(t.target || t.value);
+						e && await e.dblclick({ timeout: n });
+						break;
+					}
+					case "rightClick": {
+						let e = d(t.target || t.value);
+						e && await e.click({
+							button: "right",
+							timeout: n
+						});
+						break;
+					}
+					case "hover": {
+						let e = d(t.target || t.value);
+						e && await e.hover({ timeout: n });
+						break;
+					}
+					case "fill": {
+						let e = d(t.target), r = t.value || "";
+						e && await e.fill(r, { timeout: n });
+						break;
+					}
+					case "eraseText": {
+						let e = d(t.target || t.value);
+						e && await e.fill("", { timeout: n });
+						break;
+					}
+					case "press": {
+						let e = t.value || t.target || "Enter";
+						await a.keyboard.press(e);
+						break;
+					}
+					case "selectOption": {
+						let e = d(t.target);
+						e && t.value && await e.selectOption(t.value, { timeout: n });
+						break;
+					}
+					case "uploadFile": {
+						let e = d(t.target);
+						e && t.value && await e.setInputFiles(t.value, { timeout: n });
+						break;
+					}
+					case "waitFor": {
+						let e = t.value || t.target;
+						e === "networkIdle" || e === "load" ? await a.waitForLoadState(e === "networkIdle" ? "networkidle" : "load", { timeout: n }) : typeof e == "number" || /^\d+$/.test(e) ? await a.waitForTimeout(Number(e)) : await a.waitForSelector(e, { timeout: n });
+						break;
+					}
+					case "wait": {
+						let e = Number(t.value || t.target || 1e3);
+						await a.waitForTimeout(e);
+						break;
+					}
+					case "waitForNetwork":
+						await a.waitForLoadState("networkidle", { timeout: n });
+						break;
+					case "assertVisible": {
+						let e = d(t.target || t.value);
+						e && await e.waitFor({
+							state: "visible",
+							timeout: n
+						});
+						break;
+					}
+					case "assertNotVisible": {
+						let e = d(t.target || t.value);
+						e && await e.waitFor({
+							state: "hidden",
+							timeout: n
+						});
+						break;
+					}
+					case "assertTitle": {
+						let e = t.value || t.target || "", n = await a.title();
+						if (!n.includes(e)) throw Error(`Title "${n}" does not contain "${e}"`);
+						break;
+					}
+					case "assertUrl": {
+						let e = t.value || t.target || "", n = a.url();
+						if (!n.includes(e)) throw Error(`URL "${n}" does not contain "${e}"`);
+						break;
+					}
+					case "assertTrue": {
+						let e = t.value || t.target || "true";
+						if (!await a.evaluate(e)) throw Error(`Assertion failed for expression: ${e}`);
+						break;
+					}
+					case "copyTextFrom": {
+						let r = d(t.target);
+						if (r) {
+							let t = await r.innerText({ timeout: n });
+							c("info", e, `Copied text from element: "${t}"`);
+						}
+						break;
+					}
+					case "scroll": {
+						let e = Number(t.args?.distance || t.value || 300), n = (t.args?.direction || "down") === "up" ? -e : e;
+						await a.mouse.wheel(0, n);
+						break;
+					}
+					case "setViewport": {
+						let e = t.args?.width || 1280, n = t.args?.height || 720;
+						await a.setViewportSize({
+							width: e,
+							height: n
+						});
+						break;
+					}
+					case "takeScreenshot":
+						await a.screenshot({ type: "png" });
+						break;
+					case "clearCookies":
+						v && await v.clearCookies();
+						break;
+					case "clearStorage":
+						await a.evaluate(() => {
+							localStorage.clear(), sessionStorage.clear();
+						});
+						break;
+					case "evalScript": {
+						let e = t.value || t.target || "";
+						await a.evaluate(e);
+						break;
+					}
+					default:
+						c("warn", e, `⚠ Step ${e + 1}: Command "${l}" not yet implemented — skipping`), u(e, "skipped", Date.now() - s);
+						continue;
+				}
+				let i = Date.now() - s;
+				u(e, "passed", i), c("assertion", e, `✅ Step ${e + 1} PASSED (${i}ms)`);
+			} catch (t) {
+				let r = Date.now() - s, i = t.message || "Unknown error";
+				if (u(e, "failed", r, i), c("error", e, `❌ Step ${e + 1} FAILED: ${i}`), !n.metadata?.continueOnFailure) break;
+			}
+			i > 0 && await new Promise((e) => setTimeout(e, i));
 		}
 	});
 }
 //#endregion
 //#region electron/ipc/webviewManager.ts
-var webview = null;
-function registerWebviewHandlers() {
-	ipcMain.handle("open_child_webview", async (event, { url, x, y, width, height }) => {
-		const parentWin = BrowserWindow.fromWebContents(event.sender);
-		if (!parentWin) return;
-		if (webview) {
-			parentWin.contentView.removeChildView(webview);
-			webview = null;
-		}
-		webview = new WebContentsView();
-		parentWin.contentView.addChildView(webview);
-		webview.setBounds({
-			x: Math.round(x),
-			y: Math.round(y),
-			width: Math.round(width),
-			height: Math.round(height)
+var x = null;
+function S() {
+	i.handle("open_child_webview", async (e, { url: r, x: i, y: a, width: o, height: s }) => {
+		let c = t.fromWebContents(e.sender);
+		c && (x &&= (c.contentView.removeChildView(x), null), x = new n(), c.contentView.addChildView(x), x.setBounds({
+			x: Math.round(i),
+			y: Math.round(a),
+			width: Math.round(o),
+			height: Math.round(s)
+		}), x.webContents.loadURL(r));
+	}), i.handle("resize_child_webview", async (e, { x: t, y: n, width: r, height: i }) => {
+		x && x.setBounds({
+			x: Math.round(t),
+			y: Math.round(n),
+			width: Math.round(r),
+			height: Math.round(i)
 		});
-		webview.webContents.loadURL(url);
-	});
-	ipcMain.handle("resize_child_webview", async (event, { x, y, width, height }) => {
-		if (webview) webview.setBounds({
-			x: Math.round(x),
-			y: Math.round(y),
-			width: Math.round(width),
-			height: Math.round(height)
-		});
-	});
-	ipcMain.handle("set_child_webview_visible", async (event, { visible }) => {
-		if (webview) {
-			if (!visible) webview.setBounds({
-				x: 0,
-				y: 0,
-				width: 0,
-				height: 0
-			});
-		}
-	});
-	ipcMain.handle("close_child_webview", async (event) => {
-		const parentWin = BrowserWindow.fromWebContents(event.sender);
-		if (parentWin && webview) {
-			parentWin.contentView.removeChildView(webview);
-			webview = null;
-		}
+	}), i.handle("set_child_webview_visible", async (e, { visible: t }) => {
+		x && (t || x.setBounds({
+			x: 0,
+			y: 0,
+			width: 0,
+			height: 0
+		}));
+	}), i.handle("close_child_webview", async (e) => {
+		let n = t.fromWebContents(e.sender);
+		n && x && (n.contentView.removeChildView(x), x = null);
 	});
 }
 //#endregion
 //#region electron/ipc/index.ts
-function registerIpcHandlers() {
-	registerFileSystemHandlers();
-	registerPlaywrightHandlers();
-	registerWebviewHandlers();
+function C() {
+	d(), b(), S();
 }
 //#endregion
 //#region electron/main.ts
-var __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, "..");
-var VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-var MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-var RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-app.commandLine.appendSwitch("remote-debugging-port", "9222");
-var win;
-function createWindow() {
-	win = new BrowserWindow({
+var w = a.dirname(o(import.meta.url));
+process.env.APP_ROOT = a.join(w, "..");
+var T = process.env.VITE_DEV_SERVER_URL, E = a.join(process.env.APP_ROOT, "dist-electron"), D = a.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = T ? a.join(process.env.APP_ROOT, "public") : D, r.commandLine.appendSwitch("remote-debugging-port", "9222");
+var O;
+function k() {
+	O = new t({
 		width: 1200,
 		height: 800,
 		webPreferences: {
-			preload: path.join(__dirname, "preload.mjs"),
-			contextIsolation: true,
-			nodeIntegration: false
+			preload: a.join(w, "preload.mjs"),
+			contextIsolation: !0,
+			nodeIntegration: !1
 		}
-	});
-	if (VITE_DEV_SERVER_URL) win.loadURL(VITE_DEV_SERVER_URL);
-	else win.loadFile(path.join(RENDERER_DIST, "index.html"));
+	}), T ? O.loadURL(T) : O.loadFile(a.join(D, "index.html"));
 }
-app.on("window-all-closed", () => {
-	if (process.platform !== "darwin") {
-		app.quit();
-		win = null;
-	}
-});
-app.on("activate", () => {
-	if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
-app.whenReady().then(() => {
-	createWindow();
-	registerIpcHandlers();
+r.on("window-all-closed", () => {
+	process.platform !== "darwin" && (r.quit(), O = null);
+}), r.on("activate", () => {
+	t.getAllWindows().length === 0 && k();
+}), r.whenReady().then(() => {
+	k(), C();
 });
 //#endregion
-export { MAIN_DIST, RENDERER_DIST, VITE_DEV_SERVER_URL };
+export { E as MAIN_DIST, D as RENDERER_DIST, T as VITE_DEV_SERVER_URL };

@@ -12,7 +12,18 @@ export function registerWebviewHandlers() {
       webview = null;
     }
 
-    webview = new WebContentsView();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://') && url !== 'about:blank') {
+      console.warn(`Blocked invalid webview URL navigation attempt: ${url}`);
+      return;
+    }
+
+    webview = new WebContentsView({
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
     parentWin.contentView.addChildView(webview);
     
     // Convert to integers since Electron expects integers

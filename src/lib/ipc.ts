@@ -36,7 +36,7 @@ export interface ExecutionLogEntry {
 
 // Helper to check if running inside Electron environment
 export const isElectronEnv = (): boolean => {
-  return typeof window !== 'undefined' && 'tracyAPI' in window as any;
+  return typeof window !== 'undefined' && 'tracyAPI' in (window as any);
 };
 
 const invoke = async <T>(channel: string, args?: any): Promise<T> => {
@@ -204,7 +204,7 @@ export const tracyApi = {
 
   onBrowserEvent: async (callback: (payload: { type: string, data: any }) => void): Promise<UnlistenFn> => {
     if (!isElectronEnv()) return () => {};
-    return listen('browser_event', callback);
+    return listen('browser-event', callback);
   },
 
   onMineProgress: async (callback: (message: string) => void): Promise<UnlistenFn> => {

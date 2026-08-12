@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ExecutionLog, TestRunResult, FlowFile, FlowStep } from '@/src/types/autoflow';
-import { tracyApi } from '@/src/lib/ipc';
+import { tracyApi, isElectronEnv, UnlistenFn } from '@/src/lib/ipc';
 
 interface ExecutionState {
   isExecuting: boolean;
@@ -9,14 +9,16 @@ interface ExecutionState {
   executionLogs: ExecutionLog[];
   lastResult: TestRunResult | null;
   eventListenersSet: boolean;
+  unlistenFns: UnlistenFn[];
 
   setExecutionSpeed: (speed: number) => void;
   startExecution: (flow: FlowFile, targetBaseUrl: string) => Promise<void>;
   pauseExecution: () => void;
-  resetExecution: (flow: FlowFile) => void;
+  resetExecution: () => void;
   addLogEntry: (log: ExecutionLog) => void;
   updateStepStatus: (stepIndex: number, status: FlowStep['status'], durationMs?: number, errorMessage?: string) => void;
-  setupEventListeners: () => void;
+  setupEventListeners: () => Promise<void>;
+  cleanupEventListeners: () => void;
 }
 
 export const useExecutionStore = create<ExecutionState>((set, get) => ({
@@ -26,6 +28,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
   executionLogs: [],
   lastResult: null,
   eventListenersSet: false,
+  unlistenFns: [],
 
   setExecutionSpeed: (speed: number) => set({ executionSpeed: speed }),
 
@@ -38,7 +41,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
       const updatedLogs = [...state.executionLogs];
       if (status === 'passed' || status === 'failed') {
         const logEntry: ExecutionLog = {
-          id: `log-${Date.now()}-${stepIndex}`,
+          id: `log-${crypto.randomUUID()}-${stepIndex}`,
           timestamp: new Date().toLocaleTimeString(),
           level: status === 'failed' ? 'error' : 'assertion',
           stepIndex,
@@ -52,13 +55,13 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
     });
   },
 
-  setupEventListeners: () => {
+  setupEventListeners: async () => {
     if (get().eventListenersSet) return;
-    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-      tracyApi.onStepUpdate((payload) => {
+    if (isElectronEnv()) {
+      const unlisten1 = await tracyApi.onStepUpdate((payload) => {
         get().updateStepStatus(payload.stepIndex, payload.status, payload.durationMs, payload.errorMessage);
       });
-      tracyApi.onExecutionLog((payload) => {
+      const unlisten2 = await tracyApi.onExecutionLog((payload) => {
         get().addLogEntry({
           id: payload.id,
           timestamp: payload.timestamp,
@@ -67,8 +70,16 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           message: payload.message,
         });
       });
-      set({ eventListenersSet: true });
+      set({ eventListenersSet: true, unlistenFns: [unlisten1, unlisten2] });
     }
+  },
+
+  cleanupEventListeners: () => {
+    const { unlistenFns } = get();
+    unlistenFns.forEach((fn) => {
+      try { fn(); } catch (_) {}
+    });
+    set({ eventListenersSet: false, unlistenFns: [] });
   },
 
   startExecution: async (flow: FlowFile, targetBaseUrl: string) => {
@@ -83,7 +94,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
     });
 
     try {
-      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      if (isElectronEnv()) {
         await tracyApi.runFlow(flow, targetBaseUrl, executionSpeed);
       } else {
         // Simulated execution mode for browser fallback
@@ -98,7 +109,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           const step = flow.steps[i];
 
           get().addLogEntry({
-            id: `log-${Date.now()}-${i}`,
+            id: `log-${crypto.randomUUID()}-${i}`,
             timestamp: new Date().toLocaleTimeString(),
             level: 'info',
             stepIndex: i,
@@ -111,7 +122,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           if (!isFailTrigger) {
             passed++;
             get().addLogEntry({
-              id: `log-${Date.now()}-${i}-pass`,
+              id: `log-${crypto.randomUUID()}-${i}-pass`,
               timestamp: new Date().toLocaleTimeString(),
               level: 'assertion',
               stepIndex: i,
@@ -120,7 +131,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           } else {
             failed++;
             get().addLogEntry({
-              id: `log-${Date.now()}-${i}-fail`,
+              id: `log-${crypto.randomUUID()}-${i}-fail`,
               timestamp: new Date().toLocaleTimeString(),
               level: 'error',
               stepIndex: i,
@@ -131,7 +142,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
         }
 
         const runResult: TestRunResult = {
-          id: `run-${Date.now()}`,
+          id: `run-${crypto.randomUUID()}`,
           flowId: flow.id,
           flowName: flow.name,
           timestamp: new Date().toLocaleString(),
@@ -148,17 +159,18 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           },
         };
 
-        set({ lastResult: runResult, isExecuting: false, activeStepIndex: -1 });
+        set({ lastResult: runResult });
       }
     } catch (err: any) {
       console.error('Execution engine error:', err);
+    } finally {
       set({ isExecuting: false, activeStepIndex: -1 });
     }
   },
 
   pauseExecution: () => set({ isExecuting: false }),
 
-  resetExecution: (flow: FlowFile) => {
+  resetExecution: () => {
     set({
       isExecuting: false,
       activeStepIndex: -1,

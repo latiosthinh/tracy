@@ -1,10 +1,1 @@
-let electron = require("electron");
-//#region electron/preload.ts
-electron.contextBridge.exposeInMainWorld("tracyAPI", {
-	invoke: (channel, args) => electron.ipcRenderer.invoke(channel, args),
-	on: (channel, listener) => {
-		electron.ipcRenderer.on(channel, listener);
-		return () => electron.ipcRenderer.removeListener(channel, listener);
-	}
-});
-//#endregion
+let e=require("electron");var t=[`launch_browser`,`navigate_browser`,`get_browser_screenshot`,`get_browser_dom_tree`,`mine_batch_urls`,`inspect_element_at_point`,`interact_browser`,`set_browser_mode`,`run_flow`,`list_projects`,`scan_agent_clis`,`run_agent_cli_stream`,`parse_yaml_flow`,`save_project`,`save_project_to_disk`,`load_project_from_disk`,`save_flow_to_disk`,`save_dom_snapshot`,`load_dom_snapshots`,`save_playwright_code`,`open_child_webview`,`resize_child_webview`,`set_child_webview_visible`,`close_child_webview`],n=[`browser-event`,`mine_progress`,`step-update`,`execution-log`,`ai-stream-chunk`];e.contextBridge.exposeInMainWorld(`tracyAPI`,{invoke:(n,r)=>{if(!t.includes(n))throw Error(`IPC invoke blocked: channel "${n}" is not whitelisted`);return e.ipcRenderer.invoke(n,r)},on:(t,r)=>{if(!n.includes(t))throw Error(`IPC listen blocked: channel "${t}" is not whitelisted`);return e.ipcRenderer.on(t,r),()=>e.ipcRenderer.removeListener(t,r)}});

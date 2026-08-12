@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, WebContentsView } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,7 +11,9 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
 
-app.commandLine.appendSwitch('remote-debugging-port', '9222');
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222');
+}
 
 let win: BrowserWindow | null;
 
@@ -23,6 +25,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
   });
 

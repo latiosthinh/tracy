@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const browsersPath = path.resolve(__dirname, '../src-tauri/browsers');
+const browsersPath = path.resolve(__dirname, '../browsers');
 
 console.log(`Downloading Playwright Chromium to ${browsersPath}...`);
 

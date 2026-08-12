@@ -15,10 +15,14 @@ import { SettingsModal } from '@/src/components/settings/SettingsModal';
 import { DocsModal } from '@/src/components/shared/DocsModal';
 import { CreateFlowModal } from '@/src/components/editor/CreateFlowModal';
 import { WelcomeSetup } from '@/src/components/setup/WelcomeSetup';
+import { ErrorBoundary } from '@/src/components/shared/ErrorBoundary';
 
 export const AppShell: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState<string>('init');
+
+  const scanAgents = useAgentStore((s) => s.scanAgents);
+  const setupEventListeners = useExecutionStore((s) => s.setupEventListeners);
 
   // Auto-save hook
   useAutoSave(30);
@@ -29,16 +33,13 @@ export const AppShell: React.FC = () => {
       setLoadingStep('init');
       await scanAgents();
       setLoadingStep('projects');
-      setupEventListeners();
+      await setupEventListeners();
       setLoadingStep('ready');
       setIsLoading(false);
     };
 
     loadApp();
-  }, []);
-
-  const scanAgents = useAgentStore((s) => s.scanAgents);
-  const setupEventListeners = useExecutionStore((s) => s.setupEventListeners);
+  }, [scanAgents, setupEventListeners]);
 
   // Project store state
   const projects = useProjectStore((s) => s.projects);
@@ -159,7 +160,7 @@ export const AppShell: React.FC = () => {
           isExecuting={isExecuting}
           onStartRun={() => startExecution(activeFlow, activeProject?.targetUrl || '')}
           onPauseRun={pauseExecution}
-          onResetRun={() => resetExecution(activeFlow)}
+          onResetRun={() => resetExecution()}
           inspectMode={inspectMode}
           onToggleInspectMode={toggleInspectMode}
           activeTab={activeTab}
@@ -170,24 +171,26 @@ export const AppShell: React.FC = () => {
         />
 
         <div className="flex-1 flex overflow-hidden relative">
-          {currentView === 'projects' ? (
-            <ProjectManager
-              projects={projects}
-              onSelectProject={(proj) => {
-                selectProject(proj.id);
-                setCurrentView('studio');
-              }}
-              onCreateProject={(proj) => {
-                createProject(proj);
-                setCurrentView('studio');
-              }}
-              onUpdateProject={updateProject}
-              onDeleteProject={deleteProject}
-              initialOpenCreateModal={autoOpenCreateModal}
-            />
-          ) : (
-            <StudioView />
-          )}
+          <ErrorBoundary>
+            {currentView === 'projects' ? (
+              <ProjectManager
+                projects={projects}
+                onSelectProject={(proj) => {
+                  selectProject(proj.id);
+                  setCurrentView('studio');
+                }}
+                onCreateProject={(proj) => {
+                  createProject(proj);
+                  setCurrentView('studio');
+                }}
+                onUpdateProject={updateProject}
+                onDeleteProject={deleteProject}
+                initialOpenCreateModal={autoOpenCreateModal}
+              />
+            ) : (
+              <StudioView />
+            )}
+          </ErrorBoundary>
         </div>
 
         <DocsModal isOpen={isDocsOpen} onClose={() => setDocsOpen(false)} />

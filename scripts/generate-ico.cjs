@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Read the 256x256 PNG (which we saved as 128x128@2x.png)
-const pngPath = path.join(__dirname, 'src-tauri', 'icons', '128x128@2x.png');
+const pngPath = path.join(__dirname, '..', 'electron', 'icons', '128x128@2x.png');
 const pngData = fs.readFileSync(pngPath);
 
 // ICO file format:
@@ -45,7 +45,7 @@ entry.writeUInt32LE(22, 12);  // Offset to image data (6 + 16 = 22)
 // Combine
 const ico = Buffer.concat([header, entry, pngData]);
 
-const icoPath = path.join(__dirname, 'src-tauri', 'icons', 'icon.ico');
+const icoPath = path.join(__dirname, '..', 'electron', 'icons', 'icon.ico');
 fs.writeFileSync(icoPath, ico);
 console.log(`Created icon.ico (${ico.length} bytes)`);
 
