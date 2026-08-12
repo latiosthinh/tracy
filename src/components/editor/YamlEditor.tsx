@@ -1,8 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { VoiceInputButton } from '../ai/VoiceInputButton';
-import { Code, Copy, Check, Play, FileCode, CheckCircle2, AlertTriangle, Sparkles, Bot, ChevronDown, Terminal, Cpu, Key, Globe, Server, Flame, Eye, Box, Tag } from 'lucide-react';
-import { FlowCategory } from '../../types/autoflow';
-import { PLAYWRIGHT_CATEGORIES } from '../../utils/flowUtils';
+import { VoiceInputButton } from '@/src/components/ai/VoiceInputButton';
+import {
+  Copy,
+  Check,
+  FileCode,
+  CheckCircle2,
+  AlertTriangle,
+  Sparkles,
+  Globe,
+  Server,
+  Flame,
+  Eye,
+  Box,
+  Tag,
+  Zap
+} from 'lucide-react';
+import { FlowCategory } from '@/src/types/autoflow';
+import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
 
 interface YamlEditorProps {
   yamlContent: string;
@@ -148,6 +162,50 @@ const highlightYamlCode = (code: string): string => {
     .join('\n');
 };
 
+const AUTOCOMPLETE_OPTIONS = [
+  'navigate', 'leftClick', 'rightClick', 'doubleClick', 'hover', 'tap', 
+  'twoFingersTap', 'fill', 'press', 'eraseText', 'scroll', 'waitFor',
+  'assertVisible', 'assertNotVisible', 'selectOption', 'interceptNetwork', 
+  'copyTextFrom'
+];
+
+const AUTOCOMPLETE_ATTRIBUTES = [
+  'selector', 'text', 'value', 'role', 'name', 'testId', 'placeholder', 
+  'label', 'method', 'response', 'status', 'body', 'url', 'args', 'output', 'state'
+];
+
+const AUTOCOMPLETE_DESCRIPTIONS: Record<string, string> = {
+  navigate: 'Go to a URL',
+  leftClick: 'Standard click',
+  rightClick: 'Context menu click',
+  doubleClick: 'Fast double click',
+  hover: 'Hover over element',
+  tap: 'Mobile tap',
+  twoFingersTap: 'Mobile double tap',
+  fill: 'Type into input',
+  press: 'Press a keyboard key',
+  eraseText: 'Clear input value',
+  scroll: 'Scroll the page',
+  waitFor: 'Wait for condition',
+  assertVisible: 'Check element visible',
+  assertNotVisible: 'Check element hidden',
+  selectOption: 'Dropdown select',
+  interceptNetwork: 'Mock an API',
+  copyTextFrom: 'Extract text',
+  // Attributes
+  selector: 'CSS or XPath',
+  text: 'Text content',
+  value: 'Input value',
+  role: 'ARIA role',
+  name: 'ARIA name',
+  testId: 'data-testid',
+  placeholder: 'Input placeholder',
+  label: 'Aria label',
+  method: 'HTTP method',
+  status: 'HTTP status',
+  url: 'Endpoint URL'
+};
+
 export const YamlEditor: React.FC<YamlEditorProps> = ({
   yamlContent,
   onChange,
@@ -160,9 +218,29 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   const [lineCount, setLineCount] = useState(1);
   const [syntaxErrors, setSyntaxErrors] = useState<string[]>([]);
 
+  const [autocomplete, setAutocomplete] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    filter: string;
+    options: string[];
+    selectedIndex: number;
+  }>({ show: false, x: 0, y: 0, filter: '', options: [], selectedIndex: 0 });
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const codePreRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const autocompleteListRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (autocomplete.show && autocompleteListRef.current) {
+      const list = autocompleteListRef.current;
+      const selected = list.children[autocomplete.selectedIndex] as HTMLElement;
+      if (selected) {
+        selected.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [autocomplete.selectedIndex, autocomplete.show]);
 
   useEffect(() => {
     const lines = yamlContent.split('\n');
@@ -177,6 +255,160 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
     });
     setSyntaxErrors(errors);
   }, [yamlContent]);
+
+  const triggerAutocomplete = (textarea: HTMLTextAreaElement, manualFilter?: string) => {
+    const { selectionStart } = textarea;
+    const textBeforeCursor = textarea.value.slice(0, selectionStart);
+    const lines = textBeforeCursor.split('\n');
+    const row = lines.length - 1;
+    const currentLine = lines[row];
+    const col = currentLine.length;
+    
+    let filterStr = manualFilter;
+    if (filterStr === undefined) {
+      const match = currentLine.match(/([a-zA-Z0-9_-]+)$/);
+      filterStr = match ? match[1] : '';
+    }
+    
+    // Approximate coordinates: padding 12px. xs font = 12px, char ~7.2px width, line ~19.5px
+    const x = 12 + col * 7.2 - textarea.scrollLeft;
+    const y = 12 + (row + 1) * 19.5 - textarea.scrollTop;
+    
+    let optionsToUse = AUTOCOMPLETE_OPTIONS;
+    if (/^\s+/.test(currentLine) && !/^\s*-\s/.test(currentLine)) {
+      optionsToUse = AUTOCOMPLETE_ATTRIBUTES;
+    }
+    
+    let filtered = optionsToUse;
+    if (filterStr) {
+      filtered = optionsToUse.filter(o => o.toLowerCase().startsWith(filterStr.toLowerCase()));
+    }
+    
+    if (filtered.length > 0) {
+      setAutocomplete({ show: true, x, y, filter: filterStr, options: filtered, selectedIndex: 0 });
+    } else {
+      setAutocomplete(p => ({ ...p, show: false }));
+    }
+  };
+
+  const applyAutocomplete = (selected: string) => {
+    if (!textareaRef.current) return;
+    const textarea = textareaRef.current;
+    const { selectionStart, value } = textarea;
+    
+    const textAfterCursor = value.slice(selectionStart);
+    // filter length is the typed prefix we need to replace
+    const replaceStart = selectionStart - autocomplete.filter.length;
+    
+    const newValue = value.slice(0, replaceStart) + selected + ':' + textAfterCursor;
+    onChange(newValue);
+    setAutocomplete(p => ({ ...p, show: false }));
+    
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = replaceStart + selected.length + 1;
+      textarea.focus();
+    }, 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey && e.code === 'Space') {
+      e.preventDefault();
+      triggerAutocomplete(e.currentTarget);
+      return;
+    }
+    
+    if (autocomplete.show) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setAutocomplete(p => ({ ...p, selectedIndex: (p.selectedIndex + 1) % p.options.length }));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setAutocomplete(p => ({ ...p, selectedIndex: (p.selectedIndex - 1 + p.options.length) % p.options.length }));
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applyAutocomplete(autocomplete.options[autocomplete.selectedIndex]);
+      } else if (e.key === 'Escape') {
+        setAutocomplete(p => ({ ...p, show: false }));
+      }
+    } else {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const textarea = e.currentTarget;
+        const { selectionStart, selectionEnd, value } = textarea;
+        const newValue = value.slice(0, selectionStart) + '  ' + value.slice(selectionEnd);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
+        }, 0);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const textarea = e.currentTarget;
+        const { selectionStart, selectionEnd, value } = textarea;
+        const textBefore = value.slice(0, selectionStart);
+        const textAfter = value.slice(selectionEnd);
+        const lines = textBefore.split('\n');
+        const currentLine = lines[lines.length - 1];
+
+        // If current line is just "- " (empty step) and user hits Enter, cancel the step and go to new line
+        if (currentLine === '- ') {
+          const newBefore = textBefore.slice(0, -2);
+          onChange(newBefore + '\n' + textAfter);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selectionStart - 1;
+          }, 0);
+          return;
+        }
+        
+        let insertText = '\n';
+        if (currentLine.trim().endsWith(':')) {
+          const indentMatch = currentLine.match(/^(\s*)/);
+          const indent = indentMatch ? indentMatch[1] : '';
+          if (currentLine.trim().startsWith('-')) {
+              insertText = '\n' + indent + '    ';
+          } else {
+              insertText = '\n' + indent + '  ';
+          }
+        } else if (currentLine.match(/^\s*- /)) {
+          const indentMatch = currentLine.match(/^(\s*)- /);
+          const indent = indentMatch ? indentMatch[1] : '';
+          insertText = '\n' + indent + '- ';
+        } else {
+          const indentMatch = currentLine.match(/^(\s+)/);
+          if (indentMatch) {
+              insertText = '\n' + indentMatch[1];
+          }
+        }
+        
+        const newValue = textBefore + insertText + textAfter;
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = selectionStart + insertText.length;
+        }, 0);
+      }
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    onChange(val);
+    
+    const textBeforeCursor = val.slice(0, e.target.selectionStart);
+    const lines = textBeforeCursor.split('\n');
+    const currentLine = lines[lines.length - 1];
+
+    if (autocomplete.show) {
+      const match = currentLine.match(/([a-zA-Z0-9_-]+)$/);
+      if (match || currentLine.match(/-\s*$/)) {
+        triggerAutocomplete(e.target, match ? match[1] : '');
+      } else {
+        setAutocomplete(p => ({ ...p, show: false }));
+      }
+    } else {
+      if (currentLine.match(/-\s+[a-zA-Z]*$/) || currentLine.match(/^\s+[a-zA-Z]+$/)) {
+        triggerAutocomplete(e.target);
+      }
+    }
+  };
 
   // Synchronize scrolling between textarea, highlighted code pre, and line numbers
   const handleScroll = () => {
@@ -266,16 +498,16 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           <span>Quick Snippets:</span>
         </span>
         <button
-          onClick={() => handleInsertSnippet('- click: "Button Text"')}
+          onClick={() => handleInsertSnippet('- leftClick: "Button Text"')}
           className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
         >
-          + click
+          + leftClick
         </button>
         <button
-          onClick={() => handleInsertSnippet('- inputText:\n    selector:\n      placeholder: "Search..."\n    text: "Sample Text"')}
+          onClick={() => handleInsertSnippet('- fill:\n    selector:\n      placeholder: "Search..."\n    text: "Sample Text"')}
           className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
         >
-          + inputText
+          + fill
         </button>
         <button
           onClick={() => handleInsertSnippet('- assertVisible: "Success Message"')}
@@ -293,14 +525,14 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           onTranscript={(transcript) => {
             const text = transcript.trim();
             if (!text) return;
-            let snippet = `- click: "${text}"`;
+            let snippet = `- leftClick: "${text}"`;
             if (/^(navigate|go to)\s+/i.test(text)) {
               snippet = `- navigate: "${text.replace(/^(navigate|go to)\s+/i, '')}"`;
             } else if (/^(type|fill|input)\s+/i.test(text)) {
               const parts = text.replace(/^(type|fill|input)\s+/i, '').split(/into|in/i);
               snippet = parts.length > 1
-                ? `- inputText:\n    selector: "${parts[1].trim()}"\n    text: "${parts[0].trim()}"`
-                : `- inputText: "${text}"`;
+                ? `- fill:\n    selector: "${parts[1].trim()}"\n    text: "${parts[0].trim()}"`
+                : `- fill: "${text}"`;
             } else if (/^(assert|verify|check)\s+/i.test(text)) {
               snippet = `- assertVisible: "${text.replace(/^(assert|verify|check)\s+/i, '')}"`;
             }
@@ -346,12 +578,54 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           <textarea
             ref={textareaRef}
             value={yamlContent}
-            onChange={e => onChange(e.target.value)}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
             onScroll={handleScroll}
             spellCheck={false}
             className="absolute inset-0 w-full h-full p-3 m-0 bg-transparent text-transparent caret-amber-400 font-mono text-xs leading-relaxed resize-none focus:outline-hidden selection:bg-amber-700/50 border-0 overflow-auto whitespace-pre"
             placeholder="# Write Tracy E2E Flow YAML here..."
           />
+          {/* Autocomplete Menu */}
+          {autocomplete.show && (
+              <ul
+                ref={autocompleteListRef}
+                className="absolute z-50 bg-stone-900 border border-stone-700 rounded-lg shadow-2xl py-1.5 text-[11px] font-mono w-64 max-h-56 overflow-y-auto"
+                style={{ top: autocomplete.y, left: autocomplete.x }}
+              >
+                {autocomplete.options.map((option, idx) => {
+                  const isAction = !AUTOCOMPLETE_ATTRIBUTES.includes(option);
+                  const isSelected = idx === autocomplete.selectedIndex;
+                  return (
+                    <li
+                      key={option}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyAutocomplete(option);
+                      }}
+                      className={`px-3 py-2 cursor-pointer flex items-center justify-between group transition-colors ${
+                        isSelected 
+                          ? 'bg-amber-500/10 border-l-2 border-amber-500 text-amber-100' 
+                          : 'border-l-2 border-transparent text-stone-400 hover:bg-stone-800/80 hover:text-stone-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {isAction ? (
+                          <Zap className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-400' : 'text-stone-500 group-hover:text-amber-500/70'}`} />
+                        ) : (
+                          <Tag className={`w-3.5 h-3.5 ${isSelected ? 'text-cyan-400' : 'text-stone-500 group-hover:text-cyan-500/70'}`} />
+                        )}
+                        <span className={`font-semibold ${isSelected ? (isAction ? 'text-amber-300' : 'text-cyan-300') : ''}`}>
+                          {option}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] truncate ml-2 ${isSelected ? 'text-stone-400' : 'text-stone-600'}`}>
+                        {AUTOCOMPLETE_DESCRIPTIONS[option] || ''}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+          )}
         </div>
       </div>
 

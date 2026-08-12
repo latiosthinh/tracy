@@ -8,7 +8,7 @@ import {
   Terminal,
   Sliders,
 } from 'lucide-react';
-import type { ActiveTab } from '../../types/ui';
+import type { ActiveTab } from '@/src/types/ui';
 
 interface StudioTabsProps {
   activeTab: ActiveTab;

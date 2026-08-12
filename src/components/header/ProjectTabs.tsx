@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, ChevronDown, X } from 'lucide-react';
-import type { Project } from '../../types/project';
+import type { Project } from '@/src/types/project';
 
 interface ProjectTabsProps {
   openProjects: Project[];

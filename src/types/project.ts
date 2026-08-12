@@ -1,4 +1,4 @@
-import type { FlowFile } from './flow';
+import type { FlowFile } from '@/src/types/flow';
 
 export interface MinedPageData {
   url: string;

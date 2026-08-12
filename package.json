@@ -3,20 +3,19 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "postinstall": "node scripts/install-browser.js",
-    "dev": "tauri dev",
-    "dev:frontend": "vite",
-    "build": "tauri build",
-    "build:frontend": "vite build",
-    "clean": "rimraf dist src-tauri/target",
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "clean": "rimraf dist dist-electron release",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
-    "@tauri-apps/api": "^2.11.1",
+    "dom-miner": "^0.1.4",
     "immer": "^11.1.16",
+    "js-yaml": "^5.2.3",
     "lucide-react": "^1.30.0",
     "motion": "^13.0.0",
     "playwright-core": "^1.62.1",
@@ -26,16 +25,29 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@tauri-apps/cli": "^2.11.4",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.66.0",
+    "@typescript-eslint/parser": "^8.66.0",
     "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.5.4",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^10.8.1",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1"
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.2.1",
+    "vite-plugin-electron": "^1.1.1",
+    "vite-plugin-electron-renderer": "^1.0.0"
+  },
+  "pnpm": {
+    "builtDependencies": [
+      "electron-winstaller"
+    ]
   }
 }

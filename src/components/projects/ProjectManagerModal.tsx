@@ -1,6 +1,6 @@
 import React from 'react';
-import { ProjectManager } from './ProjectManager';
-import type { Project } from '../../types/project';
+import { ProjectManager } from '@/src/components/projects/ProjectManager';
+import type { Project } from '@/src/types/project';
 
 interface ProjectManagerModalProps {
   isOpen: boolean;

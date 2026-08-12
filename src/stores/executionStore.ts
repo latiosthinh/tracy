@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { ExecutionLog, TestRunResult, FlowFile, FlowStep } from '../types/autoflow';
-import { tracyApi } from '../lib/tauri';
+import { ExecutionLog, TestRunResult, FlowFile, FlowStep } from '@/src/types/autoflow';
+import { tracyApi } from '@/src/lib/ipc';
 
 interface ExecutionState {
   isExecuting: boolean;

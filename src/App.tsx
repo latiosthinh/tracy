@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppShell } from './components/layout/AppShell';
+import { AppShell } from '@/src/components/layout/AppShell';
 
 export default function App() {
   return <AppShell />;

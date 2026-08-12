@@ -4,15 +4,9 @@ import {
   Sparkles,
   Copy,
   Check,
-  PlusCircle,
-  Tag,
-  Code,
-  Shield,
-  Layers,
-  ArrowRight,
-  Info
+  PlusCircle
 } from 'lucide-react';
-import { InspectedElement, CommandType } from '../../types/autoflow';
+import { InspectedElement, CommandType } from '@/src/types/autoflow';
 
 interface ElementInspectorProps {
   element: InspectedElement | null;
@@ -26,7 +20,7 @@ export const ElementInspector: React.FC<ElementInspectorProps> = ({
   onClose,
 }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [selectedAction, setSelectedAction] = useState<CommandType>('click');
+  const [selectedAction, setSelectedAction] = useState<CommandType>('leftClick');
   const [inputTextValue, setInputTextValue] = useState('');
 
   if (!element) {
@@ -117,8 +111,8 @@ export const ElementInspector: React.FC<ElementInspectorProps> = ({
               onChange={e => setSelectedAction(e.target.value as CommandType)}
               className="bg-stone-800 border border-stone-700 text-stone-100 text-xs rounded-md px-2 py-1 font-semibold focus:outline-hidden focus:border-amber-600"
             >
-              <option value="click">click</option>
-              <option value="inputText">inputText</option>
+              <option value="leftClick">leftClick</option>
+              <option value="fill">fill</option>
               <option value="assertVisible">assertVisible</option>
               <option value="assertNotVisible">assertNotVisible</option>
               <option value="copyTextFrom">copyTextFrom</option>
@@ -126,7 +120,7 @@ export const ElementInspector: React.FC<ElementInspectorProps> = ({
             </select>
           </div>
 
-          {selectedAction === 'inputText' && (
+          {selectedAction === 'fill' && (
             <input
               type="text"
               placeholder="Text to type..."

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Globe, FolderKanban, Sliders, Server } from 'lucide-react';
-import type { FlowFile, FlowCategory } from '../../types/flow';
-import type { Project } from '../../types/project';
-import type { ActiveTab, DevicePreset } from '../../types/ui';
-import { BrandLogo } from '../header/BrandLogo';
-import { ProjectTabs } from '../header/ProjectTabs';
-import { FlowTabs } from '../header/FlowTabs';
+import type { FlowFile, FlowCategory } from '@/src/types/flow';
+import type { Project } from '@/src/types/project';
+import type { ActiveTab, DevicePreset } from '@/src/types/ui';
+import { BrandLogo } from '@/src/components/header/BrandLogo';
+import { ProjectTabs } from '@/src/components/header/ProjectTabs';
+import { FlowTabs } from '@/src/components/header/FlowTabs';
 
 interface HeaderProps {
   openProjects: Project[];

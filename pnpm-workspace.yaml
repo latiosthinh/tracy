@@ -1,3 +1,4 @@
 allowBuilds:
   '@google/genai': true
+  electron-winstaller: set this to true or false
   protobufjs: true

@@ -7,13 +7,11 @@ import {
   Download,
   FileSpreadsheet,
   Film,
-  Image as ImageIcon,
   Network,
-  Maximize2,
-  ShieldCheck,
-  Zap
+  Zap,
+  Image as ImageIcon
 } from 'lucide-react';
-import { TestRunResult } from '../../types/autoflow';
+import { TestRunResult } from '@/src/types/autoflow';
 
 interface TestReportsProps {
   lastResult?: TestRunResult | null;

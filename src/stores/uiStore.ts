@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ActiveTab, DevicePreset } from '../types/ui';
+import type { ActiveTab, DevicePreset } from '@/src/types/ui';
 
 interface UiState {
   currentView: 'studio' | 'projects';
@@ -39,7 +39,7 @@ interface UiState {
 export const useUiStore = create<UiState>((set) => ({
   currentView: 'studio',
   activeTab: 'ai',
-  devicePreset: 'Laptop 1280',
+  devicePreset: 'Desktop 1440',
   browser: 'chromium',
 
   isDocsOpen: false,

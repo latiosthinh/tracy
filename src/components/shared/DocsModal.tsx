@@ -1,5 +1,11 @@
 import React from 'react';
-import { BookOpen, X, Code2, MousePointer, ShieldCheck, Terminal, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  X,
+  Code2,
+  MousePointer,
+  ShieldCheck
+} from 'lucide-react';
 
 interface DocsModalProps {
   isOpen: boolean;

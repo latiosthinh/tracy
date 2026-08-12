@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { Terminal, Sliders, Play, Settings, Check, Copy, FileCode } from 'lucide-react';
-import { WorkspaceConfig } from '../../types/autoflow';
+import {
+  Terminal,
+  Play,
+  Settings,
+  FileCode
+} from 'lucide-react';
+import { WorkspaceConfig } from '@/src/types/autoflow';
 
 interface CliTerminalProps {
   config: WorkspaceConfig;

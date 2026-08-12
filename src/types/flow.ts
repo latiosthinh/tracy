@@ -1,14 +1,17 @@
-import type { TestRunResult } from './execution';
+import type { TestRunResult } from '@/src/types/execution';
 
 export type CommandType =
   | 'navigate'
-  | 'click'
+  | 'leftClick'
   | 'doubleClick'
   | 'rightClick'
   | 'hover'
-  | 'inputText'
+  | 'tap'
+  | 'twoFingersTap'
+  | 'fill'
   | 'eraseText'
-  | 'pressKey'
+  | 'press'
+  | 'waitFor'
   | 'selectOption'
   | 'uploadFile'
   | 'assertVisible'

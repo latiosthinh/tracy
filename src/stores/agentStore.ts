@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DetectedAgent, tracyApi } from '../lib/tauri';
+import { DetectedAgent, tracyApi } from '@/src/lib/ipc';
 
 interface AgentState {
   detectedAgents: DetectedAgent[];
@@ -11,7 +11,7 @@ interface AgentState {
 
 export const useAgentStore = create<AgentState>((set) => ({
   detectedAgents: [],
-  selectedAgentId: 'gemini-3.6-flash',
+  selectedAgentId: '',
   isScanning: false,
 
   scanAgents: async () => {
@@ -19,14 +19,6 @@ export const useAgentStore = create<AgentState>((set) => ({
     try {
       const agents = await tracyApi.scanAgents();
       set({ detectedAgents: agents, isScanning: false });
-      // Default to first installed agent if current is not installed
-      const current = agents.find((a) => a.id === useAgentStore.getState().selectedAgentId);
-      if (!current || (!current.installed && current.category === 'local-cli')) {
-        const firstInstalled = agents.find((a) => a.installed) || agents[0];
-        if (firstInstalled) {
-          set({ selectedAgentId: firstInstalled.id });
-        }
-      }
     } catch (err) {
       console.error('Failed to scan agent CLIs:', err);
       set({ isScanning: false });

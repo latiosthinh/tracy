@@ -1,4 +1,4 @@
-import { InspectedElement } from '../types';
+import { InspectedElement } from '@/src/types';
 
 export interface MinedNode {
   id: number;

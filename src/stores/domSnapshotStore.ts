@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { MinedPageData } from '../types/project';
+import type { MinedPageData } from '@/src/types/project';
 
 interface DomSnapshotState {
   snapshotsByProject: Record<string, Record<string, MinedPageData>>;

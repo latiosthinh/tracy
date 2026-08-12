@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileCode, Plus, Check } from 'lucide-react';
-import { FlowCategory } from '../../types/autoflow';
-import { PLAYWRIGHT_CATEGORIES } from '../../utils/flowUtils';
+import { FlowCategory } from '@/src/types/autoflow';
+import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
 
 interface CreateFlowModalProps {
   isOpen: boolean;

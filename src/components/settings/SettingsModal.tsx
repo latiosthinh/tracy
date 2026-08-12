@@ -19,12 +19,13 @@ import {
   FolderOpen,
   HardDrive,
 } from 'lucide-react';
-import type { WorkspaceConfig } from '../../types/index';
-import { DEFAULT_WORKSPACE_CONFIG } from '../../data/defaultFlows';
-import type { UiSettings } from '../../types/uiSettings';
-import { DEFAULT_UI_SETTINGS } from '../../types/uiSettings';
-import { CliTerminal } from '../reports/CliTerminal';
-import { UiSettingsPanel } from './UiSettingsPanel';
+import type { WorkspaceConfig } from '@/src/types/index';
+import { DEFAULT_WORKSPACE_CONFIG } from '@/src/data/defaultFlows';
+import type { UiSettings } from '@/src/types/uiSettings';
+import { DEFAULT_UI_SETTINGS } from '@/src/types/uiSettings';
+import { CliTerminal } from '@/src/components/reports/CliTerminal';
+import { UiSettingsPanel } from '@/src/components/settings/UiSettingsPanel';
+import { useAgentStore } from '@/src/stores/agentStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -53,9 +54,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState<'agents' | 'runtime' | 'env' | 'artifacts' | 'storage' | 'skills' | 'cli' | 'ui'>('agents');
   const [uiSettingsState, setUiSettingsState] = useState<UiSettings>(uiSettings);
 
+  const detectedAgents = useAgentStore((s) => s.detectedAgents);
+  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
+  const setSelectedAgentId = useAgentStore((s) => s.setSelectedAgentId);
+
   // AI Agent Settings State
   const [settingsAgentTab, setSettingsAgentTab] = useState<'local-agent-cli' | 'byok'>('local-agent-cli');
-  const [agentProvider, setAgentProvider] = useState<string>('local-agent-cli');
+  const [agentProvider, setAgentProvider] = useState<string>(selectedAgentId);
   const [geminiApiKey, setGeminiApiKey] = useState('AIzaSyD-sample-key-ghostflow-gemini');
   const [showApiKey, setShowApiKey] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
@@ -142,6 +147,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (onUiSettingsChange) {
       onUiSettingsChange(uiSettingsState);
     }
+    setSelectedAgentId(agentProvider);
     setSaveToast(true);
     setTimeout(() => {
       setSaveToast(false);
@@ -336,30 +342,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {settingsAgentTab === 'local-agent-cli' ? (
                     <>
-                      {[
-                        { id: 'cursor-cli', name: 'Cursor CLI Agent', desc: 'Cursor Subprocess / Terminal' },
-                        { id: 'claude-code', name: 'Claude Code CLI', desc: 'Claude Code System PATH' },
-                        { id: 'command-code', name: 'CommandCode CLI', desc: 'CommandCode Terminal Runner' },
-                        { id: 'open-code', name: 'OpenCode Interpreter', desc: 'OpenCode Agent Engine' },
-                        { id: 'gemini-cli', name: 'Gemini CLI Tool', desc: 'Google Gemini CLI' },
-                        { id: 'local-agent-cli', name: 'Tracy Local CLI', desc: 'Ollama / Local Socket' },
-                      ].map((provider) => (
+                      {detectedAgents.map((provider) => (
                         <div
                           key={provider.id}
-                          onClick={() => setAgentProvider(provider.id)}
-                          className={`p-3 rounded-[6px] border cursor-pointer transition-all ${
-                            agentProvider === provider.id
-                              ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40'
-                              : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700'
+                          onClick={() => provider.installed && setAgentProvider(provider.id)}
+                          className={`p-3 rounded-[6px] border transition-all ${
+                            !provider.installed
+                              ? 'bg-stone-950/50 border-stone-800/50 text-stone-600 opacity-50 cursor-not-allowed'
+                              : agentProvider === provider.id
+                              ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40 cursor-pointer'
+                              : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700 cursor-pointer'
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-xs text-amber-100">{provider.name}</span>
+                            <span className="font-bold text-xs text-amber-100 flex items-center gap-1.5">
+                              {provider.name}
+                              {!provider.installed && <span className="text-[9px] bg-stone-800 text-stone-400 px-1.5 py-0.5 rounded font-normal ml-1">Not Installed</span>}
+                            </span>
                             {agentProvider === provider.id && (
                               <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                             )}
                           </div>
-                          <p className="text-[10px] text-stone-400 line-clamp-1">{provider.desc}</p>
+                          <p className="text-[10px] text-stone-400 line-clamp-1">{provider.cli_binary}</p>
                         </div>
                       ))}
                     </>

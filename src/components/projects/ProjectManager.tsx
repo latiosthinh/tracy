@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import {
   FolderPlus,
   Globe,
-  ExternalLink,
-  Play,
-  Settings,
   Trash2,
-  Sparkles,
   Search,
   CheckCircle2,
   XCircle,
@@ -15,7 +11,6 @@ import {
   Server,
   Plus,
   ArrowRight,
-  ShieldCheck,
   Zap,
   Edit3,
   X,
@@ -23,7 +18,7 @@ import {
   Check,
   RefreshCw
 } from 'lucide-react';
-import { Project, FlowFile } from '../../types/autoflow';
+import { Project, FlowFile } from '@/src/types/autoflow';
 
 interface ProjectManagerProps {
   projects: Project[];
@@ -143,11 +138,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           path: 'flows/e-commerce-checkout.yaml',
           tags: ['checkout', 'e2e'],
           metadata: { url: formattedUrl, browser: formBrowser },
-          yamlContent: `url: ${formattedUrl}\n---\n- navigate: /products\n- click: "Add to Cart"\n- click: "Checkout"\n- assertVisible: "Order Confirmed!"`,
+          yamlContent: `url: ${formattedUrl}\n---\n- navigate: /products\n- leftClick: "Add to Cart"\n- leftClick: "Checkout"\n- assertVisible: "Order Confirmed!"`,
           steps: [
             { id: '1', command: 'navigate', value: '/products', status: 'pending' },
-            { id: '2', command: 'click', target: 'Add to Cart', status: 'pending' },
-            { id: '3', command: 'click', target: 'Checkout', status: 'pending' },
+            { id: '2', command: 'leftClick', target: 'Add to Cart', status: 'pending' },
+            { id: '3', command: 'leftClick', target: 'Checkout', status: 'pending' },
             { id: '4', command: 'assertVisible', value: 'Order Confirmed!', status: 'pending' },
           ],
         },
@@ -160,11 +155,11 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
           path: 'flows/auth-login-flow.yaml',
           tags: ['auth', 'login'],
           metadata: { url: formattedUrl, browser: formBrowser },
-          yamlContent: `url: ${formattedUrl}\n---\n- navigate: /login\n- inputText:\n    selector:\n      label: "Email"\n    text: "admin@example.com"\n- click: "Sign In"\n- assertVisible: "Welcome back!"`,
+          yamlContent: `url: ${formattedUrl}\n---\n- navigate: /login\n- fill:\n    selector:\n      label: "Email"\n    text: "admin@example.com"\n- leftClick: "Sign In"\n- assertVisible: "Welcome back!"`,
           steps: [
             { id: '1', command: 'navigate', value: '/login', status: 'pending' },
-            { id: '2', command: 'inputText', target: { type: 'label', value: 'Email' }, value: 'admin@example.com', status: 'pending' },
-            { id: '3', command: 'click', target: 'Sign In', status: 'pending' },
+            { id: '2', command: 'fill', target: { type: 'label', value: 'Email' }, value: 'admin@example.com', status: 'pending' },
+            { id: '3', command: 'leftClick', target: 'Sign In', status: 'pending' },
             { id: '4', command: 'assertVisible', value: 'Welcome back!', status: 'pending' },
           ],
         },

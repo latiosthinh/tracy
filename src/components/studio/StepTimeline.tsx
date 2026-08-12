@@ -10,13 +10,9 @@ import {
   Terminal,
   Sparkles,
   AlertOctagon,
-  Image as ImageIcon,
-  Activity,
-  Layers,
-  ChevronDown,
-  ChevronUp
+  Activity
 } from 'lucide-react';
-import { FlowStep, ExecutionLog, TestRunResult } from '../../types/autoflow';
+import { FlowStep, ExecutionLog, TestRunResult } from '@/src/types/autoflow';
 
 interface StepTimelineProps {
   steps: FlowStep[];

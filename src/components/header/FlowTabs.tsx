@@ -13,8 +13,8 @@ import {
   Check,
   Plus,
 } from 'lucide-react';
-import type { FlowFile, FlowCategory } from '../../types/flow';
-import { PLAYWRIGHT_CATEGORIES, getFlowCategory, groupFlowsByCategory } from '../../utils/flowUtils';
+import type { FlowFile, FlowCategory } from '@/src/types/flow';
+import { PLAYWRIGHT_CATEGORIES, getFlowCategory, groupFlowsByCategory } from '@/src/utils/flowUtils';
 
 interface FlowTabsProps {
   flows: FlowFile[];

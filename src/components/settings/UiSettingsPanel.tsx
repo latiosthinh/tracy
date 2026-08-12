@@ -11,11 +11,7 @@ import {
   Check,
   AlertCircle,
   Globe,
-  Eye,
-  SlidersHorizontal,
-  Type,
-  RotateCcw,
-  Sparkles
+  RotateCcw
 } from 'lucide-react';
 import {
   UiSettings,
@@ -26,7 +22,7 @@ import {
   ThemeMode,
   YamlPosition,
   UiScale
-} from '../../types/uiSettings';
+} from '@/src/types/uiSettings';
 
 interface UiSettingsPanelProps {
   settings: UiSettings;

@@ -1,0 +1,26 @@
+{
+  "toolbar": {
+    "navBack": "Back to root",
+    "navForward": "Forward",
+    "reload": "Reload page",
+    "recordOff": "Record User Interactions on Website",
+    "recordOn": "Stop Recording User Interactions",
+    "inspectOff": "Inspect DOM Elements",
+    "inspectOn": "Disable Inspect Mode",
+    "mineUrl": "Mine current URL for AI context",
+    "batchMine": "Batch Mine DOM (URLs & Credentials)",
+    "viewSnapshots": "View DOM snapshots",
+    "desktopPreset": "Desktop 1440px",
+    "laptopPreset": "Laptop 1280px",
+    "tabletPreset": "Tablet 768px",
+    "mobilePreset": "Mobile 375px",
+    "openExternal": "Open in external browser"
+  },
+  "domMiner": {
+    "copyJson": "Copy JSON",
+    "downloadJson": "Download JSON",
+    "batchMine": "Batch Mine DOM",
+    "closePanel": "Close Panel",
+    "clearSnapshots": "Clear"
+  }
+}

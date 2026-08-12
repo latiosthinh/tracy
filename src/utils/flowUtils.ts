@@ -1,4 +1,4 @@
-import { FlowFile, FlowCategory } from '../types/autoflow';
+import { FlowFile, FlowCategory } from '@/src/types/autoflow';
 
 export interface CategoryInfo {
   id: FlowCategory;

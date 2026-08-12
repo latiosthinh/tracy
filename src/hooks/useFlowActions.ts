@@ -1,5 +1,5 @@
-import { useProjectStore } from '../stores/projectStore';
-import type { FlowCategory, FlowStep } from '../types/flow';
+import { useProjectStore } from '@/src/stores/projectStore';
+import type { FlowCategory, FlowStep } from '@/src/types/flow';
 
 export function useFlowActions() {
   const selectFlow = useProjectStore((s) => s.selectFlow);

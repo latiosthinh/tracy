@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { VoiceInputButton } from '../ai/VoiceInputButton';
+import { VoiceInputButton } from '@/src/components/ai/VoiceInputButton';
 import {
   Layers,
   Plus,
@@ -11,19 +11,16 @@ import {
   Type,
   Eye,
   EyeOff,
-  CheckCircle,
   Network,
   List,
   Sliders,
-  Sparkles,
-  HelpCircle,
   Play,
   GripVertical,
   Edit3,
   Check,
   X
 } from 'lucide-react';
-import { FlowStep, CommandType } from '../../types/autoflow';
+import { FlowStep, CommandType } from '@/src/types/autoflow';
 
 interface VisualStepEditorProps {
   steps: FlowStep[];
@@ -38,18 +35,13 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
   onRunStep,
   activeStepIndex,
 }) => {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newCommand, setNewCommand] = useState<CommandType>('click');
-  const [newTarget, setNewTarget] = useState('');
-  const [newValue, setNewValue] = useState('');
-
   // Drag & Drop State
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Inline Self-Edit State
   const [editingStepIdx, setEditingStepIdx] = useState<number | null>(null);
-  const [editCommand, setEditCommand] = useState<CommandType>('click');
+  const [editCommand, setEditCommand] = useState<CommandType>('leftClick');
   const [editTarget, setEditTarget] = useState('');
   const [editValue, setEditValue] = useState('');
 
@@ -57,13 +49,16 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
     switch (cmd) {
       case 'navigate':
         return <Globe className="w-3.5 h-3.5 text-sky-400" />;
-      case 'click':
+      case 'leftClick':
       case 'doubleClick':
       case 'rightClick':
+      case 'tap':
+      case 'twoFingersTap':
+      case 'hover':
         return <MousePointer className="w-3.5 h-3.5 text-amber-400" />;
-      case 'inputText':
+      case 'fill':
       case 'eraseText':
-      case 'pressKey':
+      case 'press':
         return <Type className="w-3.5 h-3.5 text-emerald-400" />;
       case 'assertVisible':
       case 'assertTitle':
@@ -173,35 +168,29 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
     setEditingStepIdx(null);
   };
 
-  const handleAddStepSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    let targetVal: any = newTarget;
-    if (newTarget.startsWith('{') && newTarget.endsWith('}')) {
-      try {
-        targetVal = JSON.parse(newTarget);
-      } catch (err) {
-        // use string
-      }
-    }
-
+  const handleAddNewStepInline = () => {
     const newStepObj: FlowStep = {
       id: `step-${Date.now()}`,
-      command: newCommand,
-      target: targetVal || undefined,
-      value: newValue || undefined,
+      command: 'leftClick',
+      target: undefined,
+      value: undefined,
       status: 'pending',
     };
-
-    onStepsChange([...steps, newStepObj]);
-    setShowAddModal(false);
-    setNewTarget('');
-    setNewValue('');
+    const newSteps = [...steps, newStepObj];
+    onStepsChange(newSteps);
+    
+    // Auto-enter edit mode for the newly created step
+    const newIdx = newSteps.length - 1;
+    setEditCommand('leftClick');
+    setEditTarget('');
+    setEditValue('');
+    setEditingStepIdx(newIdx);
   };
 
   const handleVoiceDictateStep = (transcript: string) => {
     const text = transcript.trim();
     if (!text) return;
-    let cmd: CommandType = 'click';
+    let cmd: CommandType = 'leftClick';
     let target = text;
     let val = '';
 
@@ -209,7 +198,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
       cmd = 'navigate';
       target = text.replace(/^(navigate|go to)\s+/i, '');
     } else if (/^(type|fill|input)\s+/i.test(text)) {
-      cmd = 'inputText';
+      cmd = 'fill';
       const parts = text.replace(/^(type|fill|input)\s+/i, '').split(/into|in/i);
       if (parts.length > 1) {
         val = parts[0].trim();
@@ -222,7 +211,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
       cmd = 'assertVisible';
       target = text.replace(/^(assert|check|verify|see)\s+/i, '');
     } else if (/^(click|press|tap)\s+/i.test(text)) {
-      cmd = 'click';
+      cmd = 'leftClick';
       target = text.replace(/^(click|press|tap)\s+/i, '');
     }
 
@@ -254,7 +243,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
             title="Speak a test action e.g. 'click Login button', 'navigate to /cart', or 'type john@example.com into Email'"
           />
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={handleAddNewStepInline}
             className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -324,13 +313,20 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                         onChange={e => setEditCommand(e.target.value as CommandType)}
                         className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[4px] p-1.5 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
                       >
-                        <option value="click">click</option>
-                        <option value="inputText">inputText</option>
+                        <option value="navigate">navigate</option>
+                        <option value="leftClick">leftClick</option>
+                        <option value="rightClick">rightClick</option>
+                        <option value="doubleClick">doubleClick</option>
+                        <option value="hover">hover</option>
+                        <option value="tap">tap</option>
+                        <option value="twoFingersTap">twoFingersTap</option>
+                        <option value="fill">fill</option>
+                        <option value="press">press</option>
+                        <option value="eraseText">eraseText</option>
+                        <option value="scroll">scroll</option>
                         <option value="assertVisible">assertVisible</option>
                         <option value="assertNotVisible">assertNotVisible</option>
-                        <option value="navigate">navigate</option>
                         <option value="selectOption">selectOption</option>
-                        <option value="pressKey">pressKey</option>
                         <option value="interceptNetwork">interceptNetwork</option>
                         <option value="copyTextFrom">copyTextFrom</option>
                       </select>
@@ -454,91 +450,6 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
           );
         })}
       </div>
-
-      {/* Add Step Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-[6px] p-5 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-amber-100 flex items-center space-x-2">
-              <Plus className="w-4 h-4 text-amber-400" />
-              <span>Add E2E Test Step</span>
-            </h3>
-
-            <form onSubmit={handleAddStepSubmit} className="space-y-3">
-              <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Command</label>
-                <select
-                  value={newCommand}
-                  onChange={e => setNewCommand(e.target.value as CommandType)}
-                  className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] p-2 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
-                >
-                  <option value="click">click</option>
-                  <option value="inputText">inputText</option>
-                  <option value="assertVisible">assertVisible</option>
-                  <option value="assertNotVisible">assertNotVisible</option>
-                  <option value="navigate">navigate</option>
-                  <option value="selectOption">selectOption</option>
-                  <option value="pressKey">pressKey</option>
-                  <option value="interceptNetwork">interceptNetwork</option>
-                  <option value="copyTextFrom">copyTextFrom</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Target Selector (Text / ID / Object)</label>
-                <div className="flex items-center space-x-1.5">
-                  <input
-                    type="text"
-                    placeholder='e.g., "Sign In" or {"testId": "cart-btn"}'
-                    value={newTarget}
-                    onChange={e => setNewTarget(e.target.value)}
-                    className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] p-2 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
-                  />
-                  <VoiceInputButton
-                    onTranscript={(text) => setNewTarget(prev => prev ? `${prev} ${text}` : text)}
-                    size="sm"
-                    title="Dictate target selector"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Value / Text Parameter</label>
-                <div className="flex items-center space-x-1.5">
-                  <input
-                    type="text"
-                    placeholder='e.g., user@example.com or Enter'
-                    value={newValue}
-                    onChange={e => setNewValue(e.target.value)}
-                    className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] p-2 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
-                  />
-                  <VoiceInputButton
-                    onTranscript={(text) => setNewValue(prev => prev ? `${prev} ${text}` : text)}
-                    size="sm"
-                    title="Dictate input value"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-3 py-1.5 bg-stone-800 text-stone-300 font-semibold rounded-[6px] hover:bg-stone-700 border border-stone-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-amber-700 text-amber-50 font-bold rounded-[6px] hover:bg-amber-600 shadow-xs border border-amber-600"
-                >
-                  Save Step
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

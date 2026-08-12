@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { useProjectStore } from '../../stores/projectStore';
-import { useExecutionStore } from '../../stores/executionStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useUiStore } from '../../stores/uiStore';
-import { useAgentStore } from '../../stores/agentStore';
-import { useAutoSave } from '../../hooks/useAutoSave';
-import { SplashScreen } from '../shared/SplashScreen';
+import { useProjectStore } from '@/src/stores/projectStore';
+import { useExecutionStore } from '@/src/stores/executionStore';
+import { useSettingsStore } from '@/src/stores/settingsStore';
+import { useUiStore } from '@/src/stores/uiStore';
+import { useAgentStore } from '@/src/stores/agentStore';
+import { useAutoSave } from '@/src/hooks/useAutoSave';
+import { SplashScreen } from '@/src/components/shared/SplashScreen';
 
-import { Header } from './Header';
-import { StudioView } from '../studio/StudioView';
-import { ProjectManager } from '../projects/ProjectManager';
-import { ProjectManagerModal } from '../projects/ProjectManagerModal';
-import { SettingsModal } from '../settings/SettingsModal';
-import { DocsModal } from '../shared/DocsModal';
-import { CreateFlowModal } from '../editor/CreateFlowModal';
+import { Header } from '@/src/components/layout/Header';
+import { StudioView } from '@/src/components/studio/StudioView';
+import { ProjectManager } from '@/src/components/projects/ProjectManager';
+import { ProjectManagerModal } from '@/src/components/projects/ProjectManagerModal';
+import { SettingsModal } from '@/src/components/settings/SettingsModal';
+import { DocsModal } from '@/src/components/shared/DocsModal';
+import { CreateFlowModal } from '@/src/components/editor/CreateFlowModal';
+import { WelcomeSetup } from '@/src/components/setup/WelcomeSetup';
 
 export const AppShell: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +108,8 @@ export const AppShell: React.FC = () => {
   const workspaceConfig = useSettingsStore((s) => s.workspaceConfig);
   const updateWorkspaceConfig = useSettingsStore((s) => s.updateWorkspaceConfig);
 
+  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
+
   // Theme application
   const applyThemeCssVars = useSettingsStore((s) => s.applyThemeCssVars);
   useEffect(() => {
@@ -122,13 +125,17 @@ export const AppShell: React.FC = () => {
           isLoading ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <Header
-          openProjects={openProjects}
-          allProjects={projects}
-          activeProject={activeProject}
-          onSelectProject={(id) => {
-            selectProject(id);
-            setCurrentView('studio');
+        {!isLoading && !selectedAgentId ? (
+          <WelcomeSetup />
+        ) : (
+          <>
+            <Header
+              openProjects={openProjects}
+              allProjects={projects}
+              activeProject={activeProject}
+              onSelectProject={(id) => {
+                selectProject(id);
+                setCurrentView('studio');
           }}
           onCloseProjectTab={closeProjectTab}
           onOpenProjectsManager={() => {
@@ -162,24 +169,26 @@ export const AppShell: React.FC = () => {
           onOpenDocs={() => setDocsOpen(true)}
         />
 
-        {currentView === 'projects' ? (
-          <ProjectManager
-            projects={projects}
-            onSelectProject={(proj) => {
-              selectProject(proj.id);
-              setCurrentView('studio');
-            }}
-            onCreateProject={(proj) => {
-              createProject(proj);
-              setCurrentView('studio');
-            }}
-            onUpdateProject={updateProject}
-            onDeleteProject={deleteProject}
-            initialOpenCreateModal={autoOpenCreateModal}
-          />
-        ) : (
-          <StudioView />
-        )}
+        <div className="flex-1 flex overflow-hidden relative">
+          {currentView === 'projects' ? (
+            <ProjectManager
+              projects={projects}
+              onSelectProject={(proj) => {
+                selectProject(proj.id);
+                setCurrentView('studio');
+              }}
+              onCreateProject={(proj) => {
+                createProject(proj);
+                setCurrentView('studio');
+              }}
+              onUpdateProject={updateProject}
+              onDeleteProject={deleteProject}
+              initialOpenCreateModal={autoOpenCreateModal}
+            />
+          ) : (
+            <StudioView />
+          )}
+        </div>
 
         <DocsModal isOpen={isDocsOpen} onClose={() => setDocsOpen(false)} />
 
@@ -219,6 +228,8 @@ export const AppShell: React.FC = () => {
           onDeleteProject={deleteProject}
           autoOpenCreateModal={autoOpenCreateModal}
         />
+          </>
+        )}
       </div>
     </>
   );

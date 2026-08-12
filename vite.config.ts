@@ -2,11 +2,31 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import electron from 'vite-plugin-electron/simple';
 
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      electron({
+        main: {
+          entry: 'electron/main.ts',
+          vite: {
+            build: {
+              rolldownOptions: {
+                external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml']
+              }
+            }
+          }
+        },
+        preload: {
+          input: 'electron/preload.ts',
+        },
+        renderer: process.env.NODE_ENV === 'test' ? undefined : {},
+      }),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
@@ -21,5 +41,8 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    ssr: {
+      external: ['playwright-core', 'chromium-bidi', 'js-yaml']
+    }
   };
 });

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FlowCategory } from '../../types/autoflow';
-import { PLAYWRIGHT_CATEGORIES } from '../../utils/flowUtils';
+import { FlowCategory } from '@/src/types/autoflow';
+import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
 import { Globe, Server, Flame, Eye, Box, Tag, ChevronDown, Check } from 'lucide-react';
 
 interface FlowCategorySelectorProps {

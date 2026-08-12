@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useProjectStore } from '../stores/projectStore';
-import { tracyApi } from '../lib/tauri';
+import { useProjectStore } from '@/src/stores/projectStore';
+import { tracyApi } from '@/src/lib/ipc';
 
 export function useAutoSave(intervalSeconds: number = 30) {
   const lastSaveRef = useRef<number>(0);

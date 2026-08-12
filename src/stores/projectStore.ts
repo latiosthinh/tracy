@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { Project, FlowFile, FlowCategory, FlowStep, MinedPageData } from '../types/index';
-import { DEFAULT_PROJECTS } from '../data/defaultProjects';
-import { useDomSnapshotStore } from './domSnapshotStore';
+import type { Project, FlowFile, FlowCategory, FlowStep, MinedPageData } from '@/src/types/index';
+import { DEFAULT_PROJECTS } from '@/src/data/defaultProjects';
+import { useDomSnapshotStore } from '@/src/stores/domSnapshotStore';
 
 interface ProjectState {
   projects: Project[];

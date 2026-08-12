@@ -1,5 +1,5 @@
-import { useExecutionStore } from '../stores/executionStore';
-import type { FlowFile } from '../types/flow';
+import { useExecutionStore } from '@/src/stores/executionStore';
+import type { FlowFile } from '@/src/types/flow';
 
 export function useExecutionControls() {
   const isExecuting = useExecutionStore((s) => s.isExecuting);

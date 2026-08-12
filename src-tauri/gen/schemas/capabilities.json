@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Default capabilities for Tracy desktop app","local":true,"windows":["main"],"permissions":["core:default","core:webview:default","fs:default","shell:default","dialog:default"]}}

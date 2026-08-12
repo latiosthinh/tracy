@@ -1,4 +1,4 @@
-import { FlowFile, WorkspaceConfig } from '../types/autoflow';
+import { FlowFile, WorkspaceConfig } from '@/src/types/autoflow';
 
 export const DEFAULT_WORKSPACE_CONFIG: WorkspaceConfig = {
   flows: ['flows/**', 'subflows/**'],
@@ -121,22 +121,22 @@ trace: true
     steps: [
       { id: 'c-1', command: 'navigate', value: '/products', status: 'pending' },
       { id: 'c-2', command: 'assertTitle', value: 'Products - Tracy Shop', status: 'pending' },
-      { id: 'c-3', command: 'inputText', target: { type: 'placeholder', value: 'Search products...' }, value: 'Wireless Headphones', status: 'pending' },
-      { id: 'c-4', command: 'pressKey', value: 'Enter', status: 'pending' },
-      { id: 'c-5', command: 'click', target: { type: 'testId', value: 'add-cart-headphones' }, status: 'pending' },
+      { id: 'c-3', command: 'fill', target: { type: 'placeholder', value: 'Search products...' }, value: 'Wireless Headphones', status: 'pending' },
+      { id: 'c-4', command: 'press', value: 'Enter', status: 'pending' },
+      { id: 'c-5', command: 'leftClick', target: { type: 'testId', value: 'add-cart-headphones' }, status: 'pending' },
       { id: 'c-6', command: 'assertVisible', target: { type: 'testId', value: 'cart-badge' }, value: '1', status: 'pending' },
-      { id: 'c-7', command: 'click', target: 'Cart', status: 'pending' },
-      { id: 'c-8', command: 'click', target: 'Proceed to Checkout', status: 'pending' },
+      { id: 'c-7', command: 'leftClick', target: 'Cart', status: 'pending' },
+      { id: 'c-8', command: 'leftClick', target: 'Proceed to Checkout', status: 'pending' },
       { id: 'c-9', command: 'assertUrl', value: '*/checkout*', status: 'pending' },
-      { id: 'c-10', command: 'click', target: 'Have a coupon?', status: 'pending' },
-      { id: 'c-11', command: 'inputText', target: { type: 'placeholder', value: 'Enter promo code' }, value: '${COUPON_CODE}', status: 'pending' },
-      { id: 'c-12', command: 'click', target: 'Apply Coupon', status: 'pending' },
+      { id: 'c-10', command: 'leftClick', target: 'Have a coupon?', status: 'pending' },
+      { id: 'c-11', command: 'fill', target: { type: 'placeholder', value: 'Enter promo code' }, value: '${COUPON_CODE}', status: 'pending' },
+      { id: 'c-12', command: 'leftClick', target: 'Apply Coupon', status: 'pending' },
       { id: 'c-13', command: 'assertVisible', value: '25% Discount Applied!', status: 'pending' },
-      { id: 'c-14', command: 'inputText', target: { type: 'label', value: 'Full Name' }, value: 'Alex Rivera', status: 'pending' },
-      { id: 'c-15', command: 'inputText', target: { type: 'label', value: 'Email Address' }, value: '${TEST_EMAIL}', status: 'pending' },
+      { id: 'c-14', command: 'fill', target: { type: 'label', value: 'Full Name' }, value: 'Alex Rivera', status: 'pending' },
+      { id: 'c-15', command: 'fill', target: { type: 'label', value: 'Email Address' }, value: '${TEST_EMAIL}', status: 'pending' },
       { id: 'c-16', command: 'selectOption', target: { type: 'id', value: 'country-select' }, value: 'US', status: 'pending' },
-      { id: 'c-17', command: 'inputText', target: { type: 'label', value: 'Shipping Address' }, value: '742 Evergreen Terrace', status: 'pending' },
-      { id: 'c-18', command: 'click', target: 'Place Order', status: 'pending' },
+      { id: 'c-17', command: 'fill', target: { type: 'label', value: 'Shipping Address' }, value: '742 Evergreen Terrace', status: 'pending' },
+      { id: 'c-18', command: 'leftClick', target: 'Place Order', status: 'pending' },
       { id: 'c-19', command: 'assertVisible', value: 'Order Confirmed!', status: 'pending' },
       { id: 'c-20', command: 'copyTextFrom', target: { type: 'id', value: 'order-id-badge' }, args: { output: 'ORDER_ID' }, status: 'pending' },
     ],
@@ -175,26 +175,26 @@ timeout: 8000
 - assertTitle: "Sign In - Tracy Portal"
 
 # 1. Test Incorrect Password Assertion
-- inputText:
+- fill:
     selector:
       label: "Email Address"
     text: \${USER_EMAIL}
-- inputText:
+- fill:
     selector:
       label: "Password"
     text: \${WRONG_PASS}
-- click: "Sign In"
+- leftClick: "Sign In"
 - assertVisible: "Invalid email or password"
 
 # 2. Test Correct Credentials
-- inputText:
+- fill:
     selector:
       label: "Password"
     text: \${CORRECT_PASS}
-- click:
+- leftClick:
     role: "button"
     name: "Remember me"
-- click: "Sign In"
+- leftClick: "Sign In"
 - waitForNetwork: idle
 - assertVisible: "Welcome back, Alex!"
 - assertUrl: "*/dashboard*"
@@ -202,13 +202,13 @@ timeout: 8000
     steps: [
       { id: 'l-1', command: 'navigate', value: '/login', status: 'pending' },
       { id: 'l-2', command: 'assertTitle', value: 'Sign In - Tracy Portal', status: 'pending' },
-      { id: 'l-3', command: 'inputText', target: { type: 'label', value: 'Email Address' }, value: '${USER_EMAIL}', status: 'pending' },
-      { id: 'l-4', command: 'inputText', target: { type: 'label', value: 'Password' }, value: '${WRONG_PASS}', status: 'pending' },
-      { id: 'l-5', command: 'click', target: 'Sign In', status: 'pending' },
+      { id: 'l-3', command: 'fill', target: { type: 'label', value: 'Email Address' }, value: '${USER_EMAIL}', status: 'pending' },
+      { id: 'l-4', command: 'fill', target: { type: 'label', value: 'Password' }, value: '${WRONG_PASS}', status: 'pending' },
+      { id: 'l-5', command: 'leftClick', target: 'Sign In', status: 'pending' },
       { id: 'l-6', command: 'assertVisible', value: 'Invalid email or password', status: 'pending' },
-      { id: 'l-7', command: 'inputText', target: { type: 'label', value: 'Password' }, value: '${CORRECT_PASS}', status: 'pending' },
-      { id: 'l-8', command: 'click', target: { type: 'role', value: 'button', name: 'Remember me' }, status: 'pending' },
-      { id: 'l-9', command: 'click', target: 'Sign In', status: 'pending' },
+      { id: 'l-7', command: 'fill', target: { type: 'label', value: 'Password' }, value: '${CORRECT_PASS}', status: 'pending' },
+      { id: 'l-8', command: 'leftClick', target: { type: 'role', value: 'button', name: 'Remember me' }, status: 'pending' },
+      { id: 'l-9', command: 'leftClick', target: 'Sign In', status: 'pending' },
       { id: 'l-10', command: 'assertVisible', value: 'Welcome back, Alex!', status: 'pending' },
     ],
   },
@@ -239,19 +239,19 @@ viewport:
 - navigate: /
 - assertNotVisible:
     selector: ".desktop-navigation"
-- click:
+- leftClick:
     testId: "mobile-hamburger-btn"
 - assertVisible: "Categories"
-- click: "Electronics"
+- leftClick: "Electronics"
 - assertUrl: "*/category/electronics*"
 - assertVisible: "Filter Products"
 `,
     steps: [
       { id: 'r-1', command: 'setViewport', value: 'iPhone 14', status: 'pending' },
       { id: 'r-2', command: 'navigate', value: '/', status: 'pending' },
-      { id: 'r-3', command: 'click', target: { type: 'testId', value: 'mobile-hamburger-btn' }, status: 'pending' },
+      { id: 'r-3', command: 'leftClick', target: { type: 'testId', value: 'mobile-hamburger-btn' }, status: 'pending' },
       { id: 'r-4', command: 'assertVisible', value: 'Categories', status: 'pending' },
-      { id: 'r-5', command: 'click', target: 'Electronics', status: 'pending' },
+      { id: 'r-5', command: 'leftClick', target: 'Electronics', status: 'pending' },
     ],
   },
   {

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { UiSettings, DEFAULT_UI_SETTINGS, PRESET_COLOR_SCHEMES } from '../types/uiSettings';
-import { WorkspaceConfig, DevicePreset, ActiveTab } from '../types/index';
-import { DEFAULT_WORKSPACE_CONFIG } from '../data/defaultFlows';
-import { useUiStore } from './uiStore';
+import { UiSettings, DEFAULT_UI_SETTINGS, PRESET_COLOR_SCHEMES } from '@/src/types/uiSettings';
+import { WorkspaceConfig, DevicePreset, ActiveTab } from '@/src/types/index';
+import { DEFAULT_WORKSPACE_CONFIG } from '@/src/data/defaultFlows';
+import { useUiStore } from '@/src/stores/uiStore';
 
 interface SettingsState {
   // Navigation & Active Views (Delegated to uiStore for backward compatibility)

@@ -1,4 +1,4 @@
-import type { FlowStep } from './flow';
+import type { FlowStep } from '@/src/types/flow';
 
 export interface ExecutionLog {
   id: string;
