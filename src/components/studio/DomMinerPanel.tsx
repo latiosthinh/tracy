@@ -1,7 +1,8 @@
 import React from 'react';
-import { Database, Pickaxe, X, Copy, Download, Drill } from 'lucide-react';
+import { Database, Pickaxe, X, Copy, Download, Drill, Info } from 'lucide-react';
 import { IconButton } from '@/src/components/ui/IconButton';
 import type { MinedPageData } from '@/src/types/index';
+import { useEnvironment } from '@/src/hooks/useEnvironment';
 
 interface DomMinerPanelProps {
   domSnapshots: Record<string, MinedPageData>;
@@ -18,6 +19,7 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
   setShowDomMiner,
   setShowBatchMiner
 }) => {
+  const { isWeb } = useEnvironment();
   return (
     <div className="h-[400px] border-t border-stone-800 bg-stone-950 flex flex-col shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-30">
       <div className="px-4 py-2 bg-stone-900 border-b border-stone-800 flex items-center justify-between shrink-0">
@@ -80,7 +82,13 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
           <div className="flex-1 flex flex-col items-center justify-center text-stone-500">
             <Pickaxe className="w-16 h-16 mb-4 opacity-20 text-amber-500" />
             <p className="text-lg">No DOM snapshots recorded.</p>
-            <p className="text-sm mt-2">Use the Pickaxe or Drill button in the toolbar to mine pages.</p>
+            {isWeb && (
+              <div className="flex items-center gap-2 mt-3 px-4 py-2 bg-amber-950/50 border border-amber-800/50 rounded-md text-xs text-amber-300 max-w-sm text-center">
+                <Info className="w-4 h-4 shrink-0" />
+                DOM mining requires the Tracy desktop app — it uses Playwright to capture live page trees. In web mode you can only view pre-cached snapshots.
+              </div>
+            )}
+            {!isWeb && <p className="text-sm mt-2">Use the Pickaxe or Drill button in the toolbar to mine pages.</p>}
           </div>
         ) : (
           <>

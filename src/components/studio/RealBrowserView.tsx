@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { isElectronEnv, tracyApi } from '@/src/lib/ipc';
 import { generateSuggestedSelectors } from '@/src/utils/domMiner';
+import { useEnvironment } from '@/src/hooks/useEnvironment';
+import { Info } from 'lucide-react';
 
 interface RealBrowserViewProps {
   targetUrl: string;
@@ -25,6 +27,7 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
   onElementInspected,
   hideWebview = false,
 }) => {
+  const { isWeb } = useEnvironment();
   const [, setViewState] = useState<ViewState>('idle');
   const [, setCurrentUrl] = useState<string>('');
   const [, setError] = useState<string | null>(null);
@@ -178,6 +181,18 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
 
   return (
     <div className="w-full h-full bg-stone-900 flex flex-col">
+      {isWeb && (
+        <div className="bg-amber-950/80 border-b border-amber-800/60 px-4 py-2 flex items-center gap-2 text-xs text-amber-200 shrink-0">
+          <Info className="w-4 h-4 shrink-0" />
+          <span>
+            Web mode — real browser automation is only available in the Tracy desktop app.{' '}
+            <a href="#/" className="underline hover:text-amber-100">
+              Download the desktop version
+            </a>{' '}
+            for full Playwright integration.
+          </span>
+        </div>
+      )}
       {/* Main View Area */}
       <div
         className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-hidden bg-white"

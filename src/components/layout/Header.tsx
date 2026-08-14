@@ -1,11 +1,12 @@
 import React from 'react';
-import { Globe, FolderKanban, Sliders, Server } from 'lucide-react';
+import { Globe, FolderKanban, Sliders, Server, Cloud } from 'lucide-react';
 import type { FlowFile, FlowCategory } from '@/src/types/flow';
 import type { Project } from '@/src/types/project';
 import type { ActiveTab, DevicePreset } from '@/src/types/ui';
 import { BrandLogo } from '@/src/components/header/BrandLogo';
 import { ProjectTabs } from '@/src/components/header/ProjectTabs';
 import { FlowTabs } from '@/src/components/header/FlowTabs';
+import { useEnvironment } from '@/src/hooks/useEnvironment';
 
 interface HeaderProps {
   openProjects: Project[];
@@ -57,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   isExecuting,
   onOpenDocs,
 }) => {
+  const { isWeb } = useEnvironment();
   return (
     <header className="bg-stone-950 text-stone-100 border-b border-stone-800 shrink-0 select-none font-sans">
       {/* ROW 1: Working Project Tabs Bar & Settings Triggers */}
@@ -77,6 +79,12 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Top Right Utilities */}
         <div className="flex items-center space-x-1.5 shrink-0 ml-2">
+          {isWeb && (
+            <div className="hidden sm:flex items-center space-x-1 px-2 py-1 bg-sky-950/80 border border-sky-800/50 rounded-[6px] text-[11px] font-mono text-sky-300">
+              <Cloud className="w-3 h-3 text-sky-400" />
+              <span>Web Mode</span>
+            </div>
+          )}
           <div className="hidden sm:flex items-center space-x-1 px-2 py-1 bg-stone-900 border border-stone-800 rounded-[6px] text-[11px] font-mono text-emerald-400">
             <Globe className="w-3 h-3 text-emerald-400" />
             <span>Chromium</span>

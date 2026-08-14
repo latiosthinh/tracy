@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { DevicePreset } from '@/src/types/ui';
 import { IconButton } from '@/src/components/ui/IconButton';
+import { useEnvironment } from '@/src/hooks/useEnvironment';
 
 interface StudioToolbarProps {
   targetPath: string;
@@ -57,6 +58,8 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
   setShowDomMiner,
   mineProgressMessage,
 }) => {
+  const { isWeb } = useEnvironment();
+
   return (
     <div className="bg-stone-950 px-3 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 font-sans w-full relative">
       <div className="flex items-center space-x-3 flex-1 justify-start overflow-hidden">
@@ -116,10 +119,15 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
           <div className="w-px h-4 bg-stone-700"></div>
 
           <div className="relative group/miner flex items-center gap-3">
+            {isWeb && (
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-stone-800 text-stone-300 text-[10px] rounded whitespace-nowrap opacity-0 group-hover/miner:opacity-100 pointer-events-none transition-opacity shadow-lg border border-stone-700">
+                DOM mining requires the desktop app
+              </span>
+            )}
             <IconButton
-              onClick={handleMineDOM}
-              disabled={isMining}
-              className="transition-all cursor-pointer text-amber-500 hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+              onClick={isWeb ? undefined : handleMineDOM}
+              disabled={isMining || isWeb}
+              className={`transition-all ${isWeb ? 'cursor-not-allowed text-stone-600' : 'cursor-pointer text-amber-500 hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}
               titleKey="toolbar.mineUrl"
               icon={Pickaxe}
             >
@@ -129,22 +137,21 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
                 <Pickaxe className="w-3.5 h-3.5" />
               )}
             </IconButton>
-            
+
             <IconButton
-              onClick={() => setShowBatchMiner(true)}
-              disabled={isMining}
-              className="ml-2 transition-all cursor-pointer text-amber-500 hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+              onClick={isWeb ? undefined : () => setShowBatchMiner(true)}
+              disabled={isMining || isWeb}
+              className={`ml-2 transition-all ${isWeb ? 'cursor-not-allowed text-stone-600' : 'cursor-pointer text-amber-500 hover:text-amber-400 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}
               titleKey="toolbar.batchMine"
               icon={Drill}
               iconClassName="w-3.5 h-3.5"
             />
 
             <IconButton
-              onClick={() => setShowDomMiner(!showDomMiner)}
-              className={`transition-colors cursor-pointer ${showDomMiner ? 'text-green-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' : 'text-green-500 hover:text-green-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]'
-                }`}
+              onClick={isWeb ? undefined : () => setShowDomMiner(!showDomMiner)}
+              className={`transition-colors ${isWeb ? 'cursor-not-allowed text-stone-600' : `transition-colors cursor-pointer ${showDomMiner ? 'text-green-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' : 'text-green-500 hover:text-green-400 drop-shadow-[0_0_4px_rgba(6,182,212,0.3)]'}`}`}
               titleKey="toolbar.viewSnapshots"
-              disabled={!domSnapshotsCount}
+              disabled={!domSnapshotsCount || isWeb}
               icon={Database}
               iconClassName="w-3.5 h-3.5"
             />
