@@ -13,6 +13,10 @@
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const OUTPUT_DIR = path.resolve(__dirname, '..', 'public', 'screenshots');
 const APP_URL = 'http://localhost:5173'; // Electron Vite dev server
