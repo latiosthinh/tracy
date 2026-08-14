@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles, Cloud, Download } from 'lucide-react';
 import { useAgentStore } from '@/src/stores/agentStore';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
+import { useEnvironment } from '@/src/hooks/useEnvironment';
 
 export const WelcomeSetup: React.FC = () => {
   const detectedAgents = useAgentStore((s) => s.detectedAgents);
@@ -9,10 +10,12 @@ export const WelcomeSetup: React.FC = () => {
 
   const [settingsAgentTab, setSettingsAgentTab] = useState<'local-agent-cli' | 'byok'>('local-agent-cli');
   const [agentProvider, setAgentProvider] = useState<string>('');
-  
+
+  const { isWeb } = useEnvironment();
+
   // Dummy states for BYOK, ideally these sync with a secure store in a real app
   const [geminiApiKey, setGeminiApiKey] = useState('');
-  
+
   const handleContinue = () => {
     if (agentProvider) {
       setSelectedAgentId(agentProvider);
@@ -31,9 +34,30 @@ export const WelcomeSetup: React.FC = () => {
           <h1 className="text-3xl font-bold font-serif text-amber-100 tracking-tight">
             Welcome to Tracy Studio
           </h1>
-          <p className="text-stone-400 max-w-lg mx-auto">
-            Before we begin, you need to configure your AI execution engine. Tracy can orchestrate local CLI agents or use cloud GenAI APIs directly.
-          </p>
+          {isWeb ? (
+            <div className="space-y-3">
+              <p className="text-stone-400 max-w-lg mx-auto">
+                You're running Tracy in your browser. Configure your AI provider below to generate test flows instantly.
+              </p>
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-sky-950/50 border border-sky-800/40 rounded-md max-w-lg mx-auto text-xs text-sky-300">
+                <Cloud className="w-4 h-4 shrink-0" />
+                <span>Browser mode — Playwright automation and DOM mining require the desktop app. Download it for full capabilities.</span>
+              </div>
+              <a
+                href="/tracy-setup.exe"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-sm rounded-[6px] transition-all shadow-lg border border-amber-600"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Desktop App</span>
+              </a>
+            </div>
+          ) : (
+            <p className="text-stone-400 max-w-lg mx-auto">
+              Before we begin, you need to configure your AI execution engine. Tracy can orchestrate local CLI agents or use cloud GenAI APIs directly.
+            </p>
+          )}
         </div>
 
         {/* Configuration Card */}
