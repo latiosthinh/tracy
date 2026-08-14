@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" fill="none">
+  <!-- Background -->
+  <rect width="900" height="480" rx="12" fill="#0c0a09"/>
+
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" font-family="'Courier New', monospace" font-size="16" font-weight="bold" fill="#fbbf24">Tracy Architecture — Desktop vs Web Deployment</text>
+
+  <!-- ===== WEB MODE PATH ===== -->
+  <!-- Browser Client box -->
+  <rect x="20" y="70" width="250" height="360" rx="8" stroke="#06b6d4" stroke-width="2" fill="#0c1a2e"/>
+  <text x="145" y="100" text-anchor="middle" font-family="'Courier New', monospace" font-size="13" font-weight="bold" fill="#67e8f9">Browser Client</text>
+
+  <!-- React + Zustand layer -->
+  <rect x="40" y="115" width="210" height="50" rx="4" fill="#132238" stroke="#06b6d4" stroke-width="1"/>
+  <text x="145" y="137" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#a5f3fc">React 19 + Zustand Store</text>
+
+  <!-- Components layer -->
+  <rect x="40" y="175" width="210" height="50" rx="4" fill="#132238" stroke="#06b6d4" stroke-width="1"/>
+  <text x="145" y="197" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#a5f3fc">YAML Editor | Visual Step Editor</text>
+
+  <!-- AI Copilot layer -->
+  <rect x="40" y="235" width="210" height="50" rx="4" fill="#132238" stroke="#f59e0b" stroke-width="1"/>
+  <text x="145" y="257" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#fde68a">AI Copilot (BYOK API keys)</text>
+
+  <!-- Simulated Execution -->
+  <rect x="40" y="295" width="210" height="50" rx="4" fill="#132238" stroke="#06b6d4" stroke-width="1"/>
+  <text x="145" y="317" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#a5f3fc">Simulated Test Runner</text>
+
+  <!-- IndexedDB -->
+  <rect x="40" y="355" width="210" height="50" rx="4" fill="#132238" stroke="#06b6d4" stroke-width="1"/>
+  <text x="145" y="377" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#a5f3fc">IndexedDB (Dexie) Persistence</text>
+
+  <!-- HTTP Connection arrow -->
+  <line x1="280" y1="240" x2="460" y2="240" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrowYellow)"/>
+  <text x="370" y="225" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#fbbf24">HTTP / HTTPS</text>
+  <text x="370" y="245" text-anchor="middle" font-family="'Courier New', monospace" font-size="9" fill="#78716c">fetch()</text>
+
+  <!-- AI Backend box (Web mode) -->
+  <rect x="480" y="140" width="200" height="200" rx="8" stroke="#fbbf24" stroke-width="2" fill="#1c1610"/>
+  <text x="580" y="170" text-anchor="middle" font-family="'Courier New', monospace" font-size="13" font-weight="bold" fill="#fbbf24">AI Backend</text>
+  <text x="580" y="195" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#a1a1aa">Express.js / Vercel</text>
+
+  <rect x="500" y="210" width="160" height="35" rx="4" fill="#2a2015" stroke="#f59e0b" stroke-width="1"/>
+  <text x="580" y="232" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#fde68a">POST /api/gemini/generate-flow</text>
+
+  <rect x="500" y="255" width="160" height="35" rx="4" fill="#2a2015" stroke="#f59e0b" stroke-width="1"/>
+  <text x="580" y="277" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#fde68a">POST /api/gemini/auto-suite</text>
+
+  <rect x="500" y="300" width="160" height="35" rx="4" fill="#2a2015" stroke="#f59e0b" stroke-width="1"/>
+  <text x="580" y="322" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#a1a1aa">@google/genai SDK</text>
+
+  <rect x="500" y="345" width="160" height="35" rx="4" fill="#2a2015" stroke="#f59e0b" stroke-width="1"/>
+  <text x="580" y="367" text-anchor="middle" font-family="'Courier New", monospace" font-size="10" fill="#78716c">GEMINI_API_KEY env var</text>
+
+  <!-- ===== DESKTOP MODE PATH ===== -->
+  <!-- Electron Main Process -->
+  <rect x="730" y="70" width="160" height="360" rx="8" stroke="#a78bfa" stroke-width="2" fill="#120e1f"/>
+  <text x="810" y="100" text-anchor="middle" font-family="'Courier New', monospace" font-size="13" font-weight="bold" fill="#c4b5fd">Electron App</text>
+
+  <rect x="745" y="115" width="130" height="50" rx="4" fill="#1a1530" stroke="#a78bfa" stroke-width="1"/>
+  <text x="810" y="137" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#ddd6fe">IPC Bridge (secure)</text>
+
+  <rect x="745" y="175" width="130" height="50" rx="4" fill="#1a1530" stroke="#a78bfa" stroke-width="1"/>
+  <text x="810" y="197" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#ddd6fe">Playwright Engine</text>
+
+  <rect x="745" y="235" width="130" height="50" rx="4" fill="#1a1530" stroke="#a78bfa" stroke-width="1"/>
+  <text x="810" y="257" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#ddd6fe">DOM Miner</text>
+
+  <rect x="745" y="295" width="130" height="50" rx="4" fill="#1a1530" stroke="#a78bfa" stroke-width="1"/>
+  <text x="810" y="317" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#ddd6fe">File System Ops</text>
+
+  <rect x="745" y="355" width="130" height="50" rx="4" fill="#1a1530" stroke="#a78bfa" stroke-width="1"/>
+  <text x="810" y="377" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#ddd6fe">CLI Agent CLI</text>
+
+  <!-- IPC Label -->
+  <text x="810" y="420" text-anchor="middle" font-family="'Courier New', monospace" font-size="9" fill="#78716c">contextIsolation:true sandbox:true</text>
+
+  <!-- ===== Shared Types ===== -->
+  <!-- Bottom label -->
+  <rect x="20" y="445" width="860" height="25" rx="4" fill="#1a1a1a" stroke="#292524" stroke-width="1"/>
+  <text x="450" y="462" text-anchor="middle" font-family="'Courier New', monospace" font-size="10" fill="#a1a1aa">Shared: TypeScript types (Project, FlowFile), FLOW_SCHEMA.md, Zustand stores, Tailwind v4 theme</text>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowYellow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24"/>
+    </marker>
+  </defs>
+</svg>
