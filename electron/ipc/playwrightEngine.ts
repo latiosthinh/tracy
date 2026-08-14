@@ -468,8 +468,12 @@ export function registerPlaywrightHandlers() {
 
           case 'assertTrue': {
             const expr = step.value || step.target || 'true';
-            const result = await currentPage.evaluate(expr);
-            if (!result) throw new Error(`Assertion failed for expression: ${expr}`);
+            try {
+              const result = await currentPage.evaluate(expr);
+              if (!result) throw new Error(`Assertion failed for expression: ${expr}`);
+            } catch (evalErr: any) {
+              throw new Error(`assertTrue evaluation error: ${evalErr.message || String(evalErr)}`);
+            }
             break;
           }
 

@@ -1,10 +1,16 @@
-import { ipcMain } from 'electron';
 import { registerFileSystemHandlers } from './fileSystem.js';
-import { registerPlaywrightHandlers } from './playwrightEngine.js';
 import { registerWebviewHandlers } from './webviewManager.js';
 
-export function registerIpcHandlers() {
+let playwrightRegistered = false;
+
+export async function registerIpcHandlers() {
   registerFileSystemHandlers();
-  registerPlaywrightHandlers();
   registerWebviewHandlers();
+
+  // Playwright handlers are deferred — only loaded when first needed
+  if (!playwrightRegistered) {
+    playwrightRegistered = true;
+    const { registerPlaywrightHandlers } = await import('./playwrightEngine.js');
+    registerPlaywrightHandlers();
+  }
 }

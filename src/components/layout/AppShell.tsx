@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useProjectStore } from '@/src/stores/projectStore';
 import { useExecutionStore } from '@/src/stores/executionStore';
 import { useSettingsStore } from '@/src/stores/settingsStore';
@@ -9,13 +9,16 @@ import { SplashScreen } from '@/src/components/shared/SplashScreen';
 
 import { Header } from '@/src/components/layout/Header';
 import { StudioView } from '@/src/components/studio/StudioView';
-import { ProjectManager } from '@/src/components/projects/ProjectManager';
-import { ProjectManagerModal } from '@/src/components/projects/ProjectManagerModal';
-import { SettingsModal } from '@/src/components/settings/SettingsModal';
-import { DocsModal } from '@/src/components/shared/DocsModal';
-import { CreateFlowModal } from '@/src/components/editor/CreateFlowModal';
-import { WelcomeSetup } from '@/src/components/setup/WelcomeSetup';
 import { ErrorBoundary } from '@/src/components/shared/ErrorBoundary';
+
+const ProjectManager = React.lazy(() => import('@/src/components/projects/ProjectManager').then(m => ({ default: m.ProjectManager })));
+const ProjectManagerModal = React.lazy(() => import('@/src/components/projects/ProjectManagerModal').then(m => ({ default: m.ProjectManagerModal })));
+const SettingsModal = React.lazy(() => import('@/src/components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const DocsModal = React.lazy(() => import('@/src/components/shared/DocsModal').then(m => ({ default: m.DocsModal })));
+const CreateFlowModal = React.lazy(() => import('@/src/components/editor/CreateFlowModal').then(m => ({ default: m.CreateFlowModal })));
+const WelcomeSetup = React.lazy(() => import('@/src/components/setup/WelcomeSetup').then(m => ({ default: m.WelcomeSetup })));
+
+const ModalFallback = () => null;
 
 export const AppShell: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +130,9 @@ export const AppShell: React.FC = () => {
         }`}
       >
         {!isLoading && !selectedAgentId ? (
-          <WelcomeSetup />
+          <Suspense fallback={<ModalFallback />}>
+            <WelcomeSetup />
+          </Suspense>
         ) : (
           <>
             <Header
@@ -137,100 +142,110 @@ export const AppShell: React.FC = () => {
               onSelectProject={(id) => {
                 selectProject(id);
                 setCurrentView('studio');
-          }}
-          onCloseProjectTab={closeProjectTab}
-          onOpenProjectsManager={() => {
-            setAutoOpenCreateModal(false);
-            setProjectManagerModalOpen(true);
-          }}
-          onOpenCreateProject={() => {
-            setAutoOpenCreateModal(true);
-            setProjectManagerModalOpen(true);
-          }}
-          onOpenSettings={() => setSettingsOpen(true)}
-          targetUrl={activeProject?.targetUrl || 'http://localhost:3000'}
-          onUpdateTargetUrl={updateTargetUrl}
-          flows={activeProject?.flows || []}
-          activeFlow={activeFlow}
-          onSelectFlow={selectFlow}
-          onCloseFlowTab={closeFlowTab}
-          onCreateNewFlow={() => setCreateFlowModalOpen(true)}
-          onRenameFlow={renameFlow}
-          onUpdateFlowCategory={updateFlowCategory}
-          isExecuting={isExecuting}
-          onStartRun={() => startExecution(activeFlow, activeProject?.targetUrl || '')}
-          onPauseRun={pauseExecution}
-          onResetRun={() => resetExecution()}
-          inspectMode={inspectMode}
-          onToggleInspectMode={toggleInspectMode}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          devicePreset={devicePreset}
-          onDevicePresetChange={setDevicePreset}
-          onOpenDocs={() => setDocsOpen(true)}
-        />
+              }}
+              onCloseProjectTab={closeProjectTab}
+              onOpenProjectsManager={() => {
+                setAutoOpenCreateModal(false);
+                setProjectManagerModalOpen(true);
+              }}
+              onOpenCreateProject={() => {
+                setAutoOpenCreateModal(true);
+                setProjectManagerModalOpen(true);
+              }}
+              onOpenSettings={() => setSettingsOpen(true)}
+              targetUrl={activeProject?.targetUrl || 'http://localhost:3000'}
+              onUpdateTargetUrl={updateTargetUrl}
+              flows={activeProject?.flows || []}
+              activeFlow={activeFlow}
+              onSelectFlow={selectFlow}
+              onCloseFlowTab={closeFlowTab}
+              onCreateNewFlow={() => setCreateFlowModalOpen(true)}
+              onRenameFlow={renameFlow}
+              onUpdateFlowCategory={updateFlowCategory}
+              isExecuting={isExecuting}
+              onStartRun={() => startExecution(activeFlow, activeProject?.targetUrl || '')}
+              onPauseRun={pauseExecution}
+              onResetRun={() => resetExecution()}
+              inspectMode={inspectMode}
+              onToggleInspectMode={toggleInspectMode}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              devicePreset={devicePreset}
+              onDevicePresetChange={setDevicePreset}
+              onOpenDocs={() => setDocsOpen(true)}
+            />
 
-        <div className="flex-1 flex overflow-hidden relative">
-          <ErrorBoundary>
-            {currentView === 'projects' ? (
-              <ProjectManager
-                projects={projects}
-                onSelectProject={(proj) => {
-                  selectProject(proj.id);
-                  setCurrentView('studio');
-                }}
-                onCreateProject={(proj) => {
-                  createProject(proj);
-                  setCurrentView('studio');
-                }}
-                onUpdateProject={updateProject}
-                onDeleteProject={deleteProject}
-                initialOpenCreateModal={autoOpenCreateModal}
-              />
-            ) : (
-              <StudioView />
-            )}
-          </ErrorBoundary>
-        </div>
+            <div className="flex-1 flex overflow-hidden relative">
+              <ErrorBoundary>
+                {currentView === 'projects' ? (
+                  <Suspense fallback={<ModalFallback />}>
+                    <ProjectManager
+                      projects={projects}
+                      onSelectProject={(proj) => {
+                        selectProject(proj.id);
+                        setCurrentView('studio');
+                      }}
+                      onCreateProject={(proj) => {
+                        createProject(proj);
+                        setCurrentView('studio');
+                      }}
+                      onUpdateProject={updateProject}
+                      onDeleteProject={deleteProject}
+                      initialOpenCreateModal={autoOpenCreateModal}
+                    />
+                  </Suspense>
+                ) : (
+                  <StudioView />
+                )}
+              </ErrorBoundary>
+            </div>
 
-        <DocsModal isOpen={isDocsOpen} onClose={() => setDocsOpen(false)} />
+            <Suspense fallback={<ModalFallback />}>
+              {isDocsOpen && <DocsModal isOpen={isDocsOpen} onClose={() => setDocsOpen(false)} />}
 
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setSettingsOpen(false)}
-          workspaceConfig={workspaceConfig}
-          onWorkspaceConfigChange={updateWorkspaceConfig}
-          uiSettings={uiSettings}
-          onUiSettingsChange={updateUiSettings}
-          activeFlowPath={activeFlow?.path || 'flows/checkout.yaml'}
-        />
+              {isSettingsOpen && (
+                <SettingsModal
+                  isOpen={isSettingsOpen}
+                  onClose={() => setSettingsOpen(false)}
+                  workspaceConfig={workspaceConfig}
+                  onWorkspaceConfigChange={updateWorkspaceConfig}
+                  uiSettings={uiSettings}
+                  onUiSettingsChange={updateUiSettings}
+                  activeFlowPath={activeFlow?.path || 'flows/checkout.yaml'}
+                />
+              )}
 
-        <CreateFlowModal
-          isOpen={isCreateFlowModalOpen}
-          onClose={() => setCreateFlowModalOpen(false)}
-          onCreateFlow={(name, category) => {
-            createFlow(name, category);
-            setCreateFlowModalOpen(false);
-          }}
-          existingFlowCount={activeProject?.flows?.length || 0}
-        />
+              {isCreateFlowModalOpen && (
+                <CreateFlowModal
+                  isOpen={isCreateFlowModalOpen}
+                  onClose={() => setCreateFlowModalOpen(false)}
+                  onCreateFlow={(name, category) => {
+                    createFlow(name, category);
+                    setCreateFlowModalOpen(false);
+                  }}
+                  existingFlowCount={activeProject?.flows?.length || 0}
+                />
+              )}
 
-        <ProjectManagerModal
-          isOpen={isProjectManagerModalOpen}
-          onClose={() => setProjectManagerModalOpen(false)}
-          projects={projects}
-          onSelectProject={(proj) => {
-            selectProject(proj.id);
-            setCurrentView('studio');
-          }}
-          onCreateProject={(proj) => {
-            createProject(proj);
-            setCurrentView('studio');
-          }}
-          onUpdateProject={updateProject}
-          onDeleteProject={deleteProject}
-          autoOpenCreateModal={autoOpenCreateModal}
-        />
+              {isProjectManagerModalOpen && (
+                <ProjectManagerModal
+                  isOpen={isProjectManagerModalOpen}
+                  onClose={() => setProjectManagerModalOpen(false)}
+                  projects={projects}
+                  onSelectProject={(proj) => {
+                    selectProject(proj.id);
+                    setCurrentView('studio');
+                  }}
+                  onCreateProject={(proj) => {
+                    createProject(proj);
+                    setCurrentView('studio');
+                  }}
+                  onUpdateProject={updateProject}
+                  onDeleteProject={deleteProject}
+                  autoOpenCreateModal={autoOpenCreateModal}
+                />
+              )}
+            </Suspense>
           </>
         )}
       </div>

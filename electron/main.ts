@@ -13,6 +13,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 if (!app.isPackaged) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
+  app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
 }
 
 let win: BrowserWindow | null;
@@ -51,8 +52,8 @@ app.on('activate', () => {
 
 import { registerIpcHandlers } from './ipc/index.js';
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
 
-  registerIpcHandlers();
+  await registerIpcHandlers();
 });
