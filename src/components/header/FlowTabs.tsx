@@ -30,7 +30,7 @@ interface FlowTabsProps {
 export const FlowTabs: React.FC<FlowTabsProps> = ({
   flows,
   activeFlow,
-  isExecuting,
+  isExecuting: _isExecuting,
   onSelectFlow,
   onCloseFlowTab,
   onCreateNewFlow,

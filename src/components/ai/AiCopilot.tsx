@@ -11,17 +11,11 @@ import {
   Workflow,
   Zap,
   Bot,
-  Key,
   Plus,
   SlidersHorizontal,
   ChevronDown,
   Cpu,
-  Terminal,
   CheckCircle2,
-  Eye,
-  EyeOff,
-  Upload,
-  File
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
 import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
@@ -58,7 +52,6 @@ interface AiCopilotProps {
 export const AiCopilot: React.FC<AiCopilotProps> = ({
   activeProject,
   activeFlow,
-  currentYaml,
   onApplyGeneratedYaml,
   onBatchAddFlowsToProject,
   targetUrl,
@@ -81,15 +74,12 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     }
   };
   const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
   const [customEndpoint, setCustomEndpoint] = useState('http://localhost:11434');
   const [selectedModel, setSelectedModel] = useState('llama3.2');
   const [showProviderPanel, setShowProviderPanel] = useState(false);
-  const [localCliDetected, setLocalCliDetected] = useState<boolean | null>(true);
   const [isDetectingCli, setIsDetectingCli] = useState(false);
 
   const providerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -104,7 +94,6 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   const handleCheckLocalCli = () => {
     setIsDetectingCli(true);
     setTimeout(() => {
-      setLocalCliDetected(true);
       setIsDetectingCli(false);
     }, 450);
   };
@@ -112,7 +101,6 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   // Form State & Attached Files State
   const [prompt, setPrompt] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedYaml, setGeneratedYaml] = useState<string | null>(null);
   const [autoSuiteResult, setAutoSuiteResult] = useState<any | null>(null);

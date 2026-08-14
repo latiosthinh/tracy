@@ -38,11 +38,10 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
   onResetRun,
   executionSpeed,
   onSpeedChange,
-  lastResult,
+  lastResult: _lastResult,
   onExplainFailure,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'timeline' | 'logs'>('timeline');
-  const [expandedErrorIdx, setExpandedErrorIdx] = useState<number | null>(null);
 
   const passedCount = steps.filter(s => s.status === 'passed').length;
   const failedCount = steps.filter(s => s.status === 'failed').length;

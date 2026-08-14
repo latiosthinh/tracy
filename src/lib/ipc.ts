@@ -44,7 +44,7 @@ const invoke = async <T>(channel: string, args?: any): Promise<T> => {
 };
 
 const listen = async <T>(channel: string, callback: (payload: T) => void): Promise<UnlistenFn> => {
-  return (window as any).tracyAPI.on(channel, (event: any, payload: T) => callback(payload));
+  return (window as any).tracyAPI.on(channel, (_event: any, payload: T) => callback(payload));
 };
 
 export const tracyApi = {

@@ -209,10 +209,10 @@ const AUTOCOMPLETE_DESCRIPTIONS: Record<string, string> = {
 export const YamlEditor: React.FC<YamlEditorProps> = ({
   yamlContent,
   onChange,
-  onRunFlow,
-  isExecuting,
+  onRunFlow: _onRunFlow,
+  isExecuting: _isExecuting,
   flowCategory = 'E2E',
-  onCategoryChange,
+  onCategoryChange: _onCategoryChange,
 }) => {
   const [copied, setCopied] = useState(false);
   const [lineCount, setLineCount] = useState(1);

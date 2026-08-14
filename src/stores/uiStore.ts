@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { ActiveTab, DevicePreset } from '@/src/types/ui';
-import type { UiSettings, ColorScheme } from '@/src/types/uiSettings';
+import type { UiSettings } from '@/src/types/uiSettings';
 import { DEFAULT_UI_SETTINGS, PRESET_COLOR_SCHEMES } from '@/src/types/uiSettings';
 import type { WorkspaceConfig } from '@/src/types/project';
 import { DEFAULT_WORKSPACE_CONFIG } from '@/src/data/defaultFlows';

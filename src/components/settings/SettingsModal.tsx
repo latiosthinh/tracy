@@ -75,7 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [viewportWidth, setViewportWidth] = useState<number>(activeConfig?.viewport?.width || 1280);
   const [viewportHeight, setViewportHeight] = useState<number>(activeConfig?.viewport?.height || 800);
   const [timeoutMs, setTimeoutMs] = useState<number>(activeConfig?.timeout || 10000);
-  const [retries, setRetries] = useState<number>(activeConfig?.retries ?? 2);
+  const [retries, _setRetries] = useState<number>(activeConfig?.retries ?? 2);
   const [allowedHosts, setAllowedHosts] = useState('localhost, *.example.com');
   const [allowAnyHost, setAllowAnyHost] = useState(true);
 

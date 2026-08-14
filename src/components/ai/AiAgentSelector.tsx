@@ -30,7 +30,7 @@ export const AiAgentSelector: React.FC<AiAgentSelectorProps> = ({
   setApiKey,
   customEndpoint,
   setCustomEndpoint,
-  selectedModel,
+  selectedModel: _selectedModel,
   setSelectedModel,
   showApiKey,
   setShowApiKey,

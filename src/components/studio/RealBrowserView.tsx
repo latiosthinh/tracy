@@ -19,17 +19,16 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
   targetUrl,
   activePath,
   viewportWidth,
-  onNavigate,
+  onNavigate: _onNavigate,
   recordMode = false,
   inspectMode = false,
   onElementInspected,
   hideWebview = false,
 }) => {
-  const [viewState, setViewState] = useState<ViewState>('idle');
-  const [currentUrl, setCurrentUrl] = useState<string>('');
-  const [pageTitle, setPageTitle] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSecure, setIsSecure] = useState(false);
+  const [, setViewState] = useState<ViewState>('idle');
+  const [, setCurrentUrl] = useState<string>('');
+  const [, setError] = useState<string | null>(null);
+  const [, setIsSecure] = useState(false);
   const launchedRef = useRef(false);
 
   const buildUrl = useCallback(() => {

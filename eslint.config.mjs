@@ -1,16 +1,11 @@
-import tseslint from 'typescript-eslint';
-import unusedImports from 'eslint-plugin-unused-imports';
+// NOTE: typescript-eslint does not yet support TypeScript 7.0.
+// Linting is handled by `tsc --noEmit` with strict mode, noUnusedLocals,
+// and noUnusedParameters enabled in tsconfig.json.
+// Re-enable typescript-eslint when TS 7 support lands.
+// Tracking: https://github.com/typescript-eslint/typescript-eslint/issues/10940
 
-export default tseslint.config(
-  ...tseslint.configs.recommended,
+export default [
   {
-    plugins: {
-      'unused-imports': unusedImports,
-    },
-    rules: {
-      'unused-imports/no-unused-imports': 'error',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-explicit-any': 'off'
-    },
+    ignores: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**'],
   },
-);
+];

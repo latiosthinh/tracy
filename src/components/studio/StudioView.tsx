@@ -1,24 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  RotateCcw,
-  FileCode,
-  Layers,
-  Terminal,
-  Sparkles,
-  BarChart3,
-  Laptop,
-  Tablet,
-  Play,
-  Pause,
-  Copy,
-  Check,
-  Pencil,
-  Pickaxe,
   Database,
-  X,
-  Trash2,
-  Drill,
-  Download
 } from 'lucide-react';
 import { useProjectStore } from '@/src/stores/projectStore';
 import { useExecutionStore } from '@/src/stores/executionStore';
@@ -31,10 +13,8 @@ import { BatchMinerModal, BatchTarget } from '@/src/components/studio/BatchMiner
 import { StudioToolbar } from '@/src/components/studio/StudioToolbar';
 import { DomMinerPanel } from '@/src/components/studio/DomMinerPanel';
 import { StudioRightSidebar } from '@/src/components/studio/StudioRightSidebar';
-import { IconButton } from '@/src/components/ui/IconButton';
 
 import type { InspectedElement, CommandType, FlowStep, MinedPageData } from '@/src/types/index';
-import { getFlowCategory } from '@/src/utils/flowUtils';
 
 import { tracyApi } from '@/src/lib/ipc';
 
@@ -109,7 +89,6 @@ export const StudioView: React.FC = () => {
 
   const addDomSnapshot = useProjectStore((s) => s.addDomSnapshot);
   const getAllDomSnapshots = useProjectStore((s) => s.getAllDomSnapshots);
-  const clearDomSnapshots = useProjectStore((s) => s.clearDomSnapshots);
   const domSnapshots = getAllDomSnapshots(activeProjectId);
   
   const isAnyModalOpen = isDocsOpen || isSettingsOpen || isProjectManagerModalOpen || isCreateFlowModalOpen || showBatchMiner;
@@ -333,13 +312,6 @@ export const StudioView: React.FC = () => {
     
     setIsMining(false);
     setMineProgressMessage(null);
-  };
-
-  const handleClearDomSnapshots = () => {
-    clearDomSnapshots(activeProjectId);
-    setMinedDom(null);
-    setMineToast('All DOM snapshots cleared');
-    setTimeout(() => setMineToast(null), 2000);
   };
 
   const handleExplainFailureWithAi = () => {

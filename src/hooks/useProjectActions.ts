@@ -1,6 +1,5 @@
 import { useProjectStore } from '@/src/stores/projectStore';
 import { useUiStore } from '@/src/stores/uiStore';
-import type { Project } from '@/src/types/project';
 
 export function useProjectActions() {
   const selectProjectStore = useProjectStore((s) => s.selectProject);

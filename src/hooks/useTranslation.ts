@@ -1,6 +1,6 @@
 import enTranslations from '@/src/a11y/en.json';
 
-type Translations = typeof enTranslations;
+export type Translations = typeof enTranslations;
 
 export function useTranslation() {
   const t = (key: string): string => {

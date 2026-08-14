@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Terminal, Key, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { useAgentStore } from '@/src/stores/agentStore';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
 

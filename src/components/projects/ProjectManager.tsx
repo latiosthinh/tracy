@@ -54,7 +54,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [formTemplate, setFormTemplate] = useState<'standard' | 'ecommerce' | 'auth' | 'blank'>('standard');
   const [formBrowser, setFormBrowser] = useState<'chromium' | 'firefox' | 'webkit'>('chromium');
   const [formSaveLocation, setFormSaveLocation] = useState('');
-  const [formEnvVars, setFormEnvVars] = useState<{ key: string; value: string }[]>([
+  const [_formEnvVars, setFormEnvVars] = useState<{ key: string; value: string }[]>([
     { key: 'TEST_EMAIL', value: 'qa-test@example.com' },
   ]);
   const [testingUrl, setTestingUrl] = useState(false);
