@@ -16,9 +16,11 @@ import {
   X,
   Copy,
   Check,
-  RefreshCw
+  RefreshCw,
+  DownloadCloud,
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
+import { ExportImportPanel } from '@/src/components/projects/ExportImportPanel';
 
 interface ProjectManagerProps {
   projects: Project[];
@@ -45,6 +47,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [selectedEnvFilter, setSelectedEnvFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(!!(initialOpenCreateModal || autoOpenCreateModal));
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showExportImport, setShowExportImport] = useState(false);
 
   // Form State for New / Edit Project
   const [formName, setFormName] = useState('');
@@ -246,6 +249,14 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
     }
   };
 
+  const handleMergeProjects = (merged: Project[]) => {
+    for (const proj of merged) {
+      onUpdateProject(proj);
+    }
+    const mergedIds = new Set(merged.map(p => p.id));
+    projects.filter(p => !mergedIds.has(p.id)).forEach(p => onDeleteProject(p.id));
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-stone-950 text-stone-100 font-sans p-4 sm:p-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full space-y-6">
@@ -264,13 +275,23 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </p>
           </div>
 
-          <button
-            onClick={handleOpenCreateModal}
-            className="px-5 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] shadow-lg border border-amber-600 flex items-center space-x-2 transition-all active:scale-95 shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Project & Target URL</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setShowExportImport(true)}
+              className="px-4 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-[6px] border border-stone-700 flex items-center space-x-2 transition-all active:scale-95"
+              title="Export or Import projects as JSON"
+            >
+              <DownloadCloud className="w-4 h-4" />
+              <span>Export / Import</span>
+            </button>
+            <button
+              onClick={handleOpenCreateModal}
+              className="px-5 py-3 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] shadow-lg border border-amber-600 flex items-center space-x-2 transition-all active:scale-95 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Project & Target URL</span>
+            </button>
+          </div>
         </div>
 
         {/* Filter & Search Toolbar */}
@@ -601,6 +622,15 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Export/Import Modal */}
+      {showExportImport && (
+        <ExportImportPanel
+          projects={projects}
+          onMergeProjects={handleMergeProjects}
+          onClose={() => setShowExportImport(false)}
+        />
       )}
     </div>
   );
