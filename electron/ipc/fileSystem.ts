@@ -44,8 +44,16 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('run_agent_cli_stream', async (event, { agentId, prompt, systemInstruction }) => {
-    // Stub
-    return "This is a stub for the AI agent in Electron.";
+    const { createProvider } = await import('./aiProvider.js');
+    try {
+      const provider = await createProvider(agentId, {
+        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY,
+      });
+      return await provider.generateFlow(prompt, systemInstruction);
+    } catch (err: any) {
+      console.error('AI provider error:', err);
+      throw new Error(`AI generation failed: ${err.message || 'Unknown error'}`);
+    }
   });
 
   ipcMain.handle('parse_yaml_flow', async (event, { yamlContent }) => {

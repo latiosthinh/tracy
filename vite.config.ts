@@ -15,8 +15,8 @@ export default defineConfig(() => {
           entry: 'electron/main.ts',
           vite: {
             build: {
-              rolldownOptions: {
-                external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml']
+              rollupOptions: {
+                external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml', '@google/genai']
               }
             }
           }
@@ -42,7 +42,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     ssr: {
-      external: ['playwright-core', 'chromium-bidi', 'js-yaml']
+      external: ['playwright-core', 'chromium-bidi', 'js-yaml', '@google/genai']
     }
   };
 });
