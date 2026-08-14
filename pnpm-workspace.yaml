@@ -2,3 +2,5 @@ allowBuilds:
   '@google/genai': true
   electron-winstaller: true
   protobufjs: true
+minimumReleaseAgeExclude:
+  - '@google/genai@2.17.1'
