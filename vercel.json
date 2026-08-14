@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "dist-web/**", "use": "@vercel/static" },
+    { "src": "api/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/gemini/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/dist-web/$1" }
+  ],
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "env": {
+    "GEMINI_API_KEY": "protected"
+  }
+}

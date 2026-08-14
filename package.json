@@ -6,8 +6,11 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
+    "dev:web": "vite --config vite.web.config.ts",
     "build": "tsc && vite build && electron-builder",
-    "clean": "rimraf dist dist-electron release",
+    "build:web": "tsc --noEmit && vite build --config vite.web.config.ts",
+    "server:web": "node src/server/index.js",
+    "clean": "rimraf dist dist-electron dist-web release",
     "lint": "eslint . && tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -15,7 +18,9 @@
   },
   "dependencies": {
     "@google/genai": "^2.17.1",
+    "dexie": "^4.4.4",
     "dom-miner": "^0.1.4",
+    "express": "^5.2.1",
     "immer": "^11.1.16",
     "js-yaml": "^5.2.3",
     "lucide-react": "^1.31.0",
