@@ -14,6 +14,6 @@ visibly changes every other project's browser, which is the reported bug.
 **Requirements:** WEBVIEW-01, WEBVIEW-02, WEBVIEW-03
 
 Plans:
-- [ ] 01-01-PLAN.md — Main-process per-project webview registry + IPC contract (projectId on all webview channels)
+- [x] 01-01-PLAN.md — Main-process per-project webview registry + IPC contract (projectId on all webview channels)
 - [ ] 01-02-PLAN.md — Renderer wiring: RealBrowserView/StudioView project scoping + per-project browser path state
 - [ ] 01-03-PLAN.md — Verification: two-project isolation checkpoint in dev app
