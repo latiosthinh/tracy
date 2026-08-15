@@ -19,6 +19,24 @@ export interface StreamChunkPayload {
   delta: string;
 }
 
+export interface AiConfigPayload {
+  selectedAgentId: string;
+  agentModels: Record<string, string>;
+  agentCredentials: Record<string, { apiKey?: string; customEndpoint?: string }>;
+}
+
+export interface AiConnectionTestPayload {
+  agentId: string;
+  apiKey: string;
+  customEndpoint?: string;
+  model?: string;
+}
+
+export interface AiConnectionTestResult {
+  ok: boolean;
+  errorMessage?: string;
+}
+
 export interface StepUpdatePayload {
   stepIndex: number;
   status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -75,22 +93,38 @@ export const tracyApi = {
     return invoke<DetectedAgent[]>('scan_agent_clis');
   },
 
-  runAgentStream: async (agentId: string, prompt: string, systemInstruction?: string): Promise<string> => {
+  runAgentStream: async (agentId: string, prompt: string, systemInstruction?: string, model?: string): Promise<string> => {
     if (!isElectronEnv()) {
       // Browser fallback
       const res = await fetch('/api/gemini/generate-flow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, agentProvider: agentId }),
+        body: JSON.stringify({ prompt, agentProvider: agentId, selectedModel: model }),
       });
       const data = await res.json();
       return data.yaml || '';
     }
-    return invoke<string>('run_agent_cli_stream', { agentId, prompt, systemInstruction });
+    return invoke<string>('run_agent_cli_stream', { agentId, prompt, systemInstruction, model });
   },
 
   onAgentStreamChunk: async (callback: (payload: StreamChunkPayload) => void): Promise<UnlistenFn> => {
     return listen<StreamChunkPayload>('ai-stream-chunk', callback);
+  },
+
+  // AI Config Persistence
+  loadAiConfig: async (): Promise<AiConfigPayload | null> => {
+    if (!isElectronEnv()) return null;
+    return invoke<AiConfigPayload>('ai_config_load');
+  },
+
+  saveAiConfig: async (cfg: AiConfigPayload): Promise<void> => {
+    if (!isElectronEnv()) return;
+    return invoke('ai_config_save', cfg);
+  },
+
+  testAiConnection: async (payload: AiConnectionTestPayload): Promise<AiConnectionTestResult> => {
+    if (!isElectronEnv()) return { ok: false, errorMessage: 'Connection tests require the desktop app' };
+    return invoke<AiConnectionTestResult>('ai_connection_test', payload);
   },
 
   // Project Store

@@ -3,6 +3,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Whitelist of allowed IPC channels — only these can be invoked from the renderer.
 // This prevents arbitrary channel access that would defeat contextIsolation.
 const ALLOWED_INVOKE_CHANNELS = [
+  // AI config persistence & testing
+  'ai_config_load',
+  'ai_config_save',
+  'ai_connection_test',
   // Playwright engine
   'launch_browser',
   'navigate_browser',

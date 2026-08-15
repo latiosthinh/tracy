@@ -2,6 +2,10 @@ import { ipcMain } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
 import * as yaml from 'js-yaml';
+// NOTE: relative import — the electron main build does not resolve the '@/' alias.
+import { agentsByCategory, resolveAgentId, getAgentDef } from '../../src/lib/aiRegistry';
+import { detectCliAgents, runCliAgent, buildChildEnv } from './cliRunner.js';
+import { getResolvedCredentials } from './aiConfig.js';
 
 function assertSafePath(basePath: string, ...segments: string[]): string {
   if (!basePath || typeof basePath !== 'string') {
@@ -13,6 +17,17 @@ function assertSafePath(basePath: string, ...segments: string[]): string {
     throw new Error(`Path traversal blocked: target "${resolvedTarget}" is outside base directory "${resolvedBase}"`);
   }
   return resolvedTarget;
+}
+
+/** Redact secrets for safe error messages. */
+function redactSecrets(text: string): string {
+  return text
+    .replace(/sk-[A-Za-z0-9_-]{8,}/g, 'sk-…')
+    .replace(/sk-ant-[A-Za-z0-9_-]{8,}/g, 'sk-ant-…')
+    .replace(/\bBearer [A-Za-z0-9._-]+/g, 'Bearer …')
+    .replace(/(x-api-key):\s*[A-Za-z0-9_-]+/g, '$1: …')
+    .replace(/key=[A-Za-z0-9_-]+/gi, 'key=…')
+    .replace(/AIza[A-Za-z0-9_-]{3,}/g, 'AIza…');
 }
 
 export function registerFileSystemHandlers() {
@@ -30,29 +45,90 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('scan_agent_clis', async () => {
-    return [
-      {
-        id: 'gemini-3.6-flash',
-        name: 'Gemini 3.6 Flash (Direct API)',
-        cli_binary: 'gemini-api',
-        installed: true,
-        icon_name: 'Sparkles',
-        category: 'cloud-api',
-        description: 'Direct Gemini API call server side',
-      },
-    ];
+    const detected = await detectCliAgents();
+    const cloudEntries = agentsByCategory('cloud-api').map((def) => ({
+      id: def.id,
+      name: def.displayName,
+      cli_binary: '',
+      installed: true,
+      icon_name: def.iconName,
+      category: 'cloud-api',
+      description: def.description,
+    }));
+    return [...detected, ...cloudEntries];
   });
 
-  ipcMain.handle('run_agent_cli_stream', async (event, { agentId, prompt, systemInstruction }) => {
-    const { createProvider } = await import('./aiProvider.js');
+  ipcMain.handle('run_agent_cli_stream', async (event, payload: { agentId: string; prompt: string; systemInstruction?: string; model?: string }) => {
+    const { agentId, prompt, systemInstruction, model } = payload;
+    const canonicalId = resolveAgentId(agentId);
+    const def = getAgentDef(canonicalId);
+
+    if (!def) {
+      // Fallback: unknown agent → try createProvider (existing behavior)
+      try {
+        const { createProvider } = await import('./aiProvider.js');
+        const provider = await createProvider(canonicalId, {});
+        return await provider.generateFlow(prompt, systemInstruction);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('AI provider error:', err);
+        throw new Error(`AI generation failed: ${redactSecrets(msg)}`);
+      }
+    }
+
+    // Resolve credential precedence: persisted config > process.env
+    const { apiKey, customEndpoint, model: storedModel } = await getResolvedCredentials(canonicalId);
+    const finalModel = model || storedModel || def.defaultModel || '';
+    const finalEndpoint = customEndpoint || def.defaultEndpoint || '';
+
+    // CLI agents: spawn subprocess with stdin prompt
+    if (def.kind === 'cli') {
+      try {
+        const env = buildChildEnv(def, apiKey);
+        const fullPrompt = systemInstruction
+          ? `${systemInstruction}\n\n${prompt}`
+          : prompt;
+        return await runCliAgent(def, fullPrompt, {
+          model: finalModel,
+          env,
+          onChunk: (d: string) => {
+            event.sender.send('ai-stream-chunk', { agentId, delta: d });
+          },
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('CLI agent error:', err);
+        throw new Error(`AI generation failed: ${redactSecrets(msg)}`);
+      }
+    }
+
+    // HTTP agents: use createProvider with streaming (step 5 addition)
     try {
-      const provider = await createProvider(agentId, {
-        apiKey: process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY,
+      const { createProvider } = await import('./aiProvider.js');
+      const provider = await createProvider(canonicalId, {
+        apiKey,
+        customEndpoint: finalEndpoint,
+        model: finalModel,
       });
+      // Try streaming first, fall back to one-shot
+      const genFn = provider as any;
+      if (typeof genFn.generateFlowStream === 'function') {
+        let result = '';
+        await genFn.generateFlowStream(
+          prompt,
+          systemInstruction,
+          (chunk: string) => {
+            event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
+            result += chunk;
+          },
+        );
+        return result;
+      }
       return await provider.generateFlow(prompt, systemInstruction);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error('AI provider error:', err);
-      throw new Error(`AI generation failed: ${err.message || 'Unknown error'}`);
+      throw new Error(`AI generation failed: ${redactSecrets(msg)}`);
     }
   });
 

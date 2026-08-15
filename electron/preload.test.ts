@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
 const ALLOWED_INVOKE_CHANNELS = [
+  'ai_config_load',
+  'ai_config_save',
+  'ai_connection_test',
   'launch_browser',
   'navigate_browser',
   'get_browser_screenshot',
@@ -37,7 +40,7 @@ const ALLOWED_ON_CHANNELS = [
 
 describe('IPC channel whitelists', () => {
   it('invoke whitelist has expected count', () => {
-    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(24);
+    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(27);
   });
 
   it('on whitelist has expected count', () => {
@@ -76,6 +79,13 @@ describe('IPC channel whitelists', () => {
       'list_projects', 'save_project', 'save_project_to_disk',
       'load_project_from_disk', 'save_flow_to_disk',
     ];
+    for (const ch of required) {
+      expect(ALLOWED_INVOKE_CHANNELS).toContain(ch);
+    }
+  });
+
+  it('contains all required AI config channels', () => {
+    const required = ['ai_config_load', 'ai_config_save', 'ai_connection_test'];
     for (const ch of required) {
       expect(ALLOWED_INVOKE_CHANNELS).toContain(ch);
     }
