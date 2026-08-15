@@ -14,28 +14,13 @@ import {
   Plus,
   SlidersHorizontal,
   ChevronDown,
-  Cpu,
   CheckCircle2,
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
 import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
 import { useAgentStore } from '@/src/stores/agentStore';
-
-export type AgentProvider =
-  | 'cursor-cli'
-  | 'claude-code'
-  | 'command-code'
-  | 'open-code'
-  | 'gemini-cli'
-  | 'local-agent-cli'
-  | 'cursor-sdk'
-  | 'byok-claude'
-  | 'byok-gemini'
-  | 'byok-mimo'
-  | 'byok-openai'
-  | 'custom-gateway';
-
-// AttachedFile definition moved to AiPromptInput
+import { useAiConfigStore } from '@/src/stores/aiConfigStore';
+import { getAgentDef, resolveAgentId } from '@/src/lib/aiRegistry';
 
 interface AiCopilotProps {
   activeProject: Project;
@@ -44,8 +29,6 @@ interface AiCopilotProps {
   onApplyGeneratedYaml: (yaml: string) => void;
   onBatchAddFlowsToProject?: (newFlows: { name: string; yaml: string; description?: string }[]) => void;
   targetUrl: string;
-  selectedAgent?: string;
-  onSelectAgent?: (agent: string) => void;
   domContext?: string;
 }
 
@@ -55,29 +38,22 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   onApplyGeneratedYaml,
   onBatchAddFlowsToProject,
   targetUrl,
-  selectedAgent,
-  onSelectAgent,
   domContext,
 }) => {
   // Scope State: 'project' | 'flow'
   const [copilotScope, setCopilotScope] = useState<'project' | 'flow'>('project');
   const detectedAgents = useAgentStore((s) => s.detectedAgents);
 
-  // Provider / BYOK State
-  const [providerCategoryTab, setProviderCategoryTab] = useState<'local-agent-cli' | 'byok'>('local-agent-cli');
-  const [agentProvider, setAgentProvider] = useState<AgentProvider>((selectedAgent as AgentProvider) || 'local-agent-cli');
-
-  const handleSelectProvider = (prov: AgentProvider) => {
-    setAgentProvider(prov);
-    if (onSelectAgent) {
-      onSelectAgent(prov);
-    }
-  };
-  const [apiKey, setApiKey] = useState('');
-  const [customEndpoint, setCustomEndpoint] = useState('http://localhost:11434');
-  const [selectedModel, setSelectedModel] = useState('llama3.2');
+  // Provider panel visibility (local UI state)
   const [showProviderPanel, setShowProviderPanel] = useState(false);
-  const [isDetectingCli, setIsDetectingCli] = useState(false);
+
+  // Read from aiConfigStore — all writes handled by AgentSelector component
+  const selectedAgentId = useAiConfigStore((s) => s.selectedAgentId);
+  const agentCredentials = useAiConfigStore((s) => s.agentCredentials);
+  const agentModels = useAiConfigStore((s) => s.agentModels);
+  const loadFromDisk = useAiConfigStore((s) => s.loadFromDisk);
+
+  const displayName = getAgentDef(resolveAgentId(selectedAgentId))?.displayName ?? selectedAgentId;
 
   const providerRef = useRef<HTMLDivElement>(null);
 
@@ -91,21 +67,29 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCheckLocalCli = () => {
-    setIsDetectingCli(true);
-    setTimeout(() => {
-      setIsDetectingCli(false);
-    }, 450);
-  };
+  // Stream accumulation for incremental display
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedYaml, setGeneratedYaml] = useState<string | null>(null);
+  const [streamingText, setStreamingText] = useState('');
+  const [autoSuiteResult, setAutoSuiteResult] = useState<any | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [batchImported, setBatchImported] = useState(false);
+  const generatingFlag = useRef(false);
+
+  // Subscribe to stream chunks during generation
+  useEffect(() => {
+    if (!isGenerating || !generatingFlag.current) return;
+    const unlisten = tracyApi.onAgentStreamChunk((payload) => {
+      setStreamingText((prev) => prev + payload.delta);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [isGenerating]);
 
   // Form State & Attached Files State
   const [prompt, setPrompt] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedYaml, setGeneratedYaml] = useState<string | null>(null);
-  const [autoSuiteResult, setAutoSuiteResult] = useState<any | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [batchImported, setBatchImported] = useState(false);
 
   // File processing logic moved to AiPromptInput
 
@@ -116,7 +100,9 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     setIsGenerating(true);
     setErrorMessage(null);
     setGeneratedYaml(null);
+    setStreamingText('');
     setBatchImported(false);
+    generatingFlag.current = true;
 
     let finalPrompt = prompt.trim();
     if (attachedFiles.length > 0) {
@@ -131,15 +117,25 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
       finalPrompt = `${finalPrompt}\n\n[Mined DOM Context - Pre-calculated page structure]:\n${domContext}`;
     }
 
+    const model = agentModels[selectedAgentId];
+
     try {
       if (isElectronEnv()) {
-        const streamYaml = await tracyApi.runAgentStream(agentProvider, finalPrompt);
+        const streamYaml = await tracyApi.runAgentStream(
+          selectedAgentId,
+          finalPrompt,
+          undefined,
+          model,
+        );
+        generatingFlag.current = false;
         if (streamYaml) {
           setGeneratedYaml(streamYaml);
         } else {
           setErrorMessage('Empty response returned from agent CLI');
         }
       } else {
+        // Browser fallback
+        const cred = agentCredentials[selectedAgentId] || {};
         const res = await fetch('/api/gemini/generate-flow', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -149,14 +145,15 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
             copilotScope,
             projectName: activeProject.name,
             projectFlows: activeProject.flows,
-            agentProvider,
-            apiKey,
-            customEndpoint,
-            selectedModel,
+            agentProvider: selectedAgentId,
+            apiKey: cred.apiKey,
+            customEndpoint: cred.customEndpoint,
+            selectedModel: model,
           }),
         });
 
         const data = await res.json();
+        generatingFlag.current = false;
         if (res.ok && data.yaml) {
           setGeneratedYaml(data.yaml);
         } else {
@@ -164,6 +161,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         }
       }
     } catch (err: any) {
+      generatingFlag.current = false;
       setErrorMessage(err.message || 'Server error calling AI Copilot Agent');
     } finally {
       setIsGenerating(false);
@@ -175,8 +173,11 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     setErrorMessage(null);
     setAutoSuiteResult(null);
     setBatchImported(false);
+    generatingFlag.current = true;
 
     try {
+      const model = agentModels[selectedAgentId];
+      const cred = agentCredentials[selectedAgentId] || {};
       const res = await fetch('/api/gemini/auto-suite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,10 +185,10 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
           pageName: activeProject.name,
           url: targetUrl || activeProject.targetUrl,
           projectName: activeProject.name,
-          agentProvider,
-          apiKey,
-          customEndpoint,
-          selectedModel,
+          agentProvider: selectedAgentId,
+          apiKey: cred.apiKey,
+          customEndpoint: cred.customEndpoint,
+          selectedModel: model,
           pageElements: [
             { testId: 'add-cart-headphones', text: 'Add to Cart', role: 'button' },
             { testId: 'search-input', placeholder: 'Search products...', role: 'searchbox' },
@@ -200,12 +201,14 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
       });
 
       const data = await res.json();
+      generatingFlag.current = false;
       if (res.ok && data.flows) {
         setAutoSuiteResult(data);
       } else {
         setErrorMessage(data.error || 'Failed to generate project suite');
       }
     } catch (err: any) {
+      generatingFlag.current = false;
       setErrorMessage(err.message || 'Server error calling AI Agent');
     } finally {
       setIsGenerating(false);
@@ -218,23 +221,10 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     setBatchImported(true);
   };
 
-  const getAgentDisplayName = (provider: AgentProvider) => {
-    const map: Record<string, string> = {
-      'cursor-cli': 'Cursor CLI',
-      'claude-code': 'Claude Code',
-      'command-code': 'CommandCode',
-      'open-code': 'OpenCode',
-      'gemini-cli': 'Gemini CLI',
-      'local-agent-cli': 'Tracy Local CLI',
-      'cursor-sdk': 'Cursor SDK',
-      'byok-claude': 'Claude API',
-      'byok-gemini': 'Gemini API',
-      'byok-mimo': 'Xiaomi MiMo API',
-      'byok-openai': 'OpenAI API',
-      'custom-gateway': 'Custom Gateway',
-    };
-    return map[provider] || provider;
-  };
+  // Ensure store is loaded before first render
+  useEffect(() => {
+    loadFromDisk();
+  }, [loadFromDisk]);
 
   return (
     <div className="flex flex-col h-full bg-stone-950 text-stone-100 font-sans text-xs overflow-hidden relative">
@@ -317,25 +307,27 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
           </div>
         )}
 
-        {/* Generated YAML Result */}
-        {generatedYaml && (
+        {/* Streaming / Generated YAML Result */}
+        {(generatedYaml || streamingText) && (
           <div className="bg-stone-900 border border-stone-800 rounded-[6px] p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="font-bold text-emerald-400 text-xs flex items-center space-x-1.5">
-                <Check className="w-4 h-4" />
-                <span>Generated E2E YAML Flow</span>
+                {generatedYaml ? <Check className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>Generated E2E YAML Flow{!generatedYaml ? ' (streaming…)' : ''}</span>
               </span>
 
-              <button
-                onClick={() => onApplyGeneratedYaml(generatedYaml)}
-                className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all"
-              >
-                Apply to Active Editor ({activeFlow.name})
-              </button>
+              {generatedYaml && (
+                <button
+                  onClick={() => onApplyGeneratedYaml(generatedYaml)}
+                  className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all"
+                >
+                  Apply to Active Editor ({activeFlow.name})
+                </button>
+              )}
             </div>
 
             <pre className="p-3 bg-stone-950 rounded-[6px] border border-stone-800 font-mono text-xs text-amber-200 overflow-x-auto max-h-64">
-              {generatedYaml}
+              {generatedYaml || streamingText || '(waiting for response…)'}
             </pre>
           </div>
         )}
@@ -388,10 +380,10 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
 
       {/* Sticky Bottom Agent Selector Footer Bar */}
       <div className="bg-stone-900 border-t border-stone-800 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0 z-30 font-sans">
-        <div className="flex items-center space-x-2 truncate">
+        <div className="flex items-center space-x-2 truncate min-w-0">
           <Bot className="w-4 h-4 text-amber-400 shrink-0" />
           <span className="font-mono text-amber-300 font-bold text-xs bg-stone-950 px-2 py-0.5 rounded border border-stone-800 truncate">
-            {getAgentDisplayName(agentProvider)}
+            {displayName}
           </span>
         </div>
 
@@ -419,60 +411,8 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
 
               <AgentSelector
                 detectedAgents={detectedAgents}
-                agentTab={providerCategoryTab}
-                setAgentTab={setProviderCategoryTab}
-                agentProvider={agentProvider}
-                setAgentProvider={(prov) => {
-                  handleSelectProvider(prov as any);
-                  setSelectedModel(prov);
-                  setShowProviderPanel(false);
-                }}
-                apiKey={apiKey}
-                setApiKey={setApiKey}
                 size="sm"
               />
-
-              {/* Local CLI Detection Bar */}
-              {agentProvider === 'local-agent-cli' && (
-                <div className="p-2 bg-stone-950 border border-stone-800 rounded-[6px] flex items-center justify-between mt-3">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <div>
-                      <span className="font-bold text-stone-200 text-xs block">Local Agent CLI Active</span>
-                      <span className="text-[10px] font-mono text-stone-400">Listening on http://localhost:11434</span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCheckLocalCli}
-                    disabled={isDetectingCli}
-                    className="px-2.5 py-1 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold text-[11px] rounded-[4px] border border-stone-800 flex items-center space-x-1 cursor-pointer"
-                  >
-                    {isDetectingCli ? <Loader2 className="w-3 h-3 animate-spin" /> : <Cpu className="w-3 h-3 text-amber-400" />}
-                    <span>Detect CLI</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Custom Endpoint Input */}
-              <div className="space-y-2 pt-2 border-t border-stone-800/80 mt-3">
-
-                {(agentProvider === 'local-agent-cli' || agentProvider === 'custom-gateway') && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-stone-300 mb-1">
-                      Local Agent Endpoint URL
-                    </label>
-                    <input
-                      type="text"
-                      value={customEndpoint}
-                      onChange={e => setCustomEndpoint(e.target.value)}
-                      placeholder="e.g. http://localhost:11434"
-                      className="w-full bg-stone-950 border border-stone-800 rounded-[4px] p-2 text-xs font-mono text-stone-100 focus:outline-hidden focus:border-amber-600"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </div>
@@ -480,4 +420,3 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     </div>
   );
 };
-

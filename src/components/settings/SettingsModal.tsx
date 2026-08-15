@@ -26,6 +26,7 @@ import { DEFAULT_UI_SETTINGS } from '@/src/types/uiSettings';
 import { CliTerminal } from '@/src/components/reports/CliTerminal';
 import { UiSettingsPanel } from '@/src/components/settings/UiSettingsPanel';
 import { useAgentStore } from '@/src/stores/agentStore';
+import { AgentSelector } from '@/src/components/shared/AgentSelector';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -55,15 +56,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [uiSettingsState, setUiSettingsState] = useState<UiSettings>(uiSettings);
 
   const detectedAgents = useAgentStore((s) => s.detectedAgents);
-  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
-  const setSelectedAgentId = useAgentStore((s) => s.setSelectedAgentId);
-
-  // AI Agent Settings State
-  const [settingsAgentTab, setSettingsAgentTab] = useState<'local-agent-cli' | 'byok'>('local-agent-cli');
-  const [agentProvider, setAgentProvider] = useState<string>(selectedAgentId);
-  const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [systemPrompt, setSystemPrompt] = useState(
     'You are an expert E2E web testing agent. Generate robust Playwright assertion steps.'
   );
@@ -143,7 +135,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (onUiSettingsChange) {
       onUiSettingsChange(uiSettingsState);
     }
-    setSelectedAgentId(agentProvider);
     setSaveToast(true);
     setTimeout(() => {
       setSaveToast(false);
@@ -297,141 +288,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 bg-stone-950 p-1 rounded-[6px] border border-stone-800">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSettingsAgentTab('local-agent-cli');
-                      if (!['cursor-cli', 'claude-code', 'command-code', 'open-code', 'gemini-cli', 'local-agent-cli'].includes(agentProvider)) {
-                        setAgentProvider('local-agent-cli');
-                      }
-                    }}
-                    className={`py-2 px-3 rounded-[4px] font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                      settingsAgentTab === 'local-agent-cli'
-                        ? 'bg-amber-800 text-amber-100 shadow-md border border-amber-600/80'
-                        : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
-                    }`}
-                  >
-                    <Terminal className="w-4 h-4 text-emerald-400" />
-                    <span>local-agent-cli</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSettingsAgentTab('byok');
-                      if (!['cursor-sdk', 'byok-claude', 'byok-gemini', 'byok-mimo', 'byok-openai', 'custom-gateway'].includes(agentProvider)) {
-                        setAgentProvider('byok-gemini');
-                      }
-                    }}
-                    className={`py-2 px-3 rounded-[4px] font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                      settingsAgentTab === 'byok'
-                        ? 'bg-amber-800 text-amber-100 shadow-md border border-amber-600/80'
-                        : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
-                    }`}
-                  >
-                    <Key className="w-4 h-4 text-amber-300" />
-                    <span>BYOK (Bring Your Own Key)</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {settingsAgentTab === 'local-agent-cli' ? (
-                    <>
-                      {detectedAgents.map((provider) => (
-                        <div
-                          key={provider.id}
-                          onClick={() => provider.installed && setAgentProvider(provider.id)}
-                          className={`p-3 rounded-[6px] border transition-all ${
-                            !provider.installed
-                              ? 'bg-stone-950/50 border-stone-800/50 text-stone-600 opacity-50 cursor-not-allowed'
-                              : agentProvider === provider.id
-                              ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40 cursor-pointer'
-                              : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700 cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-xs text-amber-100 flex items-center gap-1.5">
-                              {provider.name}
-                              {!provider.installed && <span className="text-[9px] bg-stone-800 text-stone-400 px-1.5 py-0.5 rounded font-normal ml-1">Not Installed</span>}
-                            </span>
-                            {agentProvider === provider.id && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-stone-400 line-clamp-1">{provider.cli_binary}</p>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {[
-                        { id: 'cursor-sdk', name: 'Cursor SDK / API', desc: 'Cursor Cloud API Key' },
-                        { id: 'byok-claude', name: 'Claude API', desc: 'Anthropic Claude 3.7 Sonnet' },
-                        { id: 'byok-gemini', name: 'Gemini API', desc: 'Google GenAI SDK' },
-                        { id: 'byok-mimo', name: 'Xiaomi MiMo API', desc: 'Xiaomi MiMo Multimodal AI' },
-                        { id: 'byok-openai', name: 'OpenAI API', desc: 'OpenAI GPT-4o Key' },
-                        { id: 'custom-gateway', name: 'Custom Gateway', desc: 'Custom REST Endpoint' },
-                      ].map((provider) => (
-                        <div
-                          key={provider.id}
-                          onClick={() => setAgentProvider(provider.id)}
-                          className={`p-3 rounded-[6px] border cursor-pointer transition-all ${
-                            agentProvider === provider.id
-                              ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40'
-                              : 'bg-stone-950 border-stone-800 text-stone-400 hover:border-stone-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-xs text-amber-100">{provider.name}</span>
-                            {agentProvider === provider.id && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-stone-400 line-clamp-1">{provider.desc}</p>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-stone-800">
-                  <label className="block text-xs font-bold text-stone-300">
-                    GenAI API Credentials
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? 'text' : 'password'}
-                      value={geminiApiKey}
-                      onChange={(e) => setGeminiApiKey(e.target.value)}
-                      className="w-full p-2.5 pr-10 bg-stone-950 border border-stone-800 rounded-[6px] font-mono text-xs text-stone-100 focus:outline-hidden focus:border-amber-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-100 cursor-pointer"
-                    >
-                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-stone-500">
-                    Managed securely via process.env. GEMINI_API_KEY is used for AI Copilot step generation.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-stone-300">Default Model Alias</label>
-                  <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full p-2.5 bg-stone-950 border border-stone-800 rounded-[6px] text-xs text-stone-100 focus:outline-hidden cursor-pointer"
-                  >
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fastest, High Accuracy)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning & Complex DOMs)</option>
-                    <option value="claude-3-7-sonnet">Claude 3.7 Sonnet (CLI Agent Integration)</option>
-                    <option value="gpt-4o">GPT-4o (OpenAI Direct)</option>
-                  </select>
-                </div>
+                {/* Unified Agent Selector — reads/writes aiConfigStore */}
+                <AgentSelector detectedAgents={detectedAgents} size="md" />
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">

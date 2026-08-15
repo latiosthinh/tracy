@@ -74,7 +74,6 @@ export const StudioView: React.FC = () => {
   const [targetPath, setTargetPath] = useState<string>('/products');
   const [embedUrlInput, setEmbedUrlInput] = useState<string>(`${activeProject?.targetUrl || ''}${targetPath}`);
   const [yamlCopied, setYamlCopied] = useState<boolean>(false);
-  const [selectedAgent, setSelectedAgent] = useState<string>('gemini-2.5-flash');
   const [isEditingActiveFlowName, setIsEditingActiveFlowName] = useState<boolean>(false);
   const [activeFlowNameInput, setActiveFlowNameInput] = useState<string>('');
 
@@ -453,8 +452,6 @@ export const StudioView: React.FC = () => {
         lastResult={lastResult}
         handleExplainFailureWithAi={handleExplainFailureWithAi}
         batchAddFlows={batchAddFlows}
-        selectedAgent={selectedAgent}
-        setSelectedAgent={setSelectedAgent}
         getMinedDomContext={getMinedDomContext}
         workspaceConfig={workspaceConfig}
         updateWorkspaceConfig={updateWorkspaceConfig}

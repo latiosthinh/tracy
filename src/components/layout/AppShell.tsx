@@ -4,6 +4,7 @@ import { useExecutionStore } from '@/src/stores/executionStore';
 import { useSettingsStore } from '@/src/stores/settingsStore';
 import { useUiStore } from '@/src/stores/uiStore';
 import { useAgentStore } from '@/src/stores/agentStore';
+import { useAiConfigStore } from '@/src/stores/aiConfigStore';
 import { useAutoSave } from '@/src/hooks/useAutoSave';
 import { SplashScreen } from '@/src/components/shared/SplashScreen';
 
@@ -115,7 +116,13 @@ export const AppShell: React.FC = () => {
   const workspaceConfig = useSettingsStore((s) => s.workspaceConfig);
   const updateWorkspaceConfig = useSettingsStore((s) => s.updateWorkspaceConfig);
 
-  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
+  const selectedAgentId = useAiConfigStore((s) => s.selectedAgentId);
+  const loadFromDisk = useAiConfigStore((s) => s.loadFromDisk);
+
+  // Load AI config from disk once on app boot (Electron only; browser mode is memory-only).
+  useEffect(() => {
+    loadFromDisk();
+  }, [loadFromDisk]);
 
   // Theme application
   const applyThemeCssVars = useSettingsStore((s) => s.applyThemeCssVars);

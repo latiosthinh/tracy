@@ -51,8 +51,6 @@ interface StudioRightSidebarProps {
   lastResult: any;
   handleExplainFailureWithAi: () => void;
   batchAddFlows: (flows: any[]) => void;
-  selectedAgent: string;
-  setSelectedAgent: (agent: string) => void;
   getMinedDomContext: () => string;
   workspaceConfig: any;
   updateWorkspaceConfig: (config: any) => void;
@@ -85,8 +83,6 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
   lastResult,
   handleExplainFailureWithAi,
   batchAddFlows,
-  selectedAgent,
-  setSelectedAgent,
   getMinedDomContext,
   workspaceConfig,
   updateWorkspaceConfig
@@ -307,8 +303,6 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
           }}
           onBatchAddFlowsToProject={(flows) => batchAddFlows(flows)}
           targetUrl={activeProject?.targetUrl || ''}
-          selectedAgent={selectedAgent}
-          onSelectAgent={setSelectedAgent}
           domContext={getMinedDomContext()}
         />
       )}
