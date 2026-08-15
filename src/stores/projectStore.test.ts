@@ -17,6 +17,7 @@ function resetStore() {
     activeProjectId: DEFAULT_PROJECTS[0].id,
     activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || '',
     defaultSaveLocation: '',
+    browserPaths: {},
   } as any);
 }
 
@@ -217,6 +218,19 @@ describe('projectStore', () => {
         { name: 'flow-b', yaml: '- navigate: /b' },
       ]);
       expect(getStore().getActiveProject().flows.length).toBe(before + 2);
+    });
+  });
+
+  describe('browserPaths (per-project browser path isolation)', () => {
+    it('defaults to "/" for unknown projects', () => {
+      expect(getStore().getBrowserPath('nope')).toBe('/');
+    });
+
+    it('stores path per project without leaking to others', () => {
+      const { projects, setBrowserPath, getBrowserPath } = getStore();
+      setBrowserPath(projects[0].id, '/checkout');
+      expect(getBrowserPath(projects[0].id)).toBe('/checkout');
+      expect(getBrowserPath(projects[1].id)).toBe('/');
     });
   });
 });

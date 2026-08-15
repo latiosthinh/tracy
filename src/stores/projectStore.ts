@@ -12,14 +12,17 @@ interface ProjectState {
   activeProjectId: string;
   activeFlowId: string;
   defaultSaveLocation: string;
+  browserPaths: Record<string, string>;
 
   // Derived getters
   getActiveProject: () => Project;
   getOpenProjects: () => Project[];
   getActiveFlow: () => FlowFile;
+  getBrowserPath: (projectId: string) => string;
 
   // Actions
   setDefaultSaveLocation: (location: string) => void;
+  setBrowserPath: (projectId: string, path: string) => void;
   selectProject: (projectId: string) => void;
   closeProjectTab: (projectId: string) => void;
   createProject: (newProject: Project) => void;
@@ -56,6 +59,7 @@ export const useProjectStore = create<ProjectState>()(
     activeProjectId: DEFAULT_PROJECTS[0].id,
     activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || 'checkout-flow',
     defaultSaveLocation: '',
+    browserPaths: {},
 
     getActiveProject: () => {
       const { projects, activeProjectId } = get();
@@ -88,6 +92,15 @@ export const useProjectStore = create<ProjectState>()(
     setDefaultSaveLocation: (location: string) =>
       set((state) => {
         state.defaultSaveLocation = location;
+      }),
+
+    getBrowserPath: (projectId: string) => {
+      return get().browserPaths[projectId] || '/';
+    },
+
+    setBrowserPath: (projectId: string, path: string) =>
+      set((state) => {
+        state.browserPaths[projectId] = path;
       }),
 
     selectProject: (projectId: string) => {
