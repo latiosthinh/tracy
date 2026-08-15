@@ -521,80 +521,126 @@ function I() {
 }
 //#endregion
 //#region electron/ipc/webviewManager.ts
-var L = null;
-function R() {
-	s.handle("open_child_webview", async (e, { url: t, x: n, y: r, width: o, height: s }) => {
-		let c = i.fromWebContents(e.sender);
-		if (c) {
-			if (L &&= (c.contentView.removeChildView(L), null), t && !t.startsWith("http://") && !t.startsWith("https://") && t !== "about:blank") {
-				console.warn(`Blocked invalid webview URL navigation attempt: ${t}`);
-				return;
-			}
-			L = new a({ webPreferences: {
-				contextIsolation: !0,
-				nodeIntegration: !1,
-				sandbox: !0
-			} }), c.contentView.addChildView(L), L.setBounds({
-				x: Math.round(n),
-				y: Math.round(r),
-				width: Math.round(o),
-				height: Math.round(s)
-			}), L.webContents.loadURL(t);
+var L = 4, R = /* @__PURE__ */ new Map();
+function z(e) {
+	return typeof e == "string" && e.length > 0 && e.length <= 128;
+}
+function B(e) {
+	for (; R.size > L;) {
+		let t = null, n = Infinity;
+		for (let [e, r] of R) r.lastUsed < n && (n = r.lastUsed, t = e);
+		if (!t) break;
+		let r = R.get(t);
+		try {
+			e.contentView.removeChildView(r.view);
+		} catch {}
+		r.view.webContents.close(), R.delete(t);
+	}
+}
+function V() {
+	s.handle("open_child_webview", async (e, { projectId: t, url: n, x: r, y: o, width: s, height: c }) => {
+		if (!z(t)) {
+			console.warn(`Blocked invalid webview projectId: ${t}`);
+			return;
 		}
-	}), s.handle("resize_child_webview", async (e, { x: t, y: n, width: r, height: i }) => {
-		L && L.setBounds({
-			x: Math.round(t),
-			y: Math.round(n),
-			width: Math.round(r),
-			height: Math.round(i)
-		});
-	}), s.handle("set_child_webview_visible", async (e, { visible: t }) => {
-		L && (t || L.setBounds({
+		if (n && !n.startsWith("http://") && !n.startsWith("https://") && n !== "about:blank") {
+			console.warn(`Blocked invalid webview URL navigation attempt: ${n}`);
+			return;
+		}
+		let l = i.fromWebContents(e.sender);
+		if (!l) return;
+		if (R.has(t)) {
+			let e = R.get(t);
+			e.lastUsed = Date.now();
+			try {
+				l.contentView.removeChildView(e.view);
+			} catch {}
+			l.contentView.addChildView(e.view), e.view.setBounds({
+				x: Math.round(r),
+				y: Math.round(o),
+				width: Math.round(s),
+				height: Math.round(c)
+			}), n && e.view.webContents.getURL() !== n && e.view.webContents.loadURL(n);
+			return;
+		}
+		let u = new a({ webPreferences: {
+			contextIsolation: !0,
+			nodeIntegration: !1,
+			sandbox: !0
+		} });
+		l.contentView.addChildView(u), u.setBounds({
+			x: Math.round(r),
+			y: Math.round(o),
+			width: Math.round(s),
+			height: Math.round(c)
+		}), n && u.webContents.loadURL(n), R.set(t, {
+			view: u,
+			lastUsed: Date.now()
+		}), B(l);
+	}), s.handle("resize_child_webview", async (e, { projectId: t, x: n, y: r, width: i, height: a }) => {
+		if (!z(t)) return;
+		let o = R.get(t);
+		o && (o.view.setBounds({
+			x: Math.round(n),
+			y: Math.round(r),
+			width: Math.round(i),
+			height: Math.round(a)
+		}), o.lastUsed = Date.now());
+	}), s.handle("set_child_webview_visible", async (e, { projectId: t, visible: n }) => {
+		if (!z(t)) return;
+		let r = R.get(t);
+		r && (n || r.view.setBounds({
 			x: 0,
 			y: 0,
 			width: 0,
 			height: 0
 		}));
-	}), s.handle("close_child_webview", async (e) => {
-		let t = i.fromWebContents(e.sender);
-		t && L && (t.contentView.removeChildView(L), L = null);
+	}), s.handle("close_child_webview", async (e, { projectId: t }) => {
+		if (!z(t)) return;
+		let n = R.get(t);
+		if (!n) return;
+		let r = i.fromWebContents(e.sender);
+		if (r) try {
+			r.contentView.removeChildView(n.view);
+		} catch {}
+		n.view.webContents.close(), R.delete(t);
 	});
 }
 //#endregion
 //#region electron/ipc/index.ts
-var z = !1;
-async function B() {
-	if (I(), R(), await M(), !z) {
-		z = !0;
+var H = !1;
+async function U() {
+	if (I(), V(), await M(), !H) {
+		H = !0;
 		let { registerPlaywrightHandlers: e } = await import("./playwrightEngine-BkD6LycP.js");
 		e();
 	}
 }
 //#endregion
 //#region electron/main.ts
-var V = c.dirname(l(import.meta.url));
-process.env.APP_ROOT = c.join(V, "..");
-var H = process.env.VITE_DEV_SERVER_URL, U = c.join(process.env.APP_ROOT, "dist-electron"), W = c.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = H ? c.join(process.env.APP_ROOT, "public") : W, o.isPackaged || (o.commandLine.appendSwitch("remote-debugging-port", "9222"), o.commandLine.appendSwitch("remote-debugging-address", "127.0.0.1"));
-var G;
-function K() {
-	G = new i({
+var W = c.dirname(l(import.meta.url));
+process.env.APP_ROOT = c.join(W, "..");
+var G = process.env.VITE_DEV_SERVER_URL, K = c.join(process.env.APP_ROOT, "dist-electron"), q = c.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = G ? c.join(process.env.APP_ROOT, "public") : q, o.isPackaged || (o.commandLine.appendSwitch("remote-debugging-port", "9222"), o.commandLine.appendSwitch("remote-debugging-address", "127.0.0.1"));
+var J;
+function Y() {
+	J = new i({
 		width: 1200,
 		height: 800,
 		webPreferences: {
-			preload: c.join(V, "preload.mjs"),
+			preload: c.join(W, "preload.mjs"),
 			contextIsolation: !0,
 			nodeIntegration: !1,
 			sandbox: !0
 		}
-	}), H ? G.loadURL(H) : G.loadFile(c.join(W, "index.html"));
+	}), G ? J.loadURL(G) : J.loadFile(c.join(q, "index.html"));
 }
 o.on("window-all-closed", () => {
-	process.platform !== "darwin" && (o.quit(), G = null);
+	process.platform !== "darwin" && (o.quit(), J = null);
 }), o.on("activate", () => {
-	i.getAllWindows().length === 0 && K();
+	i.getAllWindows().length === 0 && Y();
 }), o.whenReady().then(async () => {
-	K(), await B();
+	Y(), await U();
 });
 //#endregion
-export { U as MAIN_DIST, W as RENDERER_DIST, H as VITE_DEV_SERVER_URL };
+export { K as MAIN_DIST, q as RENDERER_DIST, G as VITE_DEV_SERVER_URL };
