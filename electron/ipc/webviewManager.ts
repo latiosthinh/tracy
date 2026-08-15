@@ -5,6 +5,7 @@ const MAX_LIVE_WEBVIEWS = 4;
 interface WebviewEntry {
   view: WebContentsView;
   lastUsed: number;
+  lastBounds: { x: number; y: number; width: number; height: number };
 }
 
 const webviews = new Map<string, WebviewEntry>();
@@ -53,6 +54,7 @@ export function registerWebviewHandlers() {
     if (webviews.has(projectId)) {
       const entry = webviews.get(projectId)!;
       entry.lastUsed = Date.now();
+      entry.lastBounds = { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) };
 
       try {
         parentWin.contentView.removeChildView(entry.view);
@@ -60,7 +62,7 @@ export function registerWebviewHandlers() {
         // Ignored if not attached
       }
       parentWin.contentView.addChildView(entry.view);
-      entry.view.setBounds({ x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) });
+      entry.view.setBounds(entry.lastBounds);
       if (url && entry.view.webContents.getURL() !== url) {
         entry.view.webContents.loadURL(url);
       }
@@ -75,13 +77,14 @@ export function registerWebviewHandlers() {
       },
     });
 
+    const initialBounds = { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) };
     parentWin.contentView.addChildView(view);
-    view.setBounds({ x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) });
+    view.setBounds(initialBounds);
     if (url) {
       view.webContents.loadURL(url);
     }
 
-    webviews.set(projectId, { view, lastUsed: Date.now() });
+    webviews.set(projectId, { view, lastUsed: Date.now(), lastBounds: initialBounds });
     evictIfNeeded(parentWin);
   });
 
@@ -90,7 +93,9 @@ export function registerWebviewHandlers() {
     const entry = webviews.get(projectId);
     if (!entry) return;
 
-    entry.view.setBounds({ x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) });
+    const newBounds = { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) };
+    entry.lastBounds = newBounds;
+    entry.view.setBounds(newBounds);
     entry.lastUsed = Date.now();
   });
 
@@ -101,6 +106,8 @@ export function registerWebviewHandlers() {
 
     if (!visible) {
       entry.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+    } else if (entry.lastBounds && (entry.lastBounds.width > 0 || entry.lastBounds.height > 0)) {
+      entry.view.setBounds(entry.lastBounds);
     }
   });
 

@@ -551,45 +551,48 @@ function V() {
 		if (!l) return;
 		if (R.has(t)) {
 			let e = R.get(t);
-			e.lastUsed = Date.now();
-			try {
-				l.contentView.removeChildView(e.view);
-			} catch {}
-			l.contentView.addChildView(e.view), e.view.setBounds({
+			e.lastUsed = Date.now(), e.lastBounds = {
 				x: Math.round(r),
 				y: Math.round(o),
 				width: Math.round(s),
 				height: Math.round(c)
-			}), n && e.view.webContents.getURL() !== n && e.view.webContents.loadURL(n);
+			};
+			try {
+				l.contentView.removeChildView(e.view);
+			} catch {}
+			l.contentView.addChildView(e.view), e.view.setBounds(e.lastBounds), n && e.view.webContents.getURL() !== n && e.view.webContents.loadURL(n);
 			return;
 		}
 		let u = new a({ webPreferences: {
 			contextIsolation: !0,
 			nodeIntegration: !1,
 			sandbox: !0
-		} });
-		l.contentView.addChildView(u), u.setBounds({
+		} }), d = {
 			x: Math.round(r),
 			y: Math.round(o),
 			width: Math.round(s),
 			height: Math.round(c)
-		}), n && u.webContents.loadURL(n), R.set(t, {
+		};
+		l.contentView.addChildView(u), u.setBounds(d), n && u.webContents.loadURL(n), R.set(t, {
 			view: u,
-			lastUsed: Date.now()
+			lastUsed: Date.now(),
+			lastBounds: d
 		}), B(l);
 	}), s.handle("resize_child_webview", async (e, { projectId: t, x: n, y: r, width: i, height: a }) => {
 		if (!z(t)) return;
 		let o = R.get(t);
-		o && (o.view.setBounds({
+		if (!o) return;
+		let s = {
 			x: Math.round(n),
 			y: Math.round(r),
 			width: Math.round(i),
 			height: Math.round(a)
-		}), o.lastUsed = Date.now());
+		};
+		o.lastBounds = s, o.view.setBounds(s), o.lastUsed = Date.now();
 	}), s.handle("set_child_webview_visible", async (e, { projectId: t, visible: n }) => {
 		if (!z(t)) return;
 		let r = R.get(t);
-		r && (n || r.view.setBounds({
+		r && (n ? r.lastBounds && (r.lastBounds.width > 0 || r.lastBounds.height > 0) && r.view.setBounds(r.lastBounds) : r.view.setBounds({
 			x: 0,
 			y: 0,
 			width: 0,
@@ -624,16 +627,19 @@ var G = process.env.VITE_DEV_SERVER_URL, K = c.join(process.env.APP_ROOT, "dist-
 process.env.VITE_PUBLIC = G ? c.join(process.env.APP_ROOT, "public") : q, o.isPackaged || (o.commandLine.appendSwitch("remote-debugging-port", "9222"), o.commandLine.appendSwitch("remote-debugging-address", "127.0.0.1"));
 var J;
 function Y() {
+	let e = c.join(W, "../electron/icons/icon-256x256.png");
 	J = new i({
 		width: 1200,
 		height: 800,
+		autoHideMenuBar: !0,
+		icon: e,
 		webPreferences: {
 			preload: c.join(W, "preload.mjs"),
 			contextIsolation: !0,
 			nodeIntegration: !1,
 			sandbox: !0
 		}
-	}), G ? J.loadURL(G) : J.loadFile(c.join(q, "index.html"));
+	}), J.setMenuBarVisibility(!1), G ? J.loadURL(G) : J.loadFile(c.join(q, "index.html"));
 }
 o.on("window-all-closed", () => {
 	process.platform !== "darwin" && (o.quit(), J = null);

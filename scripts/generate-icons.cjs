@@ -1,30 +1,27 @@
-// Generate Tracy icon PNG files using pure Node.js (no dependencies)
-// Tracy logo: amber "T" on dark background with cyan accent dot
+// Generate ProQA icon PNG files using pure Node.js (no dependencies)
+// ProQA logo: vintage amber/gold P/? glyph with 4-wings star on dark roasted stone background
 
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
 function createPNG(width, height, pixels) {
-  // PNG signature
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
-  // IHDR chunk
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
-  ihdrData[8] = 8;  // bit depth
-  ihdrData[9] = 6;  // color type (RGBA)
-  ihdrData[10] = 0; // compression
-  ihdrData[11] = 0; // filter
-  ihdrData[12] = 0; // interlace
+  ihdrData[8] = 8;
+  ihdrData[9] = 6; // RGBA
+  ihdrData[10] = 0;
+  ihdrData[11] = 0;
+  ihdrData[12] = 0;
 
   const ihdrChunk = makeChunk('IHDR', ihdrData);
 
-  // IDAT chunk (image data)
   const rawData = Buffer.alloc(height * (width * 4 + 1));
   for (let y = 0; y < height; y++) {
-    rawData[y * (width * 4 + 1)] = 0; // filter byte
+    rawData[y * (width * 4 + 1)] = 0;
     for (let x = 0; x < width; x++) {
       const idx = y * width + x;
       const pixel = pixels[idx] || [0, 0, 0, 0];
@@ -38,8 +35,6 @@ function createPNG(width, height, pixels) {
 
   const compressed = zlib.deflateSync(rawData);
   const idatChunk = makeChunk('IDAT', compressed);
-
-  // IEND chunk
   const iendChunk = makeChunk('IEND', Buffer.alloc(0));
 
   return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
@@ -79,80 +74,111 @@ function crc32Table() {
   return table;
 }
 
-// Tracy logo: amber "T" on dark stone background with cyan dot
-function generateTracyLogo(size) {
+// Distance from point (px, py) to line segment (ax, ay)-(bx, by)
+function distToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+  const projX = ax + t * dx;
+  const projY = ay + t * dy;
+  return Math.hypot(px - projX, py - projY);
+}
+
+// ProQA logo: vintage amber/gold P/? glyph with 4-wings star on dark stone badge
+function generateProQALogo(size) {
   const pixels = [];
-  const bgR = 12, bgG = 10, bgB = 9; // stone-950
-  const amberR = 245, amberG = 158, amberB = 11; // amber-500
+  const bgR = 18, bgG = 16, bgB = 14; // warm dark stone
+  const borderR = 217, borderG = 119, borderB = 6; // amber-600 #d97706
+  const amberR = 217, amberG = 119, amberB = 6; // amber-600
   const amberLightR = 251, amberLightG = 191, amberLightB = 36; // amber-400
-  const cyanR = 34, cyanG = 211, cyanB = 238; // cyan-400
+
+  // Keypoints of the P/? glyph in normalized (0..1) coordinates
+  const strokeWidth = size * 0.105;
+  const strokeRadius = strokeWidth / 2;
+
+  // Segments forming the P/? hook
+  const p0 = [size * 0.34, size * 0.43]; // Left start
+  const p1 = [size * 0.34, size * 0.31]; // Top-left corner
+  const p2 = [size * 0.66, size * 0.31]; // Top-right corner
+  const p3 = [size * 0.66, size * 0.49]; // Right bottom corner
+  const p4 = [size * 0.50, size * 0.49]; // Center bend
+  const p5 = [size * 0.50, size * 0.63]; // Stem bottom
+
+  // 4-winged star centered at (0.50, 0.77) with radius ~0.09
+  const starCx = size * 0.50;
+  const starCy = size * 0.77;
+  const starR = size * 0.095;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      // Rounded rect background (fill most of the icon)
+      // Rounded rect badge background
       const margin = Math.round(size * 0.08);
-      const radius = Math.round(size * 0.15);
+      const radius = Math.round(size * 0.18);
       const cx = x - size / 2;
       const cy = y - size / 2;
       const halfW = size / 2 - margin;
       const halfH = size / 2 - margin;
 
-      let isBg = true;
+      let isInside = false;
+      let isBorder = false;
+
       if (Math.abs(cx) <= halfW && Math.abs(cy) <= halfH) {
-        isBg = true;
+        isInside = true;
+        if (Math.abs(cx) >= halfW - Math.max(1, size * 0.02) || Math.abs(cy) >= halfH - Math.max(1, size * 0.02)) {
+          isBorder = true;
+        }
       } else {
         const dx = Math.max(Math.abs(cx) - halfW, 0);
         const dy = Math.max(Math.abs(cy) - halfH, 0);
-        if (dx * dx + dy * dy <= radius * radius) {
-          isBg = true;
-        } else {
-          isBg = false;
+        const distSq = dx * dx + dy * dy;
+        if (distSq <= radius * radius) {
+          isInside = true;
+          const innerR = radius - Math.max(1, size * 0.02);
+          if (distSq >= innerR * innerR) {
+            isBorder = true;
+          }
         }
       }
 
-      if (!isBg) {
+      if (!isInside) {
         pixels.push([0, 0, 0, 0]);
         continue;
       }
 
-      // Draw "T" shape
-      const tTop = Math.round(size * 0.22);
-      const tBottom = Math.round(size * 0.72);
-      const tLeft = Math.round(size * 0.25);
-      const tRight = Math.round(size * 0.75);
-      const tStemWidth = Math.round(size * 0.18);
-      const tStemLeft = Math.round(size / 2 - tStemWidth / 2);
-      const tStemRight = Math.round(size / 2 + tStemWidth / 2);
-      const tBarHeight = Math.round(size * 0.12);
-
-      let isT = false;
-      let isCyanDot = false;
-
-      // T top bar
-      if (y >= tTop && y <= tTop + tBarHeight && x >= tLeft && x <= tRight) {
-        isT = true;
-      }
-      // T stem
-      if (y >= tTop && y <= tBottom && x >= tStemLeft && x <= tStemRight) {
-        isT = true;
+      if (isBorder) {
+        pixels.push([borderR, borderB, borderG, 255]);
+        continue;
       }
 
-      // Cyan accent dot (bottom-right area)
-      const dotCx = Math.round(size * 0.78);
-      const dotCy = Math.round(size * 0.78);
-      const dotR = Math.round(size * 0.06);
-      if ((x - dotCx) ** 2 + (y - dotCy) ** 2 <= dotR * dotR) {
-        isCyanDot = true;
+      // Check distance to the 5 stroke segments
+      const d1 = distToSegment(x, y, p0[0], p0[1], p1[0], p1[1]);
+      const d2 = distToSegment(x, y, p1[0], p1[1], p2[0], p2[1]);
+      const d3 = distToSegment(x, y, p2[0], p2[1], p3[0], p3[1]);
+      const d4 = distToSegment(x, y, p3[0], p3[1], p4[0], p4[1]);
+      const d5 = distToSegment(x, y, p4[0], p4[1], p5[0], p5[1]);
+
+      const minDist = Math.min(d1, d2, d3, d4, d5);
+      const isGlyph = minDist <= strokeRadius;
+
+      // Check 4-winged star (Astroid / 4-pointed sparkle formula)
+      const starDx = Math.abs(x - starCx);
+      const starDy = Math.abs(y - starCy);
+      let isStar = false;
+      if (starDx <= starR && starDy <= starR) {
+        const astroidVal = Math.sqrt(starDx / starR) + Math.sqrt(starDy / starR);
+        if (astroidVal <= 1.05) {
+          isStar = true;
+        }
       }
 
-      if (isCyanDot) {
-        pixels.push([cyanR, cyanG, cyanB, 255]);
-      } else if (isT) {
-        // Gradient effect on T
-        const tProgress = (y - tTop) / (tBottom - tTop);
-        const r = Math.round(amberR + (amberLightR - amberR) * (1 - tProgress));
-        const g = Math.round(amberG + (amberLightG - amberG) * (1 - tProgress));
-        const b = Math.round(amberB + (amberLightB - amberB) * (1 - tProgress));
+      if (isGlyph || isStar) {
+        // Warm gold-to-amber gradient
+        const tProgress = Math.max(0, Math.min(1, (y - size * 0.25) / (size * 0.55)));
+        const r = Math.round(amberLightR - (amberLightR - amberR) * tProgress);
+        const g = Math.round(amberLightG - (amberLightG - amberG) * tProgress);
+        const b = Math.round(amberLightB - (amberLightB - amberB) * tProgress);
         pixels.push([r, g, b, 255]);
       } else {
         pixels.push([bgR, bgG, bgB, 255]);
@@ -163,15 +189,28 @@ function generateTracyLogo(size) {
   return pixels;
 }
 
-const sizes = [32, 128, 256];
+const sizes = [16, 32, 48, 64, 128, 256];
 const iconsDir = path.join(__dirname, '..', 'electron', 'icons');
+const buildDir = path.join(__dirname, '..', 'build');
+const publicDir = path.join(__dirname, '..', 'public');
+
+[iconsDir, buildDir, publicDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
 for (const size of sizes) {
-  const pixels = generateTracyLogo(size);
+  const pixels = generateProQALogo(size);
   const png = createPNG(size, size, pixels);
-  const filename = size === 256 ? '128x128@2x.png' : `${size}x${size}.png`;
-  fs.writeFileSync(path.join(iconsDir, filename), png);
-  console.log(`Created ${filename} (${size}x${size})`);
+  fs.writeFileSync(path.join(iconsDir, `icon-${size}x${size}.png`), png);
+  console.log(`Created electron/icons/icon-${size}x${size}.png`);
 }
 
-console.log('Done! Icons generated successfully.');
+// Write standard desktop icon aliases
+const mainPixels = generateProQALogo(256);
+const mainPng = createPNG(256, 256, mainPixels);
+fs.writeFileSync(path.join(iconsDir, 'icon.png'), mainPng);
+fs.writeFileSync(path.join(buildDir, 'icon.png'), mainPng);
+fs.writeFileSync(path.join(publicDir, 'icon.png'), mainPng);
+
+console.log('Done! All ProQA icons generated successfully.');
+

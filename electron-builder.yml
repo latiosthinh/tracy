@@ -1,5 +1,5 @@
-appId: com.tracy.automation-studio
-productName: Tracy Automation Studio
+appId: com.proqa.automation-studio
+productName: ProQA Automation Studio
 directories:
   output: release
   buildResources: build

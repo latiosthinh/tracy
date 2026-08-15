@@ -22,8 +22,8 @@ const WelcomeSetup = React.lazy(() => import('@/src/components/setup/WelcomeSetu
 const ModalFallback = () => null;
 
 export const AppShell: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingStep, setLoadingStep] = useState<string>('init');
+  const [dataReady, setDataReady] = useState(false);
+  const [splashFinished, setSplashFinished] = useState(false);
 
   const scanAgents = useAgentStore((s) => s.scanAgents);
   const setupEventListeners = useExecutionStore((s) => s.setupEventListeners);
@@ -32,21 +32,24 @@ export const AppShell: React.FC = () => {
   // Auto-save hook
   useAutoSave(30);
 
-  // Initial load sequence using real async tasks
+  // Initial load sequence using real async tasks in background
   useEffect(() => {
     const loadApp = async () => {
-      setLoadingStep('init');
-      // Load projects from IndexedDB in web mode (no-op in Electron)
-      await loadProjectsFromIndexedDb();
-      await scanAgents();
-      setLoadingStep('projects');
-      await setupEventListeners();
-      setLoadingStep('ready');
-      setIsLoading(false);
+      try {
+        await loadProjectsFromIndexedDb();
+        await scanAgents();
+        await setupEventListeners();
+      } catch (err) {
+        console.error('Error during initial app boot:', err);
+      } finally {
+        setDataReady(true);
+      }
     };
 
     loadApp();
   }, [scanAgents, setupEventListeners, loadProjectsFromIndexedDb]);
+
+  const isLoading = !dataReady || !splashFinished;
 
   // Project store state
   const projects = useProjectStore((s) => s.projects);
@@ -132,7 +135,7 @@ export const AppShell: React.FC = () => {
 
   return (
     <>
-      <SplashScreen isLoading={isLoading} currentStep={loadingStep} />
+      <SplashScreen isLoading={!dataReady} onFinished={() => setSplashFinished(true)} />
 
       <div
         className={`flex flex-col h-screen w-screen bg-stone-950 overflow-hidden font-sans text-stone-100 transition-opacity duration-500 ${

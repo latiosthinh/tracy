@@ -19,9 +19,13 @@ if (!app.isPackaged) {
 let win: BrowserWindow | null;
 
 function createWindow() {
+  const iconPath = path.join(__dirname, '../electron/icons/icon-256x256.png');
+
   win = new BrowserWindow({
     width: 1200,
     height: 800,
+    autoHideMenuBar: true,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -29,6 +33,8 @@ function createWindow() {
       sandbox: true,
     },
   });
+
+  win.setMenuBarVisibility(false);
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);

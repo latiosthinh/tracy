@@ -424,10 +424,17 @@ export const StudioView: React.FC = () => {
 
       {/* Resizable Divider */}
       <div
-        role="separator"
-        aria-orientation="vertical"
+        role="slider"
+        tabIndex={0}
         aria-label="Resize panel divider"
+        aria-valuenow={sidePanelWidth}
+        aria-valuemin={280}
+        aria-valuemax={800}
         onMouseDown={handleMouseDown}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') setSidePanelWidth((prev) => Math.min(prev + 20, 800));
+          if (e.key === 'ArrowRight') setSidePanelWidth((prev) => Math.max(prev - 20, 280));
+        }}
         className={`w-1.5 bg-stone-800 hover:bg-amber-600 cursor-col-resize shrink-0 transition-colors flex items-center justify-center ${isDragging ? 'bg-amber-500' : ''
           }`}
       >
