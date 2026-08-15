@@ -6,6 +6,7 @@ import {
   MousePointer,
   ShieldCheck
 } from 'lucide-react';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface DocsModalProps {
   isOpen: boolean;
@@ -13,22 +14,30 @@ interface DocsModalProps {
 }
 
 export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="docs-modal-title"
+      className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+    >
       <div className="bg-stone-900 border border-stone-800 rounded-[6px] max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden font-sans text-xs text-stone-200">
         {/* Modal Header */}
         <div className="p-4 bg-stone-900 border-b border-stone-800 flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-amber-400" />
-            <h2 className="font-serif font-bold text-amber-100 text-sm">Tracy E2E Testing Documentation</h2>
+            <BookOpen className="w-5 h-5 text-amber-400" aria-hidden="true" />
+            <h2 id="docs-modal-title" className="font-serif font-bold text-amber-100 text-sm">{t('docs.modalTitle')}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-100 rounded-[6px] hover:bg-stone-800"
+            aria-label={t('docs.close')}
+            className="p-1 text-stone-400 hover:text-stone-100 rounded-[6px] hover:bg-stone-800 cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -37,11 +46,11 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose }) => {
           {/* Section 1: E2E Flow YAML Architecture */}
           <div className="space-y-2">
             <h3 className="font-bold text-amber-300 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
-              <Code2 className="w-4 h-4 text-amber-400" />
-              <span>1. E2E Flow YAML Structure</span>
+              <Code2 className="w-4 h-4 text-amber-400" aria-hidden="true" />
+              <span>{t('docs.structureTitle')}</span>
             </h3>
             <p className="text-stone-400 text-xs leading-relaxed">
-              Every Tracy test consists of an optional YAML header metadata section, separated by <code className="text-amber-400 font-mono">---</code> from sequential step commands.
+              {t('docs.structureDesc')}
             </p>
 
             <pre className="p-3 bg-stone-950 rounded-[6px] border border-stone-800 font-mono text-amber-200 text-xs">
@@ -64,25 +73,25 @@ viewport: { width: 1280, height: 720 }
           {/* Section 2: Selector Priority */}
           <div className="space-y-2">
             <h3 className="font-bold text-amber-300 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
-              <MousePointer className="w-4 h-4 text-emerald-400" />
-              <span>2. Selector System & Priorities</span>
+              <MousePointer className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+              <span>{t('docs.selectorTitle')}</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
               <div className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800 space-y-1">
-                <span className="font-bold text-amber-400 font-mono">testId (⭐ Best)</span>
-                <p className="text-stone-400">Target explicit <code className="text-stone-200">data-testid</code> attributes.</p>
+                <span className="font-bold text-amber-400 font-mono">{t('docs.testIdTitle')}</span>
+                <p className="text-stone-400">{t('docs.testIdDesc')}</p>
               </div>
               <div className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800 space-y-1">
-                <span className="font-bold text-emerald-400 font-mono">role (⭐ Recommended)</span>
-                <p className="text-stone-400">Target accessible ARIA roles and labels.</p>
+                <span className="font-bold text-emerald-400 font-mono">{t('docs.roleTitle')}</span>
+                <p className="text-stone-400">{t('docs.roleDesc')}</p>
               </div>
               <div className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800 space-y-1">
-                <span className="font-bold text-amber-400 font-mono">text</span>
-                <p className="text-stone-400">Target exact or partial visible screen text.</p>
+                <span className="font-bold text-amber-400 font-mono">{t('docs.textTitle')}</span>
+                <p className="text-stone-400">{t('docs.textDesc')}</p>
               </div>
               <div className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800 space-y-1">
-                <span className="font-bold text-rose-400 font-mono">css / id</span>
-                <p className="text-stone-400">Target standard CSS selectors or HTML IDs.</p>
+                <span className="font-bold text-rose-400 font-mono">{t('docs.cssIdTitle')}</span>
+                <p className="text-stone-400">{t('docs.cssIdDesc')}</p>
               </div>
             </div>
           </div>
@@ -90,30 +99,30 @@ viewport: { width: 1280, height: 720 }
           {/* Section 3: Commands Quick Ref */}
           <div className="space-y-2">
             <h3 className="font-bold text-amber-300 text-xs flex items-center space-x-1.5 uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>3. Available Step Commands</span>
+              <ShieldCheck className="w-4 h-4 text-amber-400" aria-hidden="true" />
+              <span>{t('docs.commandsTitle')}</span>
             </h3>
 
             <div className="space-y-1.5 font-mono text-[11px]">
               <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between">
                 <span className="text-amber-400 font-bold">navigate: /path</span>
-                <span className="text-stone-400 font-sans">Browser navigation</span>
+                <span className="text-stone-400 font-sans">{t('docs.cmdNavDesc')}</span>
               </div>
               <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between">
-                <span className="text-amber-400 font-bold">click: "Sign In"</span>
-                <span className="text-stone-400 font-sans">Element click</span>
+                <span className="text-amber-400 font-bold">click: &quot;Sign In&quot;</span>
+                <span className="text-stone-400 font-sans">{t('docs.cmdClickDesc')}</span>
               </div>
               <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between">
                 <span className="text-amber-400 font-bold">inputText: {`{ selector, text }`}</span>
-                <span className="text-stone-400 font-sans">Types text into input</span>
+                <span className="text-stone-400 font-sans">{t('docs.cmdInputDesc')}</span>
               </div>
               <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between">
-                <span className="text-amber-400 font-bold">assertVisible: "Welcome"</span>
-                <span className="text-stone-400 font-sans">Visibility assertion</span>
+                <span className="text-amber-400 font-bold">assertVisible: &quot;Welcome&quot;</span>
+                <span className="text-stone-400 font-sans">{t('docs.cmdAssertDesc')}</span>
               </div>
               <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between">
                 <span className="text-amber-400 font-bold">interceptNetwork: {`{ url, response }`}</span>
-                <span className="text-stone-400 font-sans">API route mocking</span>
+                <span className="text-stone-400 font-sans">{t('docs.cmdMockDesc')}</span>
               </div>
             </div>
           </div>
@@ -121,12 +130,13 @@ viewport: { width: 1280, height: 720 }
 
         {/* Modal Footer */}
         <div className="p-4 bg-stone-900 border-t border-stone-800 flex items-center justify-between shrink-0">
-          <span className="text-[11px] text-stone-400">Tracy Spec v1.0 — Powered by Playwright</span>
+          <span className="text-[11px] text-stone-400">{t('docs.footerNote')}</span>
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600"
+            className="px-4 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 cursor-pointer"
           >
-            Got It
+            {t('docs.gotIt')}
           </button>
         </div>
       </div>

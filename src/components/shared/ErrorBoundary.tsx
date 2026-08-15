@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import enTranslations from '@/src/a11y/en.json';
 
 interface Props {
   children: ReactNode;
@@ -36,20 +37,26 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-stone-950 text-stone-100 font-sans border border-stone-800 rounded-md m-4">
+        <div
+          role="alert"
+          className="flex-1 flex flex-col items-center justify-center p-8 bg-stone-950 text-stone-100 font-sans border border-stone-800 rounded-md m-4"
+        >
           <div className="p-3 bg-amber-950/80 border border-amber-800 text-amber-400 rounded-full mb-4">
-            <AlertTriangle className="w-8 h-8" />
+            <AlertTriangle className="w-8 h-8" aria-hidden="true" />
           </div>
-          <h2 className="text-lg font-bold text-amber-100 mb-2">Something went wrong in this section</h2>
+          <h2 className="text-lg font-bold text-amber-100 mb-2">
+            {enTranslations.modals.errorBoundaryTitle}
+          </h2>
           <p className="text-xs font-mono text-stone-400 max-w-md text-center mb-6 bg-stone-900 p-3 rounded-md border border-stone-800 overflow-x-auto">
-            {this.state.error?.message || 'An unexpected rendering error occurred.'}
+            {this.state.error?.message || enTranslations.modals.errorBoundaryDefault}
           </p>
           <button
+            type="button"
             onClick={this.handleReset}
             className="flex items-center space-x-2 px-4 py-2 bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-xs rounded-md border border-amber-600 transition-all cursor-pointer"
           >
-            <RefreshCw className="w-4 h-4" />
-            <span>Reload Component</span>
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
+            <span>{enTranslations.modals.reloadComponent}</span>
           </button>
         </div>
       );

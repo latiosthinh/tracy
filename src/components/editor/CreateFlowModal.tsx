@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, FileCode, Plus, Check } from 'lucide-react';
 import { FlowCategory } from '@/src/types/autoflow';
 import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface CreateFlowModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
   onCreateFlow,
   existingFlowCount,
 }) => {
+  const { t } = useTranslation();
   const defaultName = `flow-${existingFlowCount + 1}.yaml`;
   const [flowName, setFlowName] = useState(defaultName);
   const [selectedCategory, setSelectedCategory] = useState<FlowCategory>('E2E');
@@ -30,24 +32,35 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 font-sans animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-flow-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 font-sans animate-fade-in"
+    >
       <div className="bg-stone-900 border border-stone-800 rounded-[12px] shadow-2xl w-full max-w-md overflow-hidden text-stone-100">
         {/* Header */}
         <div className="bg-stone-950 px-4 py-3 border-b border-stone-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="p-1.5 bg-amber-950/80 border border-amber-700/60 rounded-[6px] text-amber-400">
-              <FileCode className="w-4 h-4" />
+              <FileCode className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-amber-100">Create New Test Flow</h3>
-              <p className="text-[11px] text-stone-400">Name and categorize your Playwright flow</p>
+              <h2 id="create-flow-modal-title" className="text-sm font-bold text-amber-100">
+                {t('modals.createFlowTitle')}
+              </h2>
+              <p className="text-[11px] text-stone-400">
+                {t('modals.createFlowSubtitle')}
+              </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-100 rounded-md hover:bg-stone-800 transition-colors"
+            aria-label={t('common.close')}
+            className="p-1 text-stone-400 hover:text-stone-100 rounded-md hover:bg-stone-800 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -55,28 +68,28 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
         <form onSubmit={handleSubmit} className="p-4 space-y-4 text-xs">
           {/* Flow Name Field */}
           <div>
-            <label className="block text-xs font-bold text-stone-300 mb-1.5 font-mono">
-              Flow File Name <span className="text-amber-400">*</span>
+            <label htmlFor="create-flow-name-input" className="block text-xs font-bold text-stone-300 mb-1.5 font-mono">
+              {t('modals.flowFileName')} <span className="text-amber-400">*</span>
             </label>
             <div className="relative flex items-center">
               <input
+                id="create-flow-name-input"
                 type="text"
                 value={flowName}
                 onChange={e => setFlowName(e.target.value)}
-                placeholder="e.g. user-authentication.yaml"
-                className="w-full bg-stone-950 border border-stone-800 rounded-[6px] px-3 py-2 text-xs font-mono text-stone-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
-                autoFocus
+                placeholder={t('modals.flowNamePlaceholder')}
+                className="w-full bg-stone-950 border border-stone-800 rounded-[6px] px-3 py-2 text-xs font-mono text-stone-100 focus:outline-hidden focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
               />
             </div>
             <p className="text-[10px] text-stone-400 mt-1 font-mono">
-              Auto-formats to ending with <span className="text-amber-400">.yaml</span> extension
+              {t('modals.autoYamlNotice')}
             </p>
           </div>
 
           {/* Flow Category Selector */}
           <div>
             <label className="block text-xs font-bold text-stone-300 mb-2">
-              Playwright Category Structure
+              {t('modals.categoryStructure')}
             </label>
             <div className="grid grid-cols-1 gap-1.5 max-h-56 overflow-y-auto pr-1">
               {PLAYWRIGHT_CATEGORIES.map(cat => {
@@ -101,7 +114,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                         <span className="text-[10px] text-stone-400 truncate block">{cat.description}</span>
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-amber-400 shrink-0 ml-2" />}
+                    {isSelected && <Check className="w-4 h-4 text-amber-400 shrink-0 ml-2" aria-hidden="true" />}
                   </button>
                 );
               })}
@@ -113,16 +126,16 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[6px] font-bold text-xs transition-colors"
+              className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[6px] font-bold text-xs transition-colors cursor-pointer"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-50 rounded-[6px] font-bold text-xs flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-amber-300" />
-              <span>Create Flow</span>
+              <Plus className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
+              <span>{t('modals.createFlowBtn')}</span>
             </button>
           </div>
         </form>
