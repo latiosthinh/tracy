@@ -28,3 +28,33 @@ Acceptance:
 - Preload whitelist channel names unchanged (payload-only change); wrapper in `src/lib/ipc.ts`
   updated per IPC contract convention
 - `pnpm lint` and `pnpm test` green; electron main bundle builds (`pnpm exec vite build`)
+
+## A11Y — Accessibility & Zero-Hardcoded-Text Refactor
+
+**A11Y-01: Zero hardcoded user-visible text in components**
+All user-facing strings, button labels, tooltips, titles, placeholders, and error templates are extracted into `src/a11y/en.json` and consumed via `useTranslation()`. Dynamic runtime IPC errors are the documented exception.
+Acceptance:
+- `src/a11y/en.json` is organized into feature domains (common, header, tabs, studio, copilot, settings, projects, modals, reports, setup, docs)
+- `useTranslation()` supports typed keys and `{param}` interpolation
+- All 40 component files use `t('domain.key')` for static text, titles, placeholders, and aria-labels
+
+**A11Y-02: jsx-a11y lint rule enforcement**
+ESLint enforces standard React accessibility rules as errors in CI.
+Acceptance:
+- `eslint-plugin-jsx-a11y` configured in ESLint
+- Zero `jsx-a11y` lint errors across the entire codebase
+
+**A11Y-03: Modal and interactive accessibility hardening**
+Interactive components follow WAI-ARIA authoring practices.
+Acceptance:
+- Shared `Modal.tsx` implements `role="dialog"`, `aria-modal="true"`, focus trapping, initial focus, and Escape-to-close
+- Form inputs have associated labels (`<label htmlFor>` or `aria-label`)
+- Icon-only buttons have accessible names (`aria-label` matching tooltip title)
+- Execution logs and streaming statuses use `aria-live="polite"`
+- Decorative logos/icons use `aria-hidden="true"`
+
+**A11Y-04: No-hardcoded-text guard test**
+An automated test scans `src/components/**/*.tsx` to ensure no raw JSX text nodes exist outside documented exceptions.
+Acceptance:
+- `src/a11y/a11yTextGuard.test.ts` scans all component files and passes
+
