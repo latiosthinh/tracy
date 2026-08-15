@@ -1,4 +1,22 @@
 {
+  "common": {
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "refresh": "Refresh",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "loading": "Loading...",
+    "search": "Search",
+    "all": "All",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
+  },
   "toolbar": {
     "navBack": "Back to root",
     "navForward": "Forward",
@@ -16,11 +34,76 @@
     "mobilePreset": "Mobile 375px",
     "openExternal": "Open in external browser"
   },
+  "header": {
+    "brandSubtitle": "Intelligent E2E Automation",
+    "openProjects": "Projects",
+    "openDocs": "Documentation",
+    "openSettings": "Settings"
+  },
+  "tabs": {
+    "closeTab": "Close tab {title}",
+    "newTab": "New flow",
+    "unsavedChanges": "Unsaved changes"
+  },
+  "studio": {
+    "browser": "Browser",
+    "editor": "Visual Editor",
+    "yaml": "YAML Code",
+    "reports": "Reports",
+    "run": "Run Flow",
+    "stop": "Stop Flow",
+    "recording": "Recording..."
+  },
+  "copilot": {
+    "title": "AI Copilot",
+    "placeholder": "Ask AI to generate or modify steps...",
+    "send": "Send prompt",
+    "generating": "Generating test steps..."
+  },
+  "settings": {
+    "title": "Settings",
+    "apiKeys": "API Keys",
+    "aiProvider": "AI Provider",
+    "theme": "Theme",
+    "uiSettings": "UI Settings"
+  },
+  "projects": {
+    "title": "Projects",
+    "newProject": "New Project",
+    "projectName": "Project Name",
+    "projectPath": "Project Path",
+    "noProjects": "No projects found"
+  },
+  "modals": {
+    "createFlow": "Create New Flow",
+    "deleteConfirm": "Are you sure you want to delete this item?",
+    "exportImport": "Export / Import Flows"
+  },
+  "reports": {
+    "title": "Execution Reports",
+    "passed": "Passed",
+    "failed": "Failed",
+    "duration": "Duration: {duration}s",
+    "logs": "Execution Logs"
+  },
+  "setup": {
+    "welcome": "Welcome to Tracy",
+    "subtitle": "Get started with automated end-to-end testing"
+  },
+  "docs": {
+    "title": "Documentation",
+    "flowSchema": "Flow Schema Reference",
+    "domMiner": "DOM Miner Guide"
+  },
   "domMiner": {
     "copyJson": "Copy JSON",
     "downloadJson": "Download JSON",
     "batchMine": "Batch Mine DOM",
     "closePanel": "Close Panel",
     "clearSnapshots": "Clear"
+  },
+  "test": {
+    "greeting": "Hello {name}, you have {count} items"
   }
 }
+
