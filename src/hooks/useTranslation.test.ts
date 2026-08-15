@@ -10,7 +10,6 @@ describe('useTranslation', () => {
 
   it('interpolates parameters correctly with {param}', () => {
     const { result } = renderHook(() => useTranslation());
-    // @ts-expect-error test key
     expect(result.current.t('test.greeting', { name: 'Alice', count: 5 })).toBe('Hello Alice, you have 5 items');
   });
 
@@ -22,3 +21,4 @@ describe('useTranslation', () => {
     warnSpy.mockRestore();
   });
 });
+
