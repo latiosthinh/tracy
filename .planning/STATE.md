@@ -2,24 +2,30 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-08-15T16:00:00.000Z"
+status: in_progress
+last_updated: "2026-08-15T16:53:00.000Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 7
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
 
-**Status:** Completed
-**Phase:** 01-per-project-browser
-**Current Plan:** Complete
+**Status:** In progress
+**Phase:** 02-a11y-and-text-extraction
+**Current Plan:** 02-02-PLAN.md
 
 ## Decisions
 
+- Configured jsx-a11y lint rules with babel parser for TSX support while TypeScript 7.0 parser compatibility is pending
+- Single-locale English dictionary (`src/a11y/en.json`) with domain-based hierarchy
+- Add `eslint-plugin-jsx-a11y` as devDependency for CI accessibility gating
+- Add modal focus trapping, initial focus, and Escape-to-close in `src/components/ui/Modal.tsx`
+- Document exception for runtime/dynamic IPC backend errors from text extraction
+- Enforce zero hardcoded JSX text via automated guard test `src/a11y/a11yTextGuard.test.ts`
 - IPC channels unchanged for webview work — payload shape gains `projectId`; preload
   whitelists already contain all four `*_child_webview` channels
 - Web mode (browser-only Vite) keeps no-op guards in `tracyApi`
@@ -30,7 +36,10 @@ progress:
 
 ## Recent Activity
 
+- 2026-08-15 — Completed 02-01-PLAN.md: Core A11y & i18n Foundation (interpolation, en.json hierarchy, eslint-plugin-jsx-a11y, Modal a11y)
+- 2026-08-15 — Planned Phase 02: A11y & Zero-Hardcoded-Text Refactor across 4 plans
 - 2026-08-15 — Completed 01-03-PLAN.md: Quality gates verified & live human isolation checkpoint approved by user
 - 2026-08-15 — Completed 01-02-PLAN.md: Renderer browser stack updated with projectId prop, per-project browser paths, and keyed RealBrowserView
 - 2026-08-15 — Completed 01-01-PLAN.md: Main-process webview registry & IPC contract updated with projectId
 - 2026-08-15 — GSD scaffold bootstrapped from bug report; phase 01 planned
+
