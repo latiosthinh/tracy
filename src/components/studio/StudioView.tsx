@@ -71,7 +71,10 @@ export const StudioView: React.FC = () => {
   const uiSettings = useSettingsStore((s) => s.uiSettings);
 
   const [inspectedElement, setInspectedElement] = useState<InspectedElement | null>(null);
-  const [targetPath, setTargetPath] = useState<string>('/products');
+  const browserPaths = useProjectStore((s) => s.browserPaths);
+  const setBrowserPath = useProjectStore((s) => s.setBrowserPath);
+  const targetPath = browserPaths[activeProjectId] || '/';
+  const setTargetPath = useCallback((path: string) => setBrowserPath(activeProjectId, path), [activeProjectId, setBrowserPath]);
   const [embedUrlInput, setEmbedUrlInput] = useState<string>(`${activeProject?.targetUrl || ''}${targetPath}`);
   const [yamlCopied, setYamlCopied] = useState<boolean>(false);
   const [isEditingActiveFlowName, setIsEditingActiveFlowName] = useState<boolean>(false);
@@ -125,7 +128,7 @@ export const StudioView: React.FC = () => {
       if (unlistenBrowser) unlistenBrowser();
       if (unlistenMine) unlistenMine();
     };
-  }, []);
+  }, [activeProjectId, setTargetPath]);
 
   // Resizable split panel state
   const [sidePanelWidth, setSidePanelWidth] = useState(520);
@@ -373,6 +376,8 @@ export const StudioView: React.FC = () => {
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-auto bg-stone-900 flex flex-col">
               <RealBrowserView
+                key={activeProjectId}
+                projectId={activeProjectId}
                 targetUrl={activeProject?.targetUrl || ''}
                 activePath={targetPath}
                 viewportWidth={getViewportWidthPx()}

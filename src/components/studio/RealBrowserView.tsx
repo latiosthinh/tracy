@@ -5,6 +5,7 @@ import { useEnvironment } from '@/src/hooks/useEnvironment';
 import { Info } from 'lucide-react';
 
 interface RealBrowserViewProps {
+  projectId: string;
   targetUrl: string;
   activePath: string;
   viewportWidth?: number;
@@ -18,6 +19,7 @@ interface RealBrowserViewProps {
 type ViewState = 'idle' | 'launching' | 'loading' | 'ready' | 'error';
 
 export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
+  projectId,
   targetUrl,
   activePath,
   viewportWidth,
@@ -71,7 +73,7 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
       // Native child webview mode: navigate it
       const rect = containerRef.current?.getBoundingClientRect();
       if (rect && rect.width > 0 && isElectronEnv()) {
-        tracyApi.openChildWebview(url, rect.x, rect.y, rect.width, rect.height);
+        tracyApi.openChildWebview(projectId, url, rect.x, rect.y, rect.width, rect.height);
       }
 
       // Sync Playwright page (in the backend it will find the active page)
@@ -85,7 +87,7 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
       setViewState('error');
       launchedRef.current = false; // allow retry
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     const unlisten = tracyApi.onBrowserEvent((payload) => {
@@ -124,7 +126,7 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
   // Manage child webview lifecycle (ResizeObserver)
   useEffect(() => {
     if (!isElectronEnv()) {
-      tracyApi.setChildWebviewVisible(false).catch(() => { });
+      tracyApi.setChildWebviewVisible(projectId, false).catch(() => { });
       return;
     }
 
@@ -140,14 +142,14 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
       if (!url) return;
 
       if (!isInitialized) {
-        await tracyApi.openChildWebview(url, rect.x, rect.y, rect.width, rect.height);
+        await tracyApi.openChildWebview(projectId, url, rect.x, rect.y, rect.width, rect.height);
         isInitialized = true;
 
         setCurrentUrl(url);
         setIsSecure(url.startsWith('https://'));
         setViewState('ready');
       } else {
-        await tracyApi.resizeChildWebview(rect.x, rect.y, rect.width, rect.height);
+        await tracyApi.resizeChildWebview(projectId, rect.x, rect.y, rect.width, rect.height);
       }
     };
 
@@ -160,16 +162,16 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
 
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
-      tracyApi.setChildWebviewVisible(false).catch(() => { });
+      tracyApi.setChildWebviewVisible(projectId, false).catch(() => { });
     };
-  }, []);
+  }, [projectId, buildUrl]);
 
   // Handle visibility externally
   useEffect(() => {
     if (isElectronEnv()) {
-      tracyApi.setChildWebviewVisible(!hideWebview).catch(() => {});
+      tracyApi.setChildWebviewVisible(projectId, !hideWebview).catch(() => {});
     }
-  }, [hideWebview]);
+  }, [projectId, hideWebview]);
 
   // Navigate whenever the URL changes
   useEffect(() => {
