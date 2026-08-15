@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, ChevronDown, X } from 'lucide-react';
 import type { Project } from '@/src/types/project';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface ProjectTabsProps {
   openProjects: Project[];
@@ -23,6 +24,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
   onOpenProjectsManager,
   onOpenCreateProject,
 }) => {
+  const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -59,24 +61,27 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
 
   return (
     <div className="flex items-center space-x-1 flex-1 min-w-0">
-      <div className="flex items-center space-x-1 flex-1 min-w-0 overflow-x-auto no-scrollbar">
+      <div className="flex items-center space-x-1 flex-1 min-w-0 overflow-x-auto no-scrollbar" role="tablist" aria-label={t('header.openProjects')}>
         {openProjects.map((proj) => {
           const isActive = proj.id === activeProject.id;
           const isProcessing = isActive && isExecuting;
+          const processingText = isProcessing ? ` - ${t('tabs.flowProcessing')}` : '';
 
           return (
-            <div
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isActive}
               key={proj.id}
               onClick={() => onSelectProject(proj.id)}
-              title={`${proj.name} (${proj.environment})${isProcessing ? ' - Flow processing in progress' : ''}`}
-              className={`group flex-1 min-w-[50px] max-w-[200px] shrink px-2 sm:px-2.5 py-1.5 rounded-t-[6px] text-xs font-bold flex items-center justify-between space-x-1 border-t border-x cursor-pointer transition-all overflow-hidden ${
-                isActive
+              title={`${proj.name} (${proj.environment})${processingText}`}
+              className={`group flex-1 min-w-[50px] max-w-[200px] shrink px-2 sm:px-2.5 py-1.5 rounded-t-[6px] text-xs font-bold flex items-center justify-between space-x-1 border-t border-x cursor-pointer transition-all overflow-hidden text-left ${isActive
                   ? 'bg-stone-900 border-amber-600/80 text-amber-100 shadow-xs'
                   : 'bg-stone-950/70 border-stone-800/80 text-stone-400 hover:text-stone-200 hover:bg-stone-900/50'
-              }`}
+                }`}
             >
               <div className="flex items-center space-x-1.5 min-w-0 overflow-hidden">
-                <span className={`w-2 h-2 rounded-full shrink-0 transition-all ${getProjectDotClass(proj)}`} />
+                <span className={`w-2 h-2 rounded-full shrink-0 transition-all ${getProjectDotClass(proj)}`} aria-hidden="true" />
                 <span className="truncate min-w-0 font-medium">{proj.name}</span>
               </div>
 
@@ -87,52 +92,59 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
 
                 {openProjects.length > 1 && onCloseProjectTab && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onCloseProjectTab(proj.id);
                     }}
                     className="p-0.5 text-stone-500 hover:text-stone-100 rounded-[4px] hover:bg-stone-800/80 opacity-60 group-hover:opacity-100 transition-opacity"
-                    title="Close project tab"
+                    title={t('tabs.closeProjectTab')}
+                    aria-label={t('tabs.closeProjectTab')}
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3 h-3" aria-hidden="true" />
                   </button>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
       <div className="relative shrink-0" ref={dropdownRef}>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             setShowDropdown(!showDropdown);
           }}
           className="p-1.5 bg-stone-900 hover:bg-stone-800 text-stone-300 rounded-[6px] border border-stone-800 flex items-center space-x-1 cursor-pointer"
-          title="Open another project tab"
+          title={t('tabs.openAnotherProject')}
+          aria-label={t('tabs.openAnotherProject')}
+          aria-expanded={showDropdown}
         >
-          <Plus className="w-3.5 h-3.5 text-amber-400" />
-          <ChevronDown className={`w-3 h-3 text-stone-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+          <Plus className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+          <ChevronDown className={`w-3 h-3 text-stone-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
 
         {showDropdown && (
           <div className="absolute top-full right-0 mt-1 w-64 max-w-[calc(100vw-2rem)] bg-stone-900 border border-stone-800 rounded-[8px] shadow-2xl z-50 p-2 space-y-1">
             <div className="text-[10px] font-mono text-stone-400 uppercase px-2 py-1 font-bold border-b border-stone-800 flex justify-between items-center">
-              <span>Open Project in Tab</span>
+              <span>{t('tabs.openProjectInTab')}</span>
               <button
+                type="button"
                 onClick={() => {
                   setShowDropdown(false);
                   onOpenProjectsManager();
                 }}
-                className="text-amber-400 hover:underline cursor-pointer"
+                className="text-amber-400 hover:underline cursor-pointer bg-transparent border-none p-0"
               >
-                Manage All
+                {t('tabs.manageAll')}
               </button>
             </div>
             <div className="max-h-48 overflow-y-auto space-y-0.5">
               {allProjects.map((p) => (
                 <button
+                  type="button"
                   key={p.id}
                   onClick={() => {
                     onSelectProject(p.id);
@@ -148,6 +160,7 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
 
             <div className="pt-1.5 border-t border-stone-800">
               <button
+                type="button"
                 onClick={() => {
                   setShowDropdown(false);
                   if (onOpenCreateProject) onOpenCreateProject();
@@ -155,8 +168,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
                 }}
                 className="w-full py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-50 font-bold text-xs rounded-[6px] flex items-center justify-center space-x-1.5 transition-all shadow-xs cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-amber-300" />
-                <span>+ Create New Project</span>
+                <Plus className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
+                <span>{t('tabs.createNewProject')}</span>
               </button>
             </div>
           </div>

@@ -36,14 +36,33 @@
   },
   "header": {
     "brandSubtitle": "Intelligent E2E Automation",
-    "openProjects": "Projects",
-    "openDocs": "Documentation",
-    "openSettings": "Settings"
+    "openProjects": "Projects Manager",
+    "openDocs": "ProQA Documentation",
+    "openSettings": "Open ProQA Settings & CLI Configuration",
+    "webMode": "Web Mode",
+    "chromium": "Chromium",
+    "brandDocs": "ProQA Automation Studio Docs"
   },
   "tabs": {
     "closeTab": "Close tab {title}",
     "newTab": "New flow",
-    "unsavedChanges": "Unsaved changes"
+    "unsavedChanges": "Unsaved changes",
+    "closeProjectTab": "Close project tab",
+    "openAnotherProject": "Open another project tab",
+    "openProjectInTab": "Open Project in Tab",
+    "manageAll": "Manage All",
+    "createNewProject": "Create New Project",
+    "flowProcessing": "Flow processing in progress",
+    "selectFlow": "Select Flow ({count})",
+    "selectFlowTooltip": "Select flow from list or create new flow",
+    "testSuite": "Playwright Test Suite",
+    "groupedCount": "{count} grouped",
+    "searchFlowsPlaceholder": "Search flows by name or category...",
+    "noMatchingFlows": "No matching flows found",
+    "createNewFlow": "+ Create New Flow",
+    "renameFlow": "Rename flow",
+    "closeFlowTab": "Close flow tab",
+    "flowTooltip": "{name} [Category: {category}] (Double click to rename)"
   },
   "studio": {
     "browser": "Browser",

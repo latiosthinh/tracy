@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { FlowFile, FlowCategory } from '@/src/types/flow';
 import { PLAYWRIGHT_CATEGORIES, getFlowCategory, groupFlowsByCategory } from '@/src/utils/flowUtils';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface FlowTabsProps {
   flows: FlowFile[];
@@ -36,11 +37,14 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
   onCreateNewFlow,
   onRenameFlow,
 }) => {
+  const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
   const [flowSearch, setFlowSearch] = useState('');
   const [editingTabFlowId, setEditingTabFlowId] = useState<string | null>(null);
   const [editingTabFlowName, setEditingTabFlowName] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const handleStartRename = (flow: FlowFile, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -54,6 +58,18 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
     }
     setEditingTabFlowId(null);
   };
+
+  useEffect(() => {
+    if (editingTabFlowId && renameInputRef.current) {
+      renameInputRef.current.focus();
+    }
+  }, [editingTabFlowId]);
+
+  useEffect(() => {
+    if (showDropdown && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showDropdown]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -79,31 +95,42 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
 
   const renderCategoryIcon = (iconName: string, className = 'w-3.5 h-3.5') => {
     switch (iconName) {
-      case 'Globe': return <Globe className={className} />;
-      case 'Server': return <Server className={className} />;
-      case 'Flame': return <Flame className={className} />;
-      case 'Eye': return <Eye className={className} />;
-      case 'Box': return <Box className={className} />;
-      default: return <FileCode className={className} />;
+      case 'Globe': return <Globe className={className} aria-hidden="true" />;
+      case 'Server': return <Server className={className} aria-hidden="true" />;
+      case 'Flame': return <Flame className={className} aria-hidden="true" />;
+      case 'Eye': return <Eye className={className} aria-hidden="true" />;
+      case 'Box': return <Box className={className} aria-hidden="true" />;
+      default: return <FileCode className={className} aria-hidden="true" />;
     }
   };
 
   return (
     <div className="flex items-center space-x-2 flex-1 min-w-0">
-      <div className="flex items-center space-x-1 flex-1 min-w-0 overflow-x-auto no-scrollbar">
+      <div className="flex items-center space-x-1 flex-1 min-w-0 overflow-x-auto no-scrollbar" role="tablist" aria-label={t('tabs.testSuite')}>
         {flows.map((f) => {
           const isFlowActive = f.id === activeFlow.id;
           const cat = getFlowCategory(f);
           const catInfo = PLAYWRIGHT_CATEGORIES.find((c) => c.id === cat);
           const isEditingThisTab = editingTabFlowId === f.id;
+          const tooltip = isEditingThisTab
+            ? ''
+            : t('tabs.flowTooltip', { name: f.name, category: catInfo?.label || cat });
 
           return (
             <div
               key={f.id}
+              role="tab"
+              aria-selected={isFlowActive}
+              tabIndex={0}
               onClick={() => !isEditingThisTab && onSelectFlow(f.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  if (!isEditingThisTab) onSelectFlow(f.id);
+                }
+              }}
               onDoubleClick={(e) => handleStartRename(f, e)}
-              title={isEditingThisTab ? '' : `${f.name} [Category: ${catInfo?.label || cat}] (Double click to rename)`}
-              className={`group flex-1 min-w-[110px] max-w-[220px] shrink px-2 sm:px-2.5 py-1 rounded-[6px] text-xs font-mono font-semibold flex items-center justify-between space-x-1 border transition-all overflow-hidden ${
+              title={tooltip}
+              className={`group flex-1 min-w-[110px] max-w-[220px] shrink px-2 sm:px-2.5 py-1 rounded-[6px] text-xs font-mono font-semibold flex items-center justify-between space-x-1 border transition-all overflow-hidden cursor-pointer ${
                 isFlowActive
                   ? 'bg-stone-900 border-amber-600/80 text-amber-300 shadow-xs font-bold'
                   : 'bg-stone-950/80 border-stone-800 text-stone-400 hover:text-stone-200 hover:bg-stone-900/60'
@@ -127,11 +154,12 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
                     className="flex items-center space-x-1 min-w-0 flex-1"
                   >
                     <input
+                      ref={renameInputRef}
                       type="text"
+                      aria-label={t('tabs.renameFlow')}
                       value={editingTabFlowName}
                       onChange={(e) => setEditingTabFlowName(e.target.value)}
                       onBlur={() => handleSaveRename(f.id)}
-                      autoFocus
                       onClick={(e) => e.stopPropagation()}
                       className="bg-stone-950 border border-amber-500 rounded px-1.5 py-0.5 text-xs text-stone-100 font-mono w-full focus:outline-none"
                     />
@@ -147,22 +175,25 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
                     type="button"
                     onClick={(e) => handleStartRename(f, e)}
                     className="p-0.5 text-stone-500 hover:text-amber-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Rename flow"
+                    title={t('tabs.renameFlow')}
+                    aria-label={t('tabs.renameFlow')}
                   >
-                    <Pencil className="w-3 h-3" />
+                    <Pencil className="w-3 h-3" aria-hidden="true" />
                   </button>
                 )}
 
                 {flows.length > 1 && onCloseFlowTab && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onCloseFlowTab(f.id);
                     }}
                     className="p-0.5 text-stone-500 hover:text-stone-100 rounded-[4px] hover:bg-stone-800/80 opacity-60 group-hover:opacity-100 transition-opacity shrink-0"
-                    title="Close flow tab"
+                    title={t('tabs.closeFlowTab')}
+                    aria-label={t('tabs.closeFlowTab')}
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3 h-3" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -176,29 +207,32 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
           type="button"
           onClick={() => setShowDropdown(!showDropdown)}
           className="px-2.5 py-1 bg-amber-950/80 hover:bg-amber-900/90 text-amber-200 rounded-[6px] border border-amber-600/60 flex items-center space-x-1.5 text-xs font-mono font-bold transition-all cursor-pointer shadow-xs"
-          title="Select flow from list or create new flow"
+          title={t('tabs.selectFlowTooltip')}
+          aria-label={t('tabs.selectFlowTooltip')}
+          aria-expanded={showDropdown}
         >
-          <FileCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span className="font-semibold text-amber-100">Select Flow ({flows.length})</span>
-          <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+          <FileCode className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+          <span className="font-semibold text-amber-100">{t('tabs.selectFlow', { count: flows.length })}</span>
+          <ChevronDown className={`w-3 h-3 text-amber-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
 
         {showDropdown && (
           <div className="absolute top-full right-0 mt-1.5 w-80 max-w-[calc(100vw-2rem)] bg-stone-900 border border-stone-800 rounded-[8px] shadow-2xl z-50 p-2.5 space-y-2">
             <div className="text-[10px] font-mono text-stone-400 uppercase px-1 py-0.5 font-bold border-b border-stone-800 flex justify-between items-center">
-              <span>Playwright Test Suite</span>
-              <span className="text-amber-400 font-normal">{flows.length} grouped</span>
+              <span>{t('tabs.testSuite')}</span>
+              <span className="text-amber-400 font-normal">{t('tabs.groupedCount', { count: flows.length })}</span>
             </div>
 
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2" />
+              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2" aria-hidden="true" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={flowSearch}
                 onChange={(e) => setFlowSearch(e.target.value)}
-                placeholder="Search flows by name or category..."
+                placeholder={t('tabs.searchFlowsPlaceholder')}
+                aria-label={t('tabs.searchFlowsPlaceholder')}
                 className="w-full pl-8 pr-2 py-1 bg-stone-950 border border-stone-800 rounded-[4px] text-xs text-stone-100 focus:outline-hidden focus:border-amber-600 font-mono"
-                autoFocus
               />
             </div>
 
@@ -221,20 +255,21 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
                     {group.flows.map((f) => {
                       const isFlowActive = f.id === activeFlow.id;
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={f.id}
                           onClick={() => {
                             onSelectFlow(f.id);
                             setShowDropdown(false);
                           }}
-                          className={`w-full px-2.5 py-1.5 rounded-[5px] text-xs font-mono flex items-center justify-between transition-colors cursor-pointer ${
+                          className={`w-full px-2.5 py-1.5 rounded-[5px] text-xs font-mono flex items-center justify-between transition-colors cursor-pointer text-left ${
                             isFlowActive
                               ? 'bg-amber-950/80 text-amber-300 font-bold border border-amber-800/60'
                               : 'text-stone-300 hover:bg-stone-800/80 border border-transparent'
                           }`}
                         >
                           <div className="flex items-center space-x-1.5 truncate min-w-0">
-                            <FileCode className={`w-3.5 h-3.5 shrink-0 ${isFlowActive ? 'text-amber-400' : 'text-stone-400'}`} />
+                            <FileCode className={`w-3.5 h-3.5 shrink-0 ${isFlowActive ? 'text-amber-400' : 'text-stone-400'}`} aria-hidden="true" />
                             <span className="truncate">{f.name}</span>
                           </div>
 
@@ -244,9 +279,9 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
                             >
                               {group.category.badgeLabel}
                             </span>
-                            {isFlowActive && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
+                            {isFlowActive && <Check className="w-3 h-3 text-amber-400 shrink-0" aria-hidden="true" />}
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -255,7 +290,7 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
 
               {filteredFlows.length === 0 && (
                 <div className="p-3 text-center text-stone-500 text-[11px] font-mono">
-                  No matching flows found
+                  {t('tabs.noMatchingFlows')}
                 </div>
               )}
             </div>
@@ -268,8 +303,8 @@ export const FlowTabs: React.FC<FlowTabsProps> = ({
               }}
               className="w-full py-1.5 bg-amber-800/80 hover:bg-amber-700 text-amber-100 font-bold text-xs rounded-[4px] border border-amber-600/80 flex items-center justify-center space-x-1.5 transition-all cursor-pointer shadow-xs"
             >
-              <Plus className="w-3.5 h-3.5 text-amber-300" />
-              <span>+ Create New Flow</span>
+              <Plus className="w-3.5 h-3.5 text-amber-300" aria-hidden="true" />
+              <span>{t('tabs.createNewFlow')}</span>
             </button>
           </div>
         )}
