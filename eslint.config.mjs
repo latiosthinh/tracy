@@ -1,11 +1,40 @@
-// NOTE: typescript-eslint does not yet support TypeScript 7.0.
-// Linting is handled by `tsc --noEmit` with strict mode, noUnusedLocals,
-// and noUnusedParameters enabled in tsconfig.json.
-// Re-enable typescript-eslint when TS 7 support lands.
-// Tracking: https://github.com/typescript-eslint/typescript-eslint/issues/10940
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import babelParser from '@babel/eslint-parser';
+
+const jsxA11yWarnRules = Object.fromEntries(
+  Object.entries(jsxA11y.configs.recommended.rules).map(([key, value]) => [
+    key,
+    value === 'error' || (Array.isArray(value) && value[0] === 'error') ? (Array.isArray(value) ? ['warn', ...value.slice(1)] : 'warn') : value,
+  ])
+);
 
 export default [
   {
     ignores: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**'],
   },
+  {
+    files: ['**/*.{jsx,tsx,ts,js,mjs}'],
+    languageOptions: {
+      parser: babelParser,
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: {
+          presets: [
+            '@babel/preset-react',
+            '@babel/preset-typescript',
+          ],
+        },
+      },
+    },
+    plugins: {
+      'jsx-a11y': jsxA11y,
+    },
+    rules: {
+      ...jsxA11yWarnRules,
+    },
+  },
 ];
+
+
+
+
