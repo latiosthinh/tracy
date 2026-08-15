@@ -23,6 +23,7 @@ import {
   YamlPosition,
   UiScale
 } from '@/src/types/uiSettings';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface UiSettingsPanelProps {
   settings: UiSettings;
@@ -33,6 +34,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
   settings,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const [jsonText, setJsonText] = useState(
     settings.colorSchemeJson || JSON.stringify(settings.colorScheme, null, 2)
   );
@@ -73,7 +75,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
     const formatted = JSON.stringify(scheme, null, 2);
     setJsonText(formatted);
     setJsonError(null);
-    setJsonSuccess(`Applied "${scheme.name}" color scheme`);
+    setJsonSuccess(t('settings.appliedSchemeSuccess', { name: scheme.name }));
     setTimeout(() => setJsonSuccess(null), 3000);
 
     const isLightScheme = scheme.id === 'clean-paper-light' || scheme.id === 'solarized-light' || scheme.bgPrimary.toLowerCase() > '#888888';
@@ -92,11 +94,11 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
     try {
       const parsed = JSON.parse(text) as ColorScheme;
       if (!parsed.bgPrimary || !parsed.accent || !parsed.textPrimary) {
-        setJsonError('JSON must contain "bgPrimary", "accent", and "textPrimary" color hex codes.');
+        setJsonError(t('settings.jsonValidationRequired'));
         return;
       }
       setJsonError(null);
-      setJsonSuccess('Valid Custom Color Scheme JSON');
+      setJsonSuccess(t('settings.validJsonSuccess'));
       setTimeout(() => setJsonSuccess(null), 2500);
 
       onChange({
@@ -145,7 +147,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
     const def = DEFAULT_UI_SETTINGS;
     setJsonText(def.colorSchemeJson);
     setJsonError(null);
-    setJsonSuccess('Reset to default UI preferences');
+    setJsonSuccess(t('settings.resetUiSuccess'));
     setTimeout(() => setJsonSuccess(null), 2500);
     onChange(def);
   };
@@ -166,27 +168,27 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
       <div className="bg-stone-950 p-4 rounded-[8px] border border-stone-800 space-y-4">
         <div className="flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center space-x-2 text-amber-300 font-bold text-sm">
-            <Sun className="w-4 h-4 text-amber-400" />
-            <span>Theme & Workspace Appearance</span>
+            <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
+            <span>{t('settings.themeTitle')}</span>
           </div>
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="text-[11px] font-mono text-stone-400 hover:text-stone-200 flex items-center space-x-1"
+            className="text-[11px] font-mono text-stone-400 hover:text-stone-200 flex items-center space-x-1 cursor-pointer"
           >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset UI Defaults</span>
+            <RotateCcw className="w-3 h-3" aria-hidden="true" />
+            <span>{t('settings.resetUiDefaults')}</span>
           </button>
         </div>
 
         {/* Dark vs Light vs System */}
         <div>
-          <label className="block text-stone-300 font-bold mb-2">Dark / Light Mode</label>
+          <label className="block text-stone-300 font-bold mb-2">{t('settings.darkLightMode')}</label>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { id: 'dark', label: 'Dark Mode', icon: Moon, desc: 'High-contrast dark canvas' },
-              { id: 'light', label: 'Light Mode', icon: Sun, desc: 'Clean bright layout' },
-              { id: 'system', label: 'System Default', icon: Laptop, desc: 'Follow OS preferences' },
+              { id: 'dark', label: t('settings.darkMode'), icon: Moon, desc: t('settings.darkModeDesc') },
+              { id: 'light', label: t('settings.lightMode'), icon: Sun, desc: t('settings.lightModeDesc') },
+              { id: 'system', label: t('settings.systemDefault'), icon: Laptop, desc: t('settings.systemDefaultDesc') },
             ].map((item) => {
               const Icon = item.icon;
               const active = settings.theme === item.id;
@@ -195,14 +197,14 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
                   key={item.id}
                   type="button"
                   onClick={() => handleThemeChange(item.id as ThemeMode)}
-                  className={`p-3 rounded-[6px] border text-left flex flex-col justify-between transition-all ${
+                  className={`p-3 rounded-[6px] border text-left flex flex-col justify-between transition-all cursor-pointer ${
                     active
                       ? 'bg-amber-950/70 border-amber-500 text-amber-100 ring-1 ring-amber-500/50'
                       : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
                   }`}
                 >
                   <div className="flex items-center space-x-2 font-bold text-amber-300 mb-1">
-                    <Icon className="w-4 h-4 text-amber-400" />
+                    <Icon className="w-4 h-4 text-amber-400" aria-hidden="true" />
                     <span>{item.label}</span>
                   </div>
                   <span className="text-[10px] text-stone-400 font-mono">{item.desc}</span>
@@ -214,37 +216,37 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
 
         {/* Side YAML Editor Position: Left vs Right */}
         <div className="pt-2">
-          <label className="block text-stone-300 font-bold mb-2">Side YAML Editor & IDE Panel Position</label>
+          <label className="block text-stone-300 font-bold mb-2">{t('settings.yamlPositionTitle')}</label>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => handlePositionChange('left')}
-              className={`p-3 rounded-[6px] border text-left flex items-center space-x-3 transition-all ${
+              className={`p-3 rounded-[6px] border text-left flex items-center space-x-3 transition-all cursor-pointer ${
                 settings.yamlPosition === 'left'
                   ? 'bg-amber-950/70 border-amber-500 text-amber-100 ring-1 ring-amber-500/50'
                   : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
               }`}
             >
-              <PanelLeft className="w-5 h-5 text-amber-400 shrink-0" />
+              <PanelLeft className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
               <div>
-                <span className="font-bold block text-stone-100">Left Side Editor</span>
-                <span className="text-[10px] text-stone-400 font-mono">YAML Editor on Left, Browser Sandbox on Right</span>
+                <span className="font-bold block text-stone-100">{t('settings.leftSideEditor')}</span>
+                <span className="text-[10px] text-stone-400 font-mono">{t('settings.leftSideEditorDesc')}</span>
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => handlePositionChange('right')}
-              className={`p-3 rounded-[6px] border text-left flex items-center space-x-3 transition-all ${
+              className={`p-3 rounded-[6px] border text-left flex items-center space-x-3 transition-all cursor-pointer ${
                 settings.yamlPosition === 'right'
                   ? 'bg-amber-950/70 border-amber-500 text-amber-100 ring-1 ring-amber-500/50'
                   : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
               }`}
             >
-              <PanelRight className="w-5 h-5 text-amber-400 shrink-0" />
+              <PanelRight className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
               <div>
-                <span className="font-bold block text-stone-100">Right Side Editor (Default)</span>
-                <span className="text-[10px] text-stone-400 font-mono">Browser Sandbox on Left, YAML Editor on Right</span>
+                <span className="font-bold block text-stone-100">{t('settings.rightSideEditor')}</span>
+                <span className="text-[10px] text-stone-400 font-mono">{t('settings.rightSideEditorDesc')}</span>
               </div>
             </button>
           </div>
@@ -255,15 +257,15 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
       <div className="bg-stone-950 p-4 rounded-[8px] border border-stone-800 space-y-4">
         <div className="flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center space-x-2 text-amber-300 font-bold text-sm">
-            <Palette className="w-4 h-4 text-amber-400" />
-            <span>Custom Color Scheme & JSON Configuration</span>
+            <Palette className="w-4 h-4 text-amber-400" aria-hidden="true" />
+            <span>{t('settings.customColorSchemeTitle')}</span>
           </div>
-          <span className="text-[10px] font-mono text-stone-400">Stored & editable as JSON</span>
+          <span className="text-[10px] font-mono text-stone-400">{t('settings.storedEditableJson')}</span>
         </div>
 
         {/* Preset Palettes */}
         <div>
-          <label className="block text-stone-300 font-bold mb-2">Select Color Scheme Preset</label>
+          <label className="block text-stone-300 font-bold mb-2">{t('settings.selectPreset')}</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {PRESET_COLOR_SCHEMES.map((scheme) => {
               const active = settings.colorScheme.id === scheme.id;
@@ -272,7 +274,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
                   key={scheme.id}
                   type="button"
                   onClick={() => handleSelectPreset(scheme)}
-                  className={`p-2.5 rounded-[6px] border text-left flex flex-col justify-between transition-all ${
+                  className={`p-2.5 rounded-[6px] border text-left flex flex-col justify-between transition-all cursor-pointer ${
                     active
                       ? 'bg-amber-950/70 border-amber-500 text-amber-100 ring-1 ring-amber-500/50'
                       : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
@@ -281,10 +283,10 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
                   <span className="font-bold text-xs truncate mb-2">{scheme.name}</span>
                   {/* Swatch dots */}
                   <div className="flex items-center space-x-1">
-                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.bgPrimary }} title="Primary BG" />
-                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.bgSecondary }} title="Secondary BG" />
-                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.accent }} title="Accent Color" />
-                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.textPrimary }} title="Text Primary" />
+                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.bgPrimary }} title={t('settings.primaryBg')} />
+                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.bgSecondary }} title={t('settings.secondaryBg')} />
+                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.accent }} title={t('settings.accent')} />
+                    <span className="w-3 h-3 rounded-full border border-stone-700" style={{ backgroundColor: scheme.textPrimary }} title={t('settings.text')} />
                   </div>
                 </button>
               );
@@ -294,33 +296,33 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
 
         {/* Color Swatch Preview Bar */}
         <div className="p-3 bg-stone-900 rounded-[6px] border border-stone-800 space-y-2">
-          <span className="font-bold text-[11px] text-stone-300 block">Current Active Swatches</span>
+          <span className="font-bold text-[11px] text-stone-300 block">{t('settings.currentActiveSwatches')}</span>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[10px]">
             <div className="flex items-center space-x-2 p-1.5 bg-stone-950 rounded border border-stone-800">
               <span className="w-4 h-4 rounded border border-stone-700 shrink-0" style={{ backgroundColor: settings.colorScheme.bgPrimary }} />
               <div className="truncate">
-                <span className="text-stone-400 block">Primary BG</span>
+                <span className="text-stone-400 block">{t('settings.primaryBg')}</span>
                 <span className="text-stone-200 font-bold">{settings.colorScheme.bgPrimary}</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 p-1.5 bg-stone-950 rounded border border-stone-800">
               <span className="w-4 h-4 rounded border border-stone-700 shrink-0" style={{ backgroundColor: settings.colorScheme.bgSecondary }} />
               <div className="truncate">
-                <span className="text-stone-400 block">Secondary BG</span>
+                <span className="text-stone-400 block">{t('settings.secondaryBg')}</span>
                 <span className="text-stone-200 font-bold">{settings.colorScheme.bgSecondary}</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 p-1.5 bg-stone-950 rounded border border-stone-800">
               <span className="w-4 h-4 rounded border border-stone-700 shrink-0" style={{ backgroundColor: settings.colorScheme.accent }} />
               <div className="truncate">
-                <span className="text-stone-400 block">Accent</span>
+                <span className="text-stone-400 block">{t('settings.accent')}</span>
                 <span className="text-amber-300 font-bold">{settings.colorScheme.accent}</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 p-1.5 bg-stone-950 rounded border border-stone-800">
               <span className="w-4 h-4 rounded border border-stone-700 shrink-0" style={{ backgroundColor: settings.colorScheme.textPrimary }} />
               <div className="truncate">
-                <span className="text-stone-400 block">Text</span>
+                <span className="text-stone-400 block">{t('settings.text')}</span>
                 <span className="text-stone-200 font-bold">{settings.colorScheme.textPrimary}</span>
               </div>
             </div>
@@ -330,7 +332,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
         {/* JSON Editor & File Upload */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-stone-300 font-bold">Edit Color Scheme JSON</label>
+            <label htmlFor="color-scheme-json-textarea" className="block text-stone-300 font-bold">{t('settings.editJson')}</label>
             <div className="flex items-center space-x-2">
               <input
                 type="file"
@@ -342,25 +344,26 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-2.5 py-1 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold rounded-[4px] border border-stone-800 flex items-center space-x-1"
-                title="Upload custom .json color scheme"
+                className="px-2.5 py-1 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold rounded-[4px] border border-stone-800 flex items-center space-x-1 cursor-pointer"
+                title={t('settings.uploadJsonTitle')}
               >
-                <Upload className="w-3 h-3 text-amber-400" />
-                <span>Upload JSON</span>
+                <Upload className="w-3 h-3 text-amber-400" aria-hidden="true" />
+                <span>{t('settings.uploadJson')}</span>
               </button>
               <button
                 type="button"
                 onClick={handleDownloadScheme}
-                className="px-2.5 py-1 bg-stone-900 hover:bg-stone-800 text-stone-300 font-bold rounded-[4px] border border-stone-800 flex items-center space-x-1"
-                title="Export color scheme to JSON file"
+                className="px-2.5 py-1 bg-stone-900 hover:bg-stone-800 text-stone-300 font-bold rounded-[4px] border border-stone-800 flex items-center space-x-1 cursor-pointer"
+                title={t('settings.exportJsonTitle')}
               >
-                <Download className="w-3 h-3 text-stone-400" />
-                <span>Export JSON</span>
+                <Download className="w-3 h-3 text-stone-400" aria-hidden="true" />
+                <span>{t('settings.exportJson')}</span>
               </button>
             </div>
           </div>
 
           <textarea
+            id="color-scheme-json-textarea"
             rows={8}
             value={jsonText}
             onChange={(e) => handleJsonTextChange(e.target.value)}
@@ -368,15 +371,15 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
           />
 
           {jsonError && (
-            <div className="mt-1.5 p-2 bg-rose-950/80 border border-rose-800 rounded text-rose-200 text-[11px] font-mono flex items-center space-x-1.5">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <div role="alert" className="mt-1.5 p-2 bg-rose-950/80 border border-rose-800 rounded text-rose-200 text-[11px] font-mono flex items-center space-x-1.5">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" aria-hidden="true" />
               <span>{jsonError}</span>
             </div>
           )}
 
           {jsonSuccess && (
-            <div className="mt-1.5 p-2 bg-emerald-950/80 border border-emerald-800 rounded text-emerald-200 text-[11px] font-mono flex items-center space-x-1.5">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div role="status" className="mt-1.5 p-2 bg-emerald-950/80 border border-emerald-800 rounded text-emerald-200 text-[11px] font-mono flex items-center space-x-1.5">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
               <span>{jsonSuccess}</span>
             </div>
           )}
@@ -387,14 +390,14 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
       <div className="bg-stone-950 p-4 rounded-[8px] border border-stone-800 space-y-4">
         <div className="flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center space-x-2 text-amber-300 font-bold text-sm">
-            <Globe className="w-4 h-4 text-amber-400" />
-            <span>Language & Accessibility (a11y) Settings</span>
+            <Globe className="w-4 h-4 text-amber-400" aria-hidden="true" />
+            <span>{t('settings.languageA11yTitle')}</span>
           </div>
         </div>
 
         {/* Language Selection */}
         <div>
-          <label className="block text-stone-300 font-bold mb-1.5">Interface Language</label>
+          <label className="block text-stone-300 font-bold mb-1.5">{t('settings.interfaceLanguage')}</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(Object.keys(languageNames) as AppLanguage[]).map((langKey) => {
               const lang = languageNames[langKey];
@@ -404,7 +407,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
                   key={langKey}
                   type="button"
                   onClick={() => onChange({ ...settings, language: langKey })}
-                  className={`p-2.5 rounded-[6px] border text-left flex flex-col justify-between transition-all ${
+                  className={`p-2.5 rounded-[6px] border text-left flex flex-col justify-between transition-all cursor-pointer ${
                     active
                       ? 'bg-amber-950/70 border-amber-500 text-amber-100 ring-1 ring-amber-500/50'
                       : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700 hover:text-stone-200'
@@ -422,18 +425,21 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
         <div className="space-y-3 pt-2 border-t border-stone-800">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-bold text-stone-200 block">High Contrast Mode</span>
-              <span className="text-[10px] text-stone-400 font-mono">Enhances border definitions and text legibility</span>
+              <span className="font-bold text-stone-200 block">{t('settings.highContrast')}</span>
+              <span className="text-[10px] text-stone-400 font-mono">{t('settings.highContrastDesc')}</span>
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={settings.a11y.highContrast}
+              aria-label={t('settings.highContrast')}
               onClick={() =>
                 onChange({
                   ...settings,
                   a11y: { ...settings.a11y, highContrast: !settings.a11y.highContrast },
                 })
               }
-              className={`w-12 h-6 rounded-full transition-colors relative p-1 ${
+              className={`w-12 h-6 rounded-full transition-colors relative p-1 cursor-pointer ${
                 settings.a11y.highContrast ? 'bg-amber-600' : 'bg-stone-800'
               }`}
             >
@@ -447,8 +453,8 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
 
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-bold text-stone-200 block">UI Font & Text Scaling</span>
-              <span className="text-[10px] text-stone-400 font-mono">Adjust interface text size for visual comfort</span>
+              <span className="font-bold text-stone-200 block">{t('settings.uiScaling')}</span>
+              <span className="text-[10px] text-stone-400 font-mono">{t('settings.uiScalingDesc')}</span>
             </div>
             <div className="flex items-center space-x-1 bg-stone-900 p-1 rounded border border-stone-800">
               {[
@@ -465,7 +471,7 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
                       a11y: { ...settings.a11y, fontSize: scale.id as UiScale },
                     })
                   }
-                  className={`px-2 py-1 rounded text-[10px] font-mono font-bold ${
+                  className={`px-2 py-1 rounded text-[10px] font-mono font-bold cursor-pointer ${
                     settings.a11y.fontSize === scale.id
                       ? 'bg-amber-800 text-amber-100'
                       : 'text-stone-400 hover:text-stone-200'
@@ -479,18 +485,21 @@ export const UiSettingsPanel: React.FC<UiSettingsPanelProps> = ({
 
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-bold text-stone-200 block">Reduce Motion & Animations</span>
-              <span className="text-[10px] text-stone-400 font-mono">Disables non-essential UI transitions</span>
+              <span className="font-bold text-stone-200 block">{t('settings.reduceMotion')}</span>
+              <span className="text-[10px] text-stone-400 font-mono">{t('settings.reduceMotionDesc')}</span>
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={settings.a11y.reducedMotion}
+              aria-label={t('settings.reduceMotion')}
               onClick={() =>
                 onChange({
                   ...settings,
                   a11y: { ...settings.a11y, reducedMotion: !settings.a11y.reducedMotion },
                 })
               }
-              className={`w-12 h-6 rounded-full transition-colors relative p-1 ${
+              className={`w-12 h-6 rounded-full transition-colors relative p-1 cursor-pointer ${
                 settings.a11y.reducedMotion ? 'bg-amber-600' : 'bg-stone-800'
               }`}
             >

@@ -4,6 +4,7 @@ import type { DetectedAgent as RendererDetectedAgent } from '@/src/lib/ipc';
 import { agentsByCategory, getAgentDef, isValidModelId } from '@/src/lib/aiRegistry';
 import { tracyApi } from '@/src/lib/ipc';
 import { useAiConfigStore } from '@/src/stores/aiConfigStore';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface AgentSelectorProps {
   detectedAgents: RendererDetectedAgent[];
@@ -44,6 +45,7 @@ function mergedCliDefs(
 }
 
 export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, size = 'md' }) => {
+  const { t } = useTranslation();
   const [agentTab, setAgentTab] = useState<AgentTab>('local-cli');
   const [showApiKey, setShowApiKey] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; loading: boolean; error?: string }>({ ok: false, loading: false });
@@ -89,7 +91,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
       });
       setTestResult({ ok: result.ok, loading: false, error: result.errorMessage });
     } catch {
-      setTestResult({ ok: false, loading: false, error: 'Connection test failed' });
+      setTestResult({ ok: false, loading: false, error: t('settings.testConnectionFailed') });
     }
   };
 
@@ -98,9 +100,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className={`grid grid-cols-2 gap-2 bg-stone-950 rounded-[6px] border border-stone-800 ${isSm ? 'p-1' : 'p-1.5'}`}>
+      <div role="tablist" className={`grid grid-cols-2 gap-2 bg-stone-950 rounded-[6px] border border-stone-800 ${isSm ? 'p-1' : 'p-1.5'}`}>
         <button
           type="button"
+          role="tab"
+          aria-selected={agentTab === 'local-cli'}
           onClick={() => setAgentTab('local-cli')}
           className={`font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
             isSm ? 'py-2 px-3 text-xs rounded-[4px]' : 'py-3 px-4 text-sm rounded-md'
@@ -110,12 +114,14 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
           }`}
         >
-          <Terminal className={`${isSm ? 'w-4 h-4' : 'w-4 h-4'} text-emerald-400`} />
-          <span>Local CLI Agents</span>
+          <Terminal className={`${isSm ? 'w-4 h-4' : 'w-4 h-4'} text-emerald-400`} aria-hidden="true" />
+          <span>{t('settings.agentLocalCli')}</span>
         </button>
 
         <button
           type="button"
+          role="tab"
+          aria-selected={agentTab === 'cloud-api'}
           onClick={() => setAgentTab('cloud-api')}
           className={`font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
             isSm ? 'py-2 px-3 text-xs rounded-[4px]' : 'py-3 px-4 text-sm rounded-md'
@@ -125,8 +131,8 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
           }`}
         >
-          <Key className={`${isSm ? 'w-4 h-4' : 'w-4 h-4'} text-amber-300`} />
-          <span>Cloud API (BYOK)</span>
+          <Key className={`${isSm ? 'w-4 h-4' : 'w-4 h-4'} text-amber-300`} aria-hidden="true" />
+          <span>{t('settings.agentCloudApi')}</span>
         </button>
       </div>
 
@@ -136,15 +142,17 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
           <>
             {cliMerged.length === 0 ? (
               <div className={`col-span-full text-center bg-stone-950/50 rounded-lg border border-stone-800/50 border-dashed ${isSm ? 'p-4' : 'p-8'}`}>
-                <Bot className={`${isSm ? 'w-6 h-6' : 'w-8 h-8'} text-stone-600 mx-auto mb-3`} />
-                <p className={`text-stone-400 ${isSm ? 'text-xs' : 'text-sm'}`}>No local CLI agents detected.</p>
+                <Bot className={`${isSm ? 'w-6 h-6' : 'w-8 h-8'} text-stone-600 mx-auto mb-3`} aria-hidden="true" />
+                <p className={`text-stone-400 ${isSm ? 'text-xs' : 'text-sm'}`}>{t('settings.noLocalAgents')}</p>
               </div>
             ) : (
               cliMerged.map((def) => (
-                <div
+                <button
                   key={def.id}
+                  type="button"
+                  disabled={!def.installed}
                   onClick={() => def.installed && handleSelectAgent(def.id)}
-                  className={`rounded-[6px] border transition-all ${isSm ? 'p-3' : 'p-4'} ${
+                  className={`text-left rounded-[6px] border transition-all ${isSm ? 'p-3' : 'p-4'} ${
                     !def.installed
                       ? 'bg-stone-950/50 border-stone-800/50 text-stone-600 opacity-50 cursor-not-allowed'
                       : selectedAgentId === def.id
@@ -157,28 +165,29 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                       {def.name}
                       {!def.installed && (
                         <span className={`bg-stone-800 text-stone-400 rounded font-normal ${isSm ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-0.5'}`}>
-                          Not Installed
+                          {t('settings.notInstalled')}
                         </span>
                       )}
                     </span>
                     {selectedAgentId === def.id && (
-                      <CheckCircle2 className={`${isSm ? 'w-3.5 h-3.5' : 'w-5 h-5'} text-amber-400`} />
+                      <CheckCircle2 className={`${isSm ? 'w-3.5 h-3.5' : 'w-5 h-5'} text-amber-400`} aria-hidden="true" />
                     )}
                   </div>
                   <p className={`${isSm ? 'text-[10px]' : 'text-xs'} font-mono text-stone-500 line-clamp-1`}>{def.cli_binary}</p>
                   {def.version && (
                     <p className={`${isSm ? 'text-[9px]' : 'text-[10px]'} font-mono text-emerald-500 line-clamp-1`}>v{def.version}</p>
                   )}
-                </div>
+                </button>
               ))
             )}
           </>
         ) : (
           cloudDefs.map((def) => (
-            <div
+            <button
               key={def.id}
+              type="button"
               onClick={() => handleSelectAgent(def.id)}
-              className={`rounded-[6px] border transition-all cursor-pointer ${isSm ? 'p-3' : 'p-4'} ${
+              className={`text-left rounded-[6px] border transition-all cursor-pointer ${isSm ? 'p-3' : 'p-4'} ${
                 selectedAgentId === def.id
                   ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40 shadow-lg transform scale-[1.02]'
                   : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-stone-600 hover:bg-stone-900'
@@ -187,11 +196,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
               <div className="flex items-center justify-between mb-1">
                 <span className={`font-bold ${isSm ? 'text-xs' : 'text-sm'} text-amber-100`}>{def.displayName}</span>
                 {selectedAgentId === def.id && (
-                  <CheckCircle2 className={`${isSm ? 'w-3.5 h-3.5' : 'w-5 h-5'} text-amber-400`} />
+                  <CheckCircle2 className={`${isSm ? 'w-3.5 h-3.5' : 'w-5 h-5'} text-amber-400`} aria-hidden="true" />
                 )}
               </div>
               <p className={`${isSm ? 'text-[10px]' : 'text-xs'} text-stone-400`}>{def.description}</p>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -202,11 +211,12 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
           {/* API Key input */}
           {activeDef.needsApiKey && (
             <div className="space-y-2">
-              <label className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
-                API Key ({activeDef.displayName})
+              <label htmlFor="agent-api-key-input" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
+                {t('settings.apiKeyLabel', { name: activeDef.displayName })}
               </label>
               <div className="relative">
                 <input
+                  id="agent-api-key-input"
                   type={showApiKey ? 'text' : 'password'}
                   value={currentCred.apiKey || ''}
                   onChange={(e) => {
@@ -220,15 +230,16 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                 <button
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
+                  aria-label={t('settings.toggleMask')}
                   className={`absolute text-stone-400 hover:text-stone-100 cursor-pointer ${
                     isSm ? 'right-3 top-2.5' : 'right-4 top-3.5'
                   }`}
                 >
-                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showApiKey ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                 </button>
               </div>
               <p className={`${isSm ? 'text-[10px]' : 'text-xs'} text-stone-500`}>
-                Keys are stored encrypted on this device (desktop) / kept in this browser session only (web).
+                {t('settings.keyStorageNotice')}
               </p>
               {/* Test connection button (HTTP-only, needs API key) */}
               {canTestConnection && (
@@ -247,15 +258,15 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                   }`}
                 >
                   {testResult.loading ? (
-                    <PlugZap className="w-3.5 h-3.5 animate-spin" />
+                    <PlugZap className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                   ) : testResult.ok === true ? (
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   ) : testResult.error ? (
-                    <Plug className="w-3.5 h-3.5" />
+                    <Plug className="w-3.5 h-3.5" aria-hidden="true" />
                   ) : (
-                    <Plug className="w-3.5 h-3.5" />
+                    <Plug className="w-3.5 h-3.5" aria-hidden="true" />
                   )}
-                  <span>{testResult.loading ? 'Testing…' : testResult.ok === true ? 'Connected!' : testResult.error ?? 'Test Connection'}</span>
+                  <span>{testResult.loading ? t('settings.testing') : testResult.ok === true ? t('settings.connected') : testResult.error ?? t('settings.testConnection')}</span>
                 </button>
               )}
             </div>
@@ -264,10 +275,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
           {/* Endpoint input */}
           {activeDef.needsEndpoint && (
             <div className="space-y-2">
-              <label className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
-                Custom Endpoint
+              <label htmlFor="agent-custom-endpoint-input" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
+                {t('settings.customEndpoint')}
               </label>
               <input
+                id="agent-custom-endpoint-input"
                 type="text"
                 value={endpointOverride !== '' ? endpointOverride : (currentCred.customEndpoint || activeDef.defaultEndpoint || '')}
                 onChange={(e) => setEndpointOverride(e.target.value)}
@@ -278,7 +290,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                 }`}
               />
               <p className={`${isSm ? 'text-[10px]' : 'text-xs'} text-stone-500`}>
-                OpenAI-compatible gateway URL (e.g., Ollama, LM Studio).
+                {t('settings.endpointDesc')}
               </p>
             </div>
           )}
@@ -286,10 +298,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
           {/* Model selector */}
           {activeDef.models.length > 0 && (
             <div className="space-y-2">
-              <label className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
-                Model
+              <label htmlFor="agent-model-select" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
+                {t('settings.model')}
               </label>
               <select
+                id="agent-model-select"
                 value={currentModel || activeDef.defaultModel}
                 onChange={(e) => setModel(selectedAgentId, e.target.value)}
                 className={`w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] focus:outline-hidden cursor-pointer ${
@@ -305,10 +318,11 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
 
           {activeDef.allowsCustomModel && (
             <div className="space-y-2">
-              <label className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
-                Model Name
+              <label htmlFor="agent-custom-model-input" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
+                {t('settings.modelName')}
               </label>
               <input
+                id="agent-custom-model-input"
                 type="text"
                 value={currentModel || activeDef.defaultModel}
                 onChange={(e) => setModel(selectedAgentId, e.target.value)}
@@ -318,7 +332,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                 }`}
               />
               {(currentModel || activeDef.defaultModel).length > 0 && !isValidModelId(currentModel || activeDef.defaultModel) && (
-                <p className="text-rose-400 text-[10px]">Invalid model name format</p>
+                <p className="text-rose-400 text-[10px]">{t('settings.invalidModelFormat')}</p>
               )}
             </div>
           )}
