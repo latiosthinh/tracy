@@ -88,11 +88,19 @@ describe('tracyApi fallbacks (non-Electron)', () => {
   });
 
   it('openChildWebview returns void', async () => {
-    await expect(tracyApi.openChildWebview('https://example.com', 0, 0, 800, 600)).resolves.toBeUndefined();
+    await expect(tracyApi.openChildWebview('proj-1', 'https://example.com', 0, 0, 800, 600)).resolves.toBeUndefined();
+  });
+
+  it('resizeChildWebview returns void', async () => {
+    await expect(tracyApi.resizeChildWebview('proj-1', 0, 0, 800, 600)).resolves.toBeUndefined();
+  });
+
+  it('setChildWebviewVisible returns void', async () => {
+    await expect(tracyApi.setChildWebviewVisible('proj-1', false)).resolves.toBeUndefined();
   });
 
   it('closeChildWebview returns void', async () => {
-    await expect(tracyApi.closeChildWebview()).resolves.toBeUndefined();
+    await expect(tracyApi.closeChildWebview('proj-1')).resolves.toBeUndefined();
   });
 
   it('launchBrowser returns void', async () => {

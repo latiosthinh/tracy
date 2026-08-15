@@ -246,24 +246,24 @@ export const tracyApi = {
     return listen('mine_progress', callback);
   },
 
-  // Child Webview Control (Native browser view)
-  openChildWebview: async (url: string, x: number, y: number, width: number, height: number): Promise<void> => {
+  // Child Webview Control (Native browser view — one session per project)
+  openChildWebview: async (projectId: string, url: string, x: number, y: number, width: number, height: number): Promise<void> => {
     if (!isElectronEnv()) return;
-    return invoke('open_child_webview', { url, x, y, width, height });
+    return invoke('open_child_webview', { projectId, url, x, y, width, height });
   },
 
-  resizeChildWebview: async (x: number, y: number, width: number, height: number): Promise<void> => {
+  resizeChildWebview: async (projectId: string, x: number, y: number, width: number, height: number): Promise<void> => {
     if (!isElectronEnv()) return;
-    return invoke('resize_child_webview', { x, y, width, height });
+    return invoke('resize_child_webview', { projectId, x, y, width, height });
   },
 
-  setChildWebviewVisible: async (visible: boolean): Promise<void> => {
+  setChildWebviewVisible: async (projectId: string, visible: boolean): Promise<void> => {
     if (!isElectronEnv()) return;
-    return invoke('set_child_webview_visible', { visible });
+    return invoke('set_child_webview_visible', { projectId, visible });
   },
 
-  closeChildWebview: async (): Promise<void> => {
+  closeChildWebview: async (projectId: string): Promise<void> => {
     if (!isElectronEnv()) return;
-    return invoke('close_child_webview');
+    return invoke('close_child_webview', { projectId });
   },
 };
