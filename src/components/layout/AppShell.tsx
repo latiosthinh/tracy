@@ -26,6 +26,7 @@ export const AppShell: React.FC = () => {
 
   const scanAgents = useAgentStore((s) => s.scanAgents);
   const setupEventListeners = useExecutionStore((s) => s.setupEventListeners);
+  const loadProjectsFromIndexedDb = useProjectStore((s) => s.loadProjectsFromIndexedDb);
 
   // Auto-save hook
   useAutoSave(30);
@@ -34,6 +35,8 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     const loadApp = async () => {
       setLoadingStep('init');
+      // Load projects from IndexedDB in web mode (no-op in Electron)
+      await loadProjectsFromIndexedDb();
       await scanAgents();
       setLoadingStep('projects');
       await setupEventListeners();
@@ -42,7 +45,7 @@ export const AppShell: React.FC = () => {
     };
 
     loadApp();
-  }, [scanAgents, setupEventListeners]);
+  }, [scanAgents, setupEventListeners, loadProjectsFromIndexedDb]);
 
   // Project store state
   const projects = useProjectStore((s) => s.projects);

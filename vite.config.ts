@@ -4,6 +4,16 @@ import path from 'path';
 import {defineConfig} from 'vite';
 import electron from 'vite-plugin-electron/simple';
 
+// Node-only packages must stay out of the Electron main bundle.
+// Regex-based so deep subpath imports (e.g. chromium-bidi/lib/cjs/...) are also externalized.
+const MAIN_PROCESS_EXTERNALS = [
+  /^playwright-core($|\/)/,
+  /^chromium-bidi($|\/)/,
+  /^playwright($|\/)/,
+  /^js-yaml($|\/)/,
+  /^@google\/genai($|\/)/,
+];
+
 export default defineConfig(() => {
   return {
     base: './',
@@ -15,8 +25,12 @@ export default defineConfig(() => {
           entry: 'electron/main.ts',
           vite: {
             build: {
+              // Vite 8 (rolldown) reads rolldownOptions; rollupOptions kept for compat.
+              rolldownOptions: {
+                external: MAIN_PROCESS_EXTERNALS,
+              },
               rollupOptions: {
-                external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml', '@google/genai']
+                external: MAIN_PROCESS_EXTERNALS,
               }
             }
           }
@@ -42,7 +56,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     ssr: {
-      external: ['playwright-core', 'chromium-bidi', 'js-yaml', '@google/genai']
+      external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml', '@google/genai'],
     }
   };
 });

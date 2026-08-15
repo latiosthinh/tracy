@@ -3,6 +3,8 @@ import { immer } from 'zustand/middleware/immer';
 import type { Project, FlowFile, FlowCategory, FlowStep, MinedPageData } from '@/src/types/index';
 import { DEFAULT_PROJECTS } from '@/src/data/defaultProjects';
 import { useDomSnapshotStore } from '@/src/stores/domSnapshotStore';
+import { isElectronEnv } from '@/src/lib/ipc';
+import { loadProjectsFromDb, saveProjectToDb, deleteProjectFromDb } from '@/src/lib/db';
 
 interface ProjectState {
   projects: Project[];
@@ -40,6 +42,11 @@ interface ProjectState {
   getDomSnapshot: (projectId: string, path: string) => MinedPageData | undefined;
   getAllDomSnapshots: (projectId: string) => Record<string, MinedPageData>;
   clearDomSnapshots: (projectId: string) => void;
+
+  // Web-mode persistence (IndexedDB)
+  loadProjectsFromIndexedDb: () => Promise<void>;
+  persistProjectToIndexedDb: (projectId: string) => Promise<void>;
+  deleteProjectFromIndexedDb: (projectId: string) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>()(
@@ -113,6 +120,8 @@ export const useProjectStore = create<ProjectState>()(
         state.activeProjectId = newProject.id;
         state.activeFlowId = newProject.flows[0]?.id || '';
       });
+      // Persist to IndexedDB in web mode
+      get().persistProjectToIndexedDb(newProject.id);
     },
 
     updateProject: (updatedProject: Project) => {
@@ -122,6 +131,8 @@ export const useProjectStore = create<ProjectState>()(
           state.projects[index] = updatedProject;
         }
       });
+      // Persist to IndexedDB in web mode
+      get().persistProjectToIndexedDb(updatedProject.id);
     },
 
     deleteProject: (projectId: string) => {
@@ -133,6 +144,8 @@ export const useProjectStore = create<ProjectState>()(
           state.activeProjectId = state.projects[0].id;
         }
       });
+      // Delete from IndexedDB in web mode
+      get().deleteProjectFromIndexedDb(projectId);
     },
 
     updateTargetUrl: (newUrl: string) => {
@@ -142,6 +155,9 @@ export const useProjectStore = create<ProjectState>()(
           activeProj.targetUrl = newUrl;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     updateProjectSaveLocation: (projectId: string, location: string) => {
@@ -168,6 +184,9 @@ export const useProjectStore = create<ProjectState>()(
           state.activeFlowId = activeProj.flows[0].id;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     createFlow: (customName?: string, category?: FlowCategory) => {
@@ -198,6 +217,9 @@ export const useProjectStore = create<ProjectState>()(
         activeProj.flows.push(newFlow);
         state.activeFlowId = newId;
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     renameFlow: (flowId: string, newName: string) => {
@@ -215,6 +237,9 @@ export const useProjectStore = create<ProjectState>()(
           flow.path = `flows/${cleanName}`;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     updateFlowCategory: (flowId: string, category: FlowCategory) => {
@@ -225,6 +250,9 @@ export const useProjectStore = create<ProjectState>()(
           flow.category = category;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     updateYamlContent: (newYaml: string) => {
@@ -235,6 +263,9 @@ export const useProjectStore = create<ProjectState>()(
           flow.yamlContent = newYaml;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     updateFlowSteps: (newSteps: FlowStep[]) => {
@@ -245,6 +276,9 @@ export const useProjectStore = create<ProjectState>()(
           flow.steps = newSteps;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     batchAddFlows: (newFlows: { name: string; yaml: string; description?: string }[]) => {
@@ -276,6 +310,9 @@ export const useProjectStore = create<ProjectState>()(
           state.activeFlowId = createdFlows[0].id;
         }
       });
+      // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
     },
 
     addDomSnapshot: (projectId: string, path: string, data: MinedPageData) => {
@@ -292,6 +329,33 @@ export const useProjectStore = create<ProjectState>()(
 
     clearDomSnapshots: (projectId: string) => {
       useDomSnapshotStore.getState().clearDomSnapshots(projectId);
+    },
+
+    // Web-mode persistence actions
+    loadProjectsFromIndexedDb: async () => {
+      if (isElectronEnv()) return; // Electron uses file system, skip IndexedDB
+      const projects = await loadProjectsFromDb();
+      if (projects.length > 0) {
+        set((state) => {
+          state.projects = projects;
+          state.openProjectIds = projects.map((p) => p.id);
+          state.activeProjectId = projects[0].id;
+          state.activeFlowId = projects[0].flows[0]?.id || '';
+        });
+      }
+    },
+
+    persistProjectToIndexedDb: async (projectId: string) => {
+      if (isElectronEnv()) return; // Electron uses file system, skip IndexedDB
+      const project = get().projects.find((p) => p.id === projectId);
+      if (project) {
+        await saveProjectToDb(project);
+      }
+    },
+
+    deleteProjectFromIndexedDb: async (projectId: string) => {
+      if (isElectronEnv()) return; // Electron uses file system, skip IndexedDB
+      await deleteProjectFromDb(projectId);
     },
   }))
 );

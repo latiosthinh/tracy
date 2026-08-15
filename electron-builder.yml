@@ -1,0 +1,38 @@
+appId: com.tracy.automation-studio
+productName: Tracy Automation Studio
+directories:
+  output: release
+  buildResources: build
+asar: true
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - "!node_modules/**/*"
+  - node_modules/playwright-core/**/*
+  - node_modules/js-yaml/**/*
+  - node_modules/dom-miner/**/*
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.icns
+  category: public.app-category.developer-tools
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  icon: build/icon.png
+  category: Development

@@ -2,9 +2,13 @@ node_modules/
 build/
 dist/
 dist-electron/
+dist-web/
 coverage/
 .DS_Store
 *.log
 *.exe
 .env*
 !.env.example
+
+# AI assistant configs
+.qwen/
