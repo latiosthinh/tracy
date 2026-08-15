@@ -13,6 +13,7 @@ import {
   Activity
 } from 'lucide-react';
 import { FlowStep, ExecutionLog, TestRunResult } from '@/src/types/autoflow';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface StepTimelineProps {
   steps: FlowStep[];
@@ -41,6 +42,7 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
   lastResult: _lastResult,
   onExplainFailure,
 }) => {
+  const { t } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<'timeline' | 'logs'>('timeline');
 
   const passedCount = steps.filter(s => s.status === 'passed').length;
@@ -55,48 +57,55 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
         <div className="flex items-center space-x-2">
           {!isExecuting ? (
             <button
+              type="button"
               onClick={onStartRun}
-              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-emerald-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-emerald-600 shadow-xs transition-all"
+              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-emerald-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-emerald-600 shadow-xs transition-all cursor-pointer"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Run Test Suite</span>
+              <Play className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+              <span>{t('studio.runTestSuite')}</span>
             </button>
           ) : (
             <button
+              type="button"
               onClick={onPauseRun}
-              className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-amber-600 shadow-xs transition-all"
+              className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-amber-600 shadow-xs transition-all cursor-pointer"
             >
-              <Pause className="w-3.5 h-3.5 fill-current" />
-              <span>Pause</span>
+              <Pause className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+              <span>{t('studio.pause')}</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={onResetRun}
-            className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[6px] border border-stone-700 transition-all"
-            title="Reset Execution"
+            className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[6px] border border-stone-700 transition-all cursor-pointer"
+            title={t('studio.resetExecution')}
+            aria-label={t('studio.resetExecution')}
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
 
           {/* Speed Selector */}
           <div className="flex items-center space-x-1 bg-stone-950 p-1 rounded-[6px] border border-stone-800 text-[10px] font-mono">
-            <FastForward className="w-3 h-3 text-amber-400 ml-1" />
+            <FastForward className="w-3 h-3 text-amber-400 ml-1" aria-hidden="true" />
             <button
+              type="button"
               onClick={() => onSpeedChange(800)}
-              className={`px-1.5 py-0.5 rounded-sm ${executionSpeed === 800 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
+              className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 800 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
               1x
             </button>
             <button
+              type="button"
               onClick={() => onSpeedChange(300)}
-              className={`px-1.5 py-0.5 rounded-sm ${executionSpeed === 300 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
+              className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 300 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
               3x
             </button>
             <button
+              type="button"
               onClick={() => onSpeedChange(50)}
-              className={`px-1.5 py-0.5 rounded-sm ${executionSpeed === 50 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
+              className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 50 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
               Turbo
             </button>
@@ -104,15 +113,15 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
         </div>
 
         {/* Progress Summary Badge */}
-        <div className="flex items-center space-x-3 text-[11px] font-mono">
-          <span className="text-emerald-400 font-bold">{passedCount} Passed</span>
-          {failedCount > 0 && <span className="text-rose-400 font-bold">{failedCount} Failed</span>}
-          <span className="text-stone-500">{totalCount} Steps</span>
+        <div className="flex items-center space-x-3 text-[11px] font-mono" aria-live="polite">
+          <span className="text-emerald-400 font-bold">{t('studio.passedCount', { count: passedCount })}</span>
+          {failedCount > 0 && <span className="text-rose-400 font-bold">{t('studio.failedCount', { count: failedCount })}</span>}
+          <span className="text-stone-500">{t('studio.stepsCount', { count: totalCount })}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-stone-900 h-1.5 overflow-hidden shrink-0">
+      <div className="w-full bg-stone-900 h-1.5 overflow-hidden shrink-0" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
         <div
           className={`h-full transition-all duration-300 ${failedCount > 0 ? 'bg-rose-500' : 'bg-emerald-500'}`}
           style={{ width: `${progressPct}%` }}
@@ -120,30 +129,36 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
       </div>
 
       {/* View Toggle Tabs */}
-      <div className="bg-stone-900/80 px-3 py-1.5 border-b border-stone-800 flex items-center space-x-4 text-xs font-semibold shrink-0">
+      <div className="bg-stone-900/80 px-3 py-1.5 border-b border-stone-800 flex items-center space-x-4 text-xs font-semibold shrink-0" role="tablist">
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeSubTab === 'timeline'}
           onClick={() => setActiveSubTab('timeline')}
-          className={`flex items-center space-x-1.5 py-1 border-b-2 transition-all ${
+          className={`flex items-center space-x-1.5 py-1 border-b-2 transition-all cursor-pointer ${
             activeSubTab === 'timeline' ? 'border-amber-500 text-amber-400' : 'border-transparent text-stone-400 hover:text-stone-200'
           }`}
         >
-          <Activity className="w-3.5 h-3.5" />
-          <span>Execution Timeline</span>
+          <Activity className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>{t('studio.executionTimeline')}</span>
         </button>
 
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeSubTab === 'logs'}
           onClick={() => setActiveSubTab('logs')}
-          className={`flex items-center space-x-1.5 py-1 border-b-2 transition-all ${
+          className={`flex items-center space-x-1.5 py-1 border-b-2 transition-all cursor-pointer ${
             activeSubTab === 'logs' ? 'border-amber-500 text-amber-400' : 'border-transparent text-stone-400 hover:text-stone-200'
           }`}
         >
-          <Terminal className="w-3.5 h-3.5" />
-          <span>Console & Network Logs ({logs.length})</span>
+          <Terminal className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>{t('studio.consoleLogsCount', { count: logs.length })}</span>
         </button>
       </div>
 
       {/* Main Tab Body */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-2 font-mono">
+      <div className="flex-1 p-3 overflow-y-auto space-y-2 font-mono" aria-live="polite">
         {activeSubTab === 'timeline' ? (
           <div className="space-y-2">
             {steps.map((step, idx) => {
@@ -165,13 +180,13 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start space-x-2.5">
                       {step.status === 'passed' ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" aria-hidden="true" />
                       ) : step.status === 'failed' ? (
-                        <XCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+                        <XCircle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" aria-hidden="true" />
                       ) : isActive ? (
-                        <div className="w-4 h-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mt-0.5 shrink-0" />
+                        <div className="w-4 h-4 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mt-0.5 shrink-0" aria-hidden="true" />
                       ) : (
-                        <Clock className="w-4 h-4 text-stone-600 mt-0.5 shrink-0" />
+                        <Clock className="w-4 h-4 text-stone-600 mt-0.5 shrink-0" aria-hidden="true" />
                       )}
 
                       <div>
@@ -190,7 +205,7 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
 
                         {step.value && step.target && (
                           <p className="text-[11px] text-stone-400 mt-0.5">
-                            Value: <span className="text-emerald-300 font-mono">"{step.value}"</span>
+                            {t('studio.valueLabel')}<span className="text-emerald-300 font-mono">"{step.value}"</span>
                           </p>
                         )}
                       </div>
@@ -199,7 +214,7 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
                     <div className="flex items-center space-x-2 text-[10px] text-stone-500">
                       {step.durationMs && <span>{step.durationMs}ms</span>}
                       <span className="uppercase font-bold">
-                        {step.status === 'passed' ? 'Passed' : step.status === 'failed' ? 'Failed' : step.status}
+                        {step.status === 'passed' ? t('reports.passed') : step.status === 'failed' ? t('reports.failed') : step.status}
                       </span>
                     </div>
                   </div>
@@ -208,18 +223,19 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
                   {step.status === 'failed' && step.errorMessage && (
                     <div className="mt-2.5 p-2.5 bg-rose-950/80 rounded-[6px] border border-rose-800/80 text-[11px] text-rose-200 space-y-2">
                       <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
-                        <AlertOctagon className="w-3.5 h-3.5" />
-                        <span>Assertion Failure Error:</span>
+                        <AlertOctagon className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{t('studio.assertionError')}</span>
                       </div>
                       <p className="font-mono text-stone-300">{step.errorMessage}</p>
 
                       {onExplainFailure && (
                         <button
+                          type="button"
                           onClick={() => onExplainFailure(step, step.errorMessage!)}
-                          className="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-amber-50 font-sans font-bold text-[10px] rounded-[6px] flex items-center space-x-1 border border-amber-600 shadow-xs transition-all"
+                          className="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-amber-50 font-sans font-bold text-[10px] rounded-[6px] flex items-center space-x-1 border border-amber-600 shadow-xs transition-all cursor-pointer"
                         >
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>Ask Gemini AI to Explain & Fix Step</span>
+                          <Sparkles className="w-3 h-3 text-amber-300" aria-hidden="true" />
+                          <span>{t('studio.askAiExplain')}</span>
                         </button>
                       )}
                     </div>
@@ -232,7 +248,7 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
           /* Logs Panel */
           <div className="space-y-1.5 text-[11px]">
             {logs.length === 0 ? (
-              <p className="text-stone-500 text-center py-6">No console logs recorded yet. Start test execution.</p>
+              <p className="text-stone-500 text-center py-6">{t('studio.noLogs')}</p>
             ) : (
               logs.map(log => (
                 <div

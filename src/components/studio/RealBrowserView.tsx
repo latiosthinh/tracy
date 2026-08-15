@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { isElectronEnv, tracyApi } from '@/src/lib/ipc';
 import { generateSuggestedSelectors } from '@/src/utils/domMiner';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
+import { useTranslation } from '@/src/hooks/useTranslation';
 import { Info } from 'lucide-react';
 
 interface RealBrowserViewProps {
@@ -30,6 +31,7 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
   hideWebview = false,
 }) => {
   const { isWeb } = useEnvironment();
+  const { t } = useTranslation();
   const [, setViewState] = useState<ViewState>('idle');
   const [, setCurrentUrl] = useState<string>('');
   const [, setError] = useState<string | null>(null);
@@ -170,6 +172,12 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
   useEffect(() => {
     if (isElectronEnv()) {
       tracyApi.setChildWebviewVisible(projectId, !hideWebview).catch(() => {});
+      if (!hideWebview && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          tracyApi.resizeChildWebview(projectId, rect.x, rect.y, rect.width, rect.height).catch(() => {});
+        }
+      }
     }
   }, [projectId, hideWebview]);
 
@@ -185,20 +193,19 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
     <div className="w-full h-full bg-stone-900 flex flex-col">
       {isWeb && (
         <div className="bg-amber-950/80 border-b border-amber-800/60 px-4 py-2 flex items-center gap-2 text-xs text-amber-200 shrink-0">
-          <Info className="w-4 h-4 shrink-0" />
+          <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>
-            Web mode — real browser automation is only available in the Tracy desktop app.{' '}
+            {t('studio.webModeNotice')}{' '}
             <a href="#/" className="underline hover:text-amber-100">
-              Download the desktop version
+              {t('studio.downloadDesktop')}
             </a>{' '}
-            for full Playwright integration.
+            {t('studio.desktopIntegrationNotice')}
           </span>
         </div>
       )}
       {/* Main View Area */}
       <div
         className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-hidden bg-white"
-        tabIndex={0}
       >
         {/* NATIVE CHILD WEBVIEW CONTAINER */}
         <div

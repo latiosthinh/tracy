@@ -9,30 +9,38 @@ import {
   Sliders,
 } from 'lucide-react';
 import type { ActiveTab } from '@/src/types/ui';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface StudioTabsProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
 }
 
-const TABS: { id: ActiveTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-  { id: 'editor', label: 'YAML Editor', icon: Code },
-  { id: 'steps', label: 'Visual Steps', icon: ListOrdered },
-  { id: 'timeline', label: 'Execution', icon: Activity },
-  { id: 'ai', label: 'AI Copilot', icon: Bot },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-  { id: 'cli', label: 'CLI Agents', icon: Terminal },
-  { id: 'config', label: 'Config', icon: Sliders },
-];
-
 export const StudioTabs: React.FC<StudioTabsProps> = ({ activeTab, onTabChange }) => {
+  const { t } = useTranslation();
+
+  const TABS: { id: ActiveTab; labelKey: string; icon: React.FC<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }> }[] = [
+    { id: 'editor', labelKey: 'studio.tabYaml', icon: Code },
+    { id: 'steps', labelKey: 'studio.tabSteps', icon: ListOrdered },
+    { id: 'timeline', labelKey: 'studio.tabTimeline', icon: Activity },
+    { id: 'ai', labelKey: 'studio.tabAi', icon: Bot },
+    { id: 'reports', labelKey: 'studio.tabReports', icon: BarChart3 },
+    { id: 'cli', labelKey: 'studio.tabCli', icon: Terminal },
+    { id: 'config', labelKey: 'studio.tabConfig', icon: Sliders },
+  ];
+
   return (
-    <div className="bg-stone-950 border-b border-stone-900 px-3 py-1 flex items-center space-x-1 shrink-0 select-none overflow-x-auto no-scrollbar">
+    <div className="bg-stone-950 border-b border-stone-900 px-3 py-1 flex items-center space-x-1 shrink-0 select-none overflow-x-auto no-scrollbar" role="tablist">
       {TABS.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
+        const label = t(tab.labelKey);
+
         return (
           <button
+            type="button"
+            role="tab"
+            aria-selected={isActive}
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`px-3 py-1.5 rounded-[6px] text-xs font-mono font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
@@ -41,8 +49,8 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({ activeTab, onTabChange }
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900/60 border border-transparent'
             }`}
           >
-            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-stone-500'}`} />
-            <span>{tab.label}</span>
+            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-stone-500'}`} aria-hidden="true" />
+            <span>{label}</span>
           </button>
         );
       })}

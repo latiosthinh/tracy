@@ -3,6 +3,7 @@ import { Database, Pickaxe, X, Copy, Download, Drill, Info } from 'lucide-react'
 import { IconButton } from '@/src/components/ui/IconButton';
 import type { MinedPageData } from '@/src/types/index';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface DomMinerPanelProps {
   domSnapshots: Record<string, MinedPageData>;
@@ -20,12 +21,14 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
   setShowBatchMiner
 }) => {
   const { isWeb } = useEnvironment();
+  const { t } = useTranslation();
+
   return (
     <div className="h-[400px] border-t border-stone-800 bg-stone-950 flex flex-col shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-30">
       <div className="px-4 py-2 bg-stone-900 border-b border-stone-800 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-2">
-          <Database className="w-4 h-4 text-cyan-400" />
-          <span className="font-bold text-cyan-100 text-sm">DOM Snapshots</span>
+          <Database className="w-4 h-4 text-cyan-400" aria-hidden="true" />
+          <span className="font-bold text-cyan-100 text-sm">{t('domMiner.title')}</span>
           <span className="text-xs text-stone-400 font-mono">({Object.keys(domSnapshots).length})</span>
         </div>
         <div className="flex items-center space-x-1.5">
@@ -80,15 +83,15 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {Object.keys(domSnapshots).length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-stone-500">
-            <Pickaxe className="w-16 h-16 mb-4 opacity-20 text-amber-500" />
-            <p className="text-lg">No DOM snapshots recorded.</p>
+            <Pickaxe className="w-16 h-16 mb-4 opacity-20 text-amber-500" aria-hidden="true" />
+            <p className="text-lg">{t('domMiner.noSnapshots')}</p>
             {isWeb && (
               <div className="flex items-center gap-2 mt-3 px-4 py-2 bg-amber-950/50 border border-amber-800/50 rounded-md text-xs text-amber-300 max-w-sm text-center">
-                <Info className="w-4 h-4 shrink-0" />
-                DOM mining requires the Tracy desktop app — it uses Playwright to capture live page trees. In web mode you can only view pre-cached snapshots.
+                <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {t('domMiner.webModeNotice')}
               </div>
             )}
-            {!isWeb && <p className="text-sm mt-2">Use the Pickaxe or Drill button in the toolbar to mine pages.</p>}
+            {!isWeb && <p className="text-sm mt-2">{t('domMiner.desktopInstruction')}</p>}
           </div>
         ) : (
           <>
@@ -112,10 +115,11 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
                       {snaps.map((snap) => {
                         const isSelected = selectedSnapshotPath === snap.path;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={snap.path}
                             onClick={() => setSelectedSnapshotPath(snap.path)}
-                            className={`p-3 transition-colors cursor-pointer ${
+                            className={`w-full text-left p-3 transition-colors cursor-pointer ${
                               isSelected ? 'bg-amber-900/20' : 'hover:bg-stone-800/40'
                             }`}
                           >
@@ -128,10 +132,10 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
                               </span>
                             </div>
                             <div className="flex gap-3 text-[10px] text-stone-400">
-                              <div><span className="text-stone-500">Nodes:</span> {snap.stats.totalNodes}</div>
-                              <div><span className="text-emerald-500">Interactive:</span> {snap.stats.interactiveNodes}</div>
+                              <div><span className="text-stone-500">{t('domMiner.nodes')}</span> {snap.stats.totalNodes}</div>
+                              <div><span className="text-emerald-500">{t('domMiner.interactive')}</span> {snap.stats.interactiveNodes}</div>
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -148,15 +152,15 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
                     <h3 className="text-sm font-bold text-stone-200 truncate mb-1">{domSnapshots[selectedSnapshotPath].url}</h3>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-stone-400">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-stone-500">Nodes:</span>
+                        <span className="text-stone-500">{t('domMiner.nodes')}</span>
                         <span className="font-mono text-stone-300">{domSnapshots[selectedSnapshotPath].stats.totalNodes}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-emerald-500">Interactive:</span>
+                        <span className="text-emerald-500">{t('domMiner.interactive')}</span>
                         <span className="font-mono text-stone-300">{domSnapshots[selectedSnapshotPath].stats.interactiveNodes}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-cyan-500">Text:</span>
+                        <span className="text-cyan-500">{t('domMiner.text')}</span>
                         <span className="font-mono text-stone-300">{domSnapshots[selectedSnapshotPath].stats.textHolders}</span>
                       </div>
                     </div>
@@ -167,7 +171,7 @@ export const DomMinerPanel: React.FC<DomMinerPanelProps> = ({
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-stone-500 text-sm">
-                  <p>Select a snapshot from the list to view its DOM tree.</p>
+                  <p>{t('domMiner.selectSnapshotPrompt')}</p>
                 </div>
               )}
             </div>

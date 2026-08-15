@@ -18,6 +18,7 @@ import {
 import type { DevicePreset } from '@/src/types/ui';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface StudioToolbarProps {
   targetPath: string;
@@ -59,6 +60,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
   mineProgressMessage,
 }) => {
   const { isWeb } = useEnvironment();
+  const { t } = useTranslation();
 
   return (
     <div className="bg-stone-950 px-3 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 font-sans w-full relative">
@@ -121,7 +123,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
           <div className="relative group/miner flex items-center gap-3">
             {isWeb && (
               <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-stone-800 text-stone-300 text-[10px] rounded whitespace-nowrap opacity-0 group-hover/miner:opacity-100 pointer-events-none transition-opacity shadow-lg border border-stone-700">
-                DOM mining requires the desktop app
+                {t('toolbar.domMiningRequiresDesktop')}
               </span>
             )}
             <IconButton
@@ -134,7 +136,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
               {isMining && !mineProgressMessage ? (
                 <span className="w-3.5 h-3.5 block animate-spin">⛏</span>
               ) : (
-                <Pickaxe className="w-3.5 h-3.5" />
+                <Pickaxe className="w-3.5 h-3.5" aria-hidden="true" />
               )}
             </IconButton>
 
@@ -178,20 +180,21 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
         className="w-full max-w-xl flex items-center space-x-1.5 px-4 shrink-0"
       >
         <div className="w-full bg-stone-900 border border-stone-800 focus-within:border-amber-600/80 rounded-[6px] px-2.5 py-1 flex items-center space-x-2 shadow-inner">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
           <input
             type="text"
             value={embedUrlInput}
             onChange={(e) => setEmbedUrlInput(e.target.value)}
             onFocus={(e) => e.target.select()}
-            placeholder="Enter target URL or path e.g. google.com or /checkout"
+            placeholder={t('toolbar.urlPlaceholder')}
+            aria-label={t('toolbar.urlPlaceholder')}
             className="w-full bg-transparent text-amber-50 font-mono text-xs focus:outline-hidden"
           />
           <button
             type="submit"
             className="px-2 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-mono text-[10px] font-bold rounded-[4px] border border-amber-600/80 shrink-0 cursor-pointer"
           >
-            Go
+            {t('toolbar.go')}
           </button>
         </div>
       </form>

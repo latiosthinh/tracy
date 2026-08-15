@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   RotateCcw,
   FileCode,
@@ -21,6 +21,7 @@ import { CliTerminal } from '@/src/components/reports/CliTerminal';
 import { FlowCategorySelector } from '@/src/components/editor/FlowCategorySelector';
 import { StepTimeline } from '@/src/components/studio/StepTimeline';
 import { getFlowCategory } from '@/src/utils/flowUtils';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import type { FlowFile, Project, ActiveTab } from '@/src/types/index';
 
@@ -87,6 +88,15 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
   workspaceConfig,
   updateWorkspaceConfig
 }) => {
+  const { t } = useTranslation();
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingActiveFlowName && renameInputRef.current) {
+      renameInputRef.current.focus();
+    }
+  }, [isEditingActiveFlowName]);
+
   return (
     <div
       className="h-full bg-stone-950 flex flex-col overflow-hidden shrink-0 border-l border-stone-800"
@@ -95,7 +105,7 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
       {/* Flow Header */}
       <div className="bg-stone-950 px-3.5 py-2 border-b border-stone-800 flex items-center justify-between gap-2 shrink-0 font-sans">
         <div className="flex items-center space-x-2 truncate min-w-0">
-          <FileCode className="w-4 h-4 text-amber-400 shrink-0" />
+          <FileCode className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
           {isEditingActiveFlowName ? (
             <form
               onSubmit={(e) => {
@@ -108,7 +118,9 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
               className="flex items-center space-x-1"
             >
               <input
+                ref={renameInputRef}
                 type="text"
+                aria-label={t('studio.renameFlow')}
                 value={activeFlowNameInput}
                 onChange={(e) => setActiveFlowNameInput(e.target.value)}
                 onBlur={() => {
@@ -117,22 +129,22 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
                   }
                   setIsEditingActiveFlowName(false);
                 }}
-                autoFocus
                 className="bg-stone-900 border border-amber-500 rounded px-2 py-0.5 text-xs font-mono text-stone-100 focus:outline-none"
               />
             </form>
           ) : (
             <div className="flex items-center space-x-1.5 min-w-0">
-              <span
+              <button
+                type="button"
                 onClick={() => {
                   setActiveFlowNameInput(activeFlow.name);
                   setIsEditingActiveFlowName(true);
                 }}
-                className="font-mono font-bold text-stone-100 text-xs truncate cursor-pointer hover:text-amber-300 transition-colors"
-                title="Click to rename flow"
+                className="font-mono font-bold text-stone-100 text-xs truncate cursor-pointer hover:text-amber-300 transition-colors bg-transparent border-none p-0 text-left"
+                title={t('studio.clickToRename')}
               >
                 {activeFlow.name}
-              </span>
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -140,9 +152,10 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
                   setIsEditingActiveFlowName(true);
                 }}
                 className="p-1 text-stone-500 hover:text-amber-400 rounded transition-colors cursor-pointer"
-                title="Rename flow"
+                title={t('studio.renameFlow')}
+                aria-label={t('studio.renameFlow')}
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
           )}
@@ -155,102 +168,128 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
       </div>
 
       {/* Side Tabs Header */}
-      <div className="bg-stone-950 border-b border-stone-800 px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto text-xs shrink-0">
+      <div className="bg-stone-950 border-b border-stone-800 px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto text-xs shrink-0" role="tablist">
         <div className="flex items-center space-x-1">
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'ai'}
             onClick={() => setActiveTab('ai')}
-            title="AI Copilot"
+            title={t('studio.aiCopilot')}
+            aria-label={t('studio.aiCopilot')}
             className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'ai'
               ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
               }`}
           >
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-            {activeTab === 'ai' && <span>AI Copilot</span>}
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'ai' && <span>{t('studio.aiCopilot')}</span>}
           </button>
 
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'editor'}
             onClick={() => setActiveTab('editor')}
-            title="YAML Editor"
+            title={t('studio.yamlEditor')}
+            aria-label={t('studio.yamlEditor')}
             className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'editor'
               ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
               }`}
           >
-            <FileCode className="w-4 h-4 text-amber-400 shrink-0" />
-            {activeTab === 'editor' && <span>YAML Editor</span>}
+            <FileCode className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'editor' && <span>{t('studio.yamlEditor')}</span>}
           </button>
 
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'steps'}
             onClick={() => setActiveTab('steps')}
-            title="Visual Blocks"
+            title={t('studio.visualBlocks')}
+            aria-label={t('studio.visualBlocks')}
             className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'steps'
               ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
               }`}
           >
-            <Layers className="w-4 h-4 text-amber-400 shrink-0" />
-            {activeTab === 'steps' && <span>Visual Blocks</span>}
+            <Layers className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'steps' && <span>{t('studio.visualBlocks')}</span>}
           </button>
 
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'timeline'}
             onClick={() => setActiveTab('timeline')}
-            title="Runner Timeline"
+            title={t('studio.runnerTimeline')}
+            aria-label={t('studio.runnerTimeline')}
             className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'timeline'
               ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
               }`}
           >
-            <Terminal className="w-4 h-4 text-amber-400 shrink-0" />
-            {activeTab === 'timeline' && <span>Runner Timeline</span>}
+            <Terminal className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'timeline' && <span>{t('studio.runnerTimeline')}</span>}
           </button>
 
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'reports'}
             onClick={() => setActiveTab('reports')}
-            title="Test Reports"
+            title={t('studio.testReports')}
+            aria-label={t('studio.testReports')}
             className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'reports'
               ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
               : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
               }`}
           >
-            <BarChart3 className="w-4 h-4 text-amber-400 shrink-0" />
-            {activeTab === 'reports' && <span>Test Reports</span>}
+            <BarChart3 className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'reports' && <span>{t('studio.testReports')}</span>}
           </button>
         </div>
 
         <div className="flex items-center space-x-1.5 shrink-0 ml-auto">
           {!isExecuting ? (
             <button
+              type="button"
               onClick={() => startExecution(activeFlow, activeProject?.targetUrl || '')}
               className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 shadow-md border border-amber-600 transition-all shrink-0 cursor-pointer"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Run Flow</span>
+              <Play className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+              <span>{t('studio.run')}</span>
             </button>
           ) : (
             <button
+              type="button"
               onClick={pauseExecution}
               className="px-3 py-1.5 bg-stone-700 hover:bg-stone-600 text-amber-100 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 shadow-md border border-stone-600 transition-all shrink-0 cursor-pointer"
             >
-              <Pause className="w-3.5 h-3.5 fill-current" />
-              <span>Pause</span>
+              <Pause className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+              <span>{t('studio.pause')}</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={handleCopyYaml}
-            title="Copy YAML Code"
+            title={t('studio.copyYaml')}
+            aria-label={t('studio.copyYaml')}
             className="p-1.5 bg-stone-900 hover:bg-stone-800 text-stone-400 hover:text-stone-100 rounded-[6px] border border-stone-800 transition-all shrink-0 cursor-pointer"
           >
-            {yamlCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {yamlCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
           </button>
 
           <button
+            type="button"
             onClick={() => resetExecution(activeFlow)}
-            title="Reset steps"
+            title={t('studio.resetSteps')}
+            aria-label={t('studio.resetSteps')}
             className="p-1.5 bg-stone-900 hover:bg-stone-800 text-stone-400 hover:text-stone-100 rounded-[6px] border border-stone-800 transition-all shrink-0 cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>

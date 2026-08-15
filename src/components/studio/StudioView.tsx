@@ -6,6 +6,7 @@ import { useProjectStore } from '@/src/stores/projectStore';
 import { useExecutionStore } from '@/src/stores/executionStore';
 import { useSettingsStore } from '@/src/stores/settingsStore';
 import { useUiStore } from '@/src/stores/uiStore';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { RealBrowserView } from '@/src/components/studio/RealBrowserView';
 import { ElementInspector } from '@/src/components/studio/ElementInspector';
@@ -19,6 +20,7 @@ import type { InspectedElement, CommandType, FlowStep, MinedPageData } from '@/s
 import { tracyApi } from '@/src/lib/ipc';
 
 export const StudioView: React.FC = () => {
+  const { t } = useTranslation();
   const projects = useProjectStore((s) => s.projects);
   const activeProjectId = useProjectStore((s) => s.activeProjectId);
   const activeFlowId = useProjectStore((s) => s.activeFlowId);
@@ -241,12 +243,12 @@ export const StudioView: React.FC = () => {
 
   const handleMineDOM = async () => {
     setIsMining(true);
-    setMineToast('Mining DOM via Playwright...');
+    setMineToast(t('studio.miningDomToast'));
 
     try {
       const result = await tracyApi.getBrowserDomTree();
       if (!result || !result.tree) {
-        setMineToast('DOM mining failed: No tree returned.');
+        setMineToast(t('studio.miningDomFailed'));
         setTimeout(() => setMineToast(null), 3000);
         setIsMining(false);
         return;
@@ -262,10 +264,10 @@ export const StudioView: React.FC = () => {
 
       setMinedDom(snapshot);
       addDomSnapshot(activeProjectId, targetPath || '/', snapshot);
-      setMineToast(`Mined ${result.stats.interactiveNodes} interactive elements from ${targetPath || '/'}`);
+      setMineToast(t('studio.minedInteractiveElements', { count: result.stats.interactiveNodes, path: targetPath || '/' }));
       setTimeout(() => setMineToast(null), 4000);
     } catch (err) {
-      setMineToast('DOM mining failed. Try again.');
+      setMineToast(t('studio.miningDomError'));
       setTimeout(() => setMineToast(null), 3000);
     }
 
@@ -275,12 +277,12 @@ export const StudioView: React.FC = () => {
   const handleBatchMineSubmit = async (targets: BatchTarget[]) => {
     setShowBatchMiner(false);
     setIsMining(true);
-    setMineProgressMessage('Starting batch mining...');
+    setMineProgressMessage(t('studio.batchMiningStarting'));
     
     try {
       const results = await tracyApi.mineBatchUrls(targets, embedUrlInput);
       if (!results || results.length === 0) {
-        setMineToast('Batch mining failed or returned no results.');
+        setMineToast(t('studio.batchMiningFailed'));
         setTimeout(() => setMineToast(null), 3000);
         setIsMining(false);
         setMineProgressMessage(null);
@@ -305,10 +307,10 @@ export const StudioView: React.FC = () => {
         count++;
       }
       
-      setMineToast(`Mined ${count} pages from batch!`);
+      setMineToast(t('studio.minedPagesBatch', { count }));
       setTimeout(() => setMineToast(null), 4000);
     } catch (err) {
-      setMineToast('Batch mining failed.');
+      setMineToast(t('studio.batchMiningGeneralFailed'));
       setTimeout(() => setMineToast(null), 3000);
     }
     
@@ -413,8 +415,8 @@ export const StudioView: React.FC = () => {
         </div>
 
         {mineToast && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 text-cyan-300 px-4 py-2 rounded border border-cyan-500/80 shadow-2xl font-mono text-xs font-bold flex items-center space-x-2">
-            {isMining ? <span className="animate-spin">⛏</span> : <Database className="w-3.5 h-3.5" />}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 text-cyan-300 px-4 py-2 rounded border border-cyan-500/80 shadow-2xl font-mono text-xs font-bold flex items-center space-x-2" role="status" aria-live="polite">
+            {isMining ? <span className="animate-spin">⛏</span> : <Database className="w-3.5 h-3.5" aria-hidden="true" />}
             <span>{mineToast}</span>
           </div>
         )}
@@ -422,6 +424,9 @@ export const StudioView: React.FC = () => {
 
       {/* Resizable Divider */}
       <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize panel divider"
         onMouseDown={handleMouseDown}
         className={`w-1.5 bg-stone-800 hover:bg-amber-600 cursor-col-resize shrink-0 transition-colors flex items-center justify-center ${isDragging ? 'bg-amber-500' : ''
           }`}
