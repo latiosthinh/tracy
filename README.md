@@ -57,7 +57,7 @@ Tracy is an intelligent test authoring environment that bridges the gap between 
 Full feature set with Playwright automation.
 
 ```bash
-git clone https://github.com/your-org/tracy.git
+git clone https://github.com/latiosthinh/tracy.git
 cd tracy
 pnpm install
 pnpm dev              # Start Electron + Vite dev server
@@ -69,7 +69,7 @@ pnpm build            # Build production installer
 Edit flows, generate tests with AI, and simulate executions directly in your browser.
 
 ```bash
-git clone https://github.com/your-org/tracy.git
+git clone https://github.com/latiosthinh/tracy.git
 cd tracy
 pnpm install
 pnpm dev:web          # Vite dev server on :5174
