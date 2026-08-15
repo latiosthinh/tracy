@@ -38,6 +38,8 @@
     "urlPlaceholder": "Enter target URL or path e.g. google.com or /checkout"
   },
   "header": {
+    "brandTitle": "ProQA",
+    "brandStudio": "STUDIO",
     "brandSubtitle": "Intelligent E2E Automation",
     "openProjects": "Projects Manager",
     "openDocs": "ProQA Documentation",
@@ -87,6 +89,9 @@
     "resetSteps": "Reset steps",
     "runTestSuite": "Run Test Suite",
     "resetExecution": "Reset Execution",
+    "speed1x": "1x",
+    "speed3x": "3x",
+    "speedTurbo": "Turbo",
     "passedCount": "{count} Passed",
     "failedCount": "{count} Failed",
     "stepsCount": "{count} Steps",

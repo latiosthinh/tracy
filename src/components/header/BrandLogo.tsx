@@ -37,10 +37,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ onOpenDocs }) => {
       </div>
       <div className="flex flex-col leading-none hidden sm:flex">
         <span className="font-serif font-bold text-amber-100 text-sm tracking-wide group-hover:text-amber-300 transition-colors">
-          ProQA
+          {t('header.brandTitle')}
         </span>
         <span className="text-[9px] font-mono font-semibold text-amber-500/80 tracking-[0.25em] uppercase">
-          STUDIO
+          {t('header.brandStudio')}
         </span>
       </div>
     </button>

@@ -93,21 +93,21 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
               onClick={() => onSpeedChange(800)}
               className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 800 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
-              1x
+              {t('studio.speed1x')}
             </button>
             <button
               type="button"
               onClick={() => onSpeedChange(300)}
               className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 300 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
-              3x
+              {t('studio.speed3x')}
             </button>
             <button
               type="button"
               onClick={() => onSpeedChange(50)}
               className={`px-1.5 py-0.5 rounded-sm cursor-pointer ${executionSpeed === 50 ? 'bg-amber-800 text-amber-100 font-bold' : 'text-stone-400 hover:text-stone-200'}`}
             >
-              Turbo
+              {t('studio.speedTurbo')}
             </button>
           </div>
         </div>
