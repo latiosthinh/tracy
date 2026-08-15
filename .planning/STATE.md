@@ -3,23 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-08-15T17:05:00.000Z"
+last_updated: "2026-08-16T00:04:00.000Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
 
 **Status:** In progress
 **Phase:** 02-a11y-and-text-extraction
-**Current Plan:** 02-03-PLAN.md
+**Current Plan:** 02-04-PLAN.md
 
 ## Decisions
 
+- Extracted all user-facing strings in Settings, Setup, Projects, Docs, and Modals into `src/a11y/en.json`
+- Added explicit modal ARIA metadata (`role="dialog"`, `aria-labelledby`, `aria-modal="true"`) to all modal dialogues
 - Extracted all user-facing strings in Header, Tabs, and Studio components into domain keys in `src/a11y/en.json`
 - Converted interactive divs and tab elements into semantic accessible buttons/roles with proper focus and keyboard interaction
 - Configured jsx-a11y lint rules with babel parser for TSX support while TypeScript 7.0 parser compatibility is pending
@@ -38,6 +40,7 @@ progress:
 
 ## Recent Activity
 
+- 2026-08-16 — Completed 02-03-PLAN.md: Settings, Setup, Projects & Modals text extraction (SettingsModal, UiSettingsPanel, WelcomeSetup, AgentSelector, ProjectManager, ProjectManagerModal, ExportImportPanel, DocsModal, BatchMinerModal, CreateFlowModal, ErrorBoundary)
 - 2026-08-15 — Completed 02-02-PLAN.md: Layout & Studio text extraction (Header, Tabs, StudioToolbar, RealBrowserView, StepTimeline, ElementInspector, DomMinerPanel, StudioRightSidebar, StudioTabs, StudioView)
 - 2026-08-15 — Completed 02-01-PLAN.md: Core A11y & i18n Foundation (interpolation, en.json hierarchy, eslint-plugin-jsx-a11y, Modal a11y)
 - 2026-08-15 — Planned Phase 02: A11y & Zero-Hardcoded-Text Refactor across 4 plans

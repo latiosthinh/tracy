@@ -27,6 +27,6 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — A11y & i18n infrastructure: en.json domain hierarchy, enhanced useTranslation with interpolation, jsx-a11y lint config, and shared Modal a11y hardening
 - [x] 02-02-PLAN.md — Layout & Studio text extraction: Header, Tabs, StudioToolbar, RealBrowserView, StepTimeline, ElementInspector, DomMinerPanel, StudioRightSidebar
-- [ ] 02-03-PLAN.md — Settings, Setup, Projects & Modals text extraction: SettingsModal, UiSettingsPanel, WelcomeSetup, ProjectManager, AgentSelector, CreateFlowModal, DocsModal, BatchMinerModal, ErrorBoundary
+- [x] 02-03-PLAN.md — Settings, Setup, Projects & Modals text extraction: SettingsModal, UiSettingsPanel, WelcomeSetup, ProjectManager, AgentSelector, CreateFlowModal, DocsModal, BatchMinerModal, ErrorBoundary
 - [ ] 02-04-PLAN.md — AI, Editor, Reports & Guard tests: AiCopilot, AiPromptInput, VoiceInputButton, YamlEditor, VisualStepEditor, TestReports, CliTerminal, SplashScreen, a11yTextGuard test
 
