@@ -21,6 +21,7 @@ import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
 import { useAgentStore } from '@/src/stores/agentStore';
 import { useAiConfigStore } from '@/src/stores/aiConfigStore';
 import { getAgentDef, resolveAgentId } from '@/src/lib/aiRegistry';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface AiCopilotProps {
   activeProject: Project;
@@ -40,6 +41,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   targetUrl,
   domContext,
 }) => {
+  const { t } = useTranslation();
   // Scope State: 'project' | 'flow'
   const [copilotScope, setCopilotScope] = useState<'project' | 'flow'>('project');
   const detectedAgents = useAgentStore((s) => s.detectedAgents);
@@ -131,7 +133,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         if (streamYaml) {
           setGeneratedYaml(streamYaml);
         } else {
-          setErrorMessage('Empty response returned from agent CLI');
+          setErrorMessage(t('copilot.emptyAgentResponse'));
         }
       } else {
         // Browser fallback
@@ -157,12 +159,12 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         if (res.ok && data.yaml) {
           setGeneratedYaml(data.yaml);
         } else {
-          setErrorMessage(data.error || 'Failed to generate test step YAML');
+          setErrorMessage(data.error || t('copilot.failedGenerateYaml'));
         }
       }
     } catch (err: any) {
       generatingFlag.current = false;
-      setErrorMessage(err.message || 'Server error calling AI Copilot Agent');
+      setErrorMessage(err.message || t('copilot.serverErrorCopilot'));
     } finally {
       setIsGenerating(false);
     }
@@ -205,11 +207,11 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
       if (res.ok && data.flows) {
         setAutoSuiteResult(data);
       } else {
-        setErrorMessage(data.error || 'Failed to generate project suite');
+        setErrorMessage(data.error || t('copilot.failedGenerateSuite'));
       }
     } catch (err: any) {
       generatingFlag.current = false;
-      setErrorMessage(err.message || 'Server error calling AI Agent');
+      setErrorMessage(err.message || t('copilot.serverErrorAgent'));
     } finally {
       setIsGenerating(false);
     }
@@ -241,7 +243,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               }`}
           >
             <Workflow className="w-3.5 h-3.5 text-amber-300" />
-            <span>Full flow</span>
+            <span>{t('copilot.fullFlow')}</span>
           </button>
 
           <button
@@ -253,7 +255,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               }`}
           >
             <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span>Single flow</span>
+            <span>{t('copilot.singleFlow')}</span>
           </button>
         </div>
 
@@ -276,24 +278,24 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               type="button"
               onClick={handleAutoSuite}
               disabled={isGenerating}
-              className="px-3 py-2 bg-stone-900 hover:bg-stone-800 text-amber-300 rounded-[6px] font-semibold text-xs flex items-center space-x-1.5 border border-stone-800 transition-all shrink-0"
+              className="px-3 py-2 bg-stone-900 hover:bg-stone-800 text-amber-300 rounded-[6px] font-semibold text-xs flex items-center space-x-1.5 border border-stone-800 transition-all shrink-0 cursor-pointer"
             >
               <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Auto-Generate Whole Project Suite</span>
+              <span>{t('copilot.autoSuite')}</span>
             </button>
 
             <button
               type="submit"
               disabled={isGenerating || !prompt.trim()}
-              className="px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-amber-600 shadow-md transition-all shrink-0"
+              className="px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 font-bold text-xs rounded-[6px] flex items-center space-x-1.5 border border-amber-600 shadow-md transition-all shrink-0 cursor-pointer"
             >
               {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               <span>
                 {isGenerating
-                  ? 'Generating...'
+                  ? t('copilot.generating')
                   : copilotScope === 'project'
-                    ? 'Generate Project Test Steps'
-                    : 'Generate Flow Steps'}
+                    ? t('copilot.generateProjectSteps')
+                    : t('copilot.generateFlowSteps')}
               </span>
             </button>
           </div>
@@ -313,21 +315,24 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="font-bold text-emerald-400 text-xs flex items-center space-x-1.5">
                 {generatedYaml ? <Check className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>Generated E2E YAML Flow{!generatedYaml ? ' (streaming…)' : ''}</span>
+                <span>{generatedYaml ? t('copilot.generatedYaml') : t('copilot.generatedYamlStreaming')}</span>
               </span>
 
               {generatedYaml && (
                 <button
                   onClick={() => onApplyGeneratedYaml(generatedYaml)}
-                  className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all"
+                  className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all cursor-pointer"
                 >
-                  Apply to Active Editor ({activeFlow.name})
+                  {t('copilot.applyToActiveEditor', { name: activeFlow.name })}
                 </button>
               )}
             </div>
 
-            <pre className="p-3 bg-stone-950 rounded-[6px] border border-stone-800 font-mono text-xs text-amber-200 overflow-x-auto max-h-64">
-              {generatedYaml || streamingText || '(waiting for response…)'}
+            <pre
+              aria-live="polite"
+              className="p-3 bg-stone-950 rounded-[6px] border border-stone-800 font-mono text-xs text-amber-200 overflow-x-auto max-h-64"
+            >
+              {generatedYaml || streamingText || t('copilot.waitingResponse')}
             </pre>
           </div>
         )}
@@ -339,7 +344,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               <h4 className="font-bold text-stone-200 text-xs flex items-center space-x-2">
                 <ListChecks className="w-4 h-4 text-emerald-400" />
                 <span>
-                  Generated Whole Project Suite ({autoSuiteResult.flows?.length || 0} Flows)
+                  {t('copilot.generatedSuite', { count: autoSuiteResult.flows?.length || 0 })}
                 </span>
               </h4>
 
@@ -347,10 +352,10 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
                 <button
                   onClick={handleImportAllSuiteFlows}
                   disabled={batchImported}
-                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-60 text-emerald-50 font-bold text-xs rounded-[6px] border border-emerald-600 flex items-center space-x-1.5 transition-all"
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-60 text-emerald-50 font-bold text-xs rounded-[6px] border border-emerald-600 flex items-center space-x-1.5 transition-all cursor-pointer"
                 >
                   {batchImported ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                  <span>{batchImported ? 'All Flows Imported to Project!' : 'Import All Flows into Project'}</span>
+                  <span>{batchImported ? t('copilot.allFlowsImported') : t('copilot.importAllSuite')}</span>
                 </button>
               )}
             </div>
@@ -362,9 +367,9 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
                     <span className="font-mono font-bold text-amber-400 text-xs">{flowItem.name}</span>
                     <button
                       onClick={() => onApplyGeneratedYaml(flowItem.yaml)}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-amber-700 text-stone-200 text-[10px] font-bold rounded-[6px] border border-stone-700"
+                      className="px-2.5 py-1 bg-stone-800 hover:bg-amber-700 text-stone-200 text-[10px] font-bold rounded-[6px] border border-stone-700 cursor-pointer"
                     >
-                      Load into Active Editor
+                      {t('copilot.loadIntoEditor')}
                     </button>
                   </div>
                   <p className="text-stone-400 text-[11px] leading-relaxed">{flowItem.description}</p>
@@ -394,7 +399,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
             className="px-2.5 py-1.5 bg-stone-950 hover:bg-stone-800 text-amber-300 font-sans font-bold text-xs rounded-[6px] border border-stone-700/80 hover:border-amber-500 shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-            <span>Switch Agent Provider</span>
+            <span>{t('copilot.switchAgent')}</span>
             <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform ${showProviderPanel ? 'rotate-180' : ''}`} />
           </button>
 
@@ -404,9 +409,9 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               <div className="flex items-center justify-between border-b border-stone-800 pb-2">
                 <span className="font-bold text-amber-300 text-xs flex items-center space-x-1.5">
                   <Bot className="w-4 h-4" />
-                  <span>AI Agent Provider Selection</span>
+                  <span>{t('copilot.providerSelection')}</span>
                 </span>
-                <span className="text-[10px] text-stone-400 font-mono">CLI Tool or BYOK Key</span>
+                <span className="text-[10px] text-stone-400 font-mono">{t('copilot.providerSubtext')}</span>
               </div>
 
               <AgentSelector

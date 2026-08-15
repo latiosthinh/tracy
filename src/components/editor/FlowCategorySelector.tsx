@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FlowCategory } from '@/src/types/autoflow';
 import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
 import { Globe, Server, Flame, Eye, Box, Tag, ChevronDown, Check } from 'lucide-react';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface FlowCategorySelectorProps {
   category: FlowCategory;
@@ -14,6 +15,7 @@ export const FlowCategorySelector: React.FC<FlowCategorySelectorProps> = ({
   onChange,
   compact = false,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +48,8 @@ export const FlowCategorySelector: React.FC<FlowCategorySelectorProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        title={`Category: ${currentCatInfo.label}. Click to change Playwright structure.`}
+        title={t('editor.categoryTooltip', { label: currentCatInfo.label })}
+        aria-label={t('editor.categoryTooltip', { label: currentCatInfo.label })}
         className={`group flex items-center space-x-1.5 px-2.5 py-1 rounded-[6px] text-xs font-mono font-bold border transition-all cursor-pointer shadow-xs ${
           currentCatInfo.bgColor
         } ${currentCatInfo.borderColor} ${currentCatInfo.textColor} hover:brightness-110 active:scale-98`}
@@ -66,8 +69,8 @@ export const FlowCategorySelector: React.FC<FlowCategorySelectorProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-full mt-1.5 w-80 bg-stone-900 border border-stone-800 rounded-[8px] shadow-2xl z-50 p-2 space-y-1 font-sans">
           <div className="text-[10px] font-mono text-stone-400 uppercase px-2 py-1 font-bold border-b border-stone-800 flex justify-between items-center">
-            <span>Playwright Category</span>
-            <span className="text-amber-400 font-mono text-[9px] font-normal">Structure</span>
+            <span>{t('editor.categoryTitle')}</span>
+            <span className="text-amber-400 font-mono text-[9px] font-normal">{t('editor.categoryStructure')}</span>
           </div>
 
           <div className="space-y-1 pt-1">

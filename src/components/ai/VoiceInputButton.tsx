@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Mic, MicOff } from 'lucide-react';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface VoiceInputButtonProps {
   onTranscript: (text: string) => void;
@@ -12,8 +13,10 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   onTranscript,
   className = '',
   size = 'md',
-  title = 'Click to dictate via voice input',
+  title,
 }) => {
+  const { t } = useTranslation();
+  const defaultTitle = title || t('copilot.voiceRecordingStart');
   const [isListening, setIsListening] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
@@ -35,7 +38,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 
     if (!SpeechRecognition) {
       // Friendly fallback if SpeechRecognition is blocked in sandboxed iframe or unsupported browser
-      const simulatedText = prompt('Voice Input (Browser Speech API unavailable, enter text or test prompt):');
+      const simulatedText = prompt(t('copilot.voicePromptFallback'));
       if (simulatedText && simulatedText.trim()) {
         onTranscript(simulatedText.trim());
       }
@@ -57,7 +60,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 
         recognition.onstart = () => {
           setIsListening(true);
-          setStatusMessage('Listening...');
+          setStatusMessage(t('copilot.voiceListening'));
         };
 
         recognition.onresult = (event: any) => {
@@ -68,7 +71,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
           if (event.results[0].isFinal) {
             if (currentTranscript.trim()) {
               onTranscript(currentTranscript.trim());
-              setStatusMessage(`Captured: "${currentTranscript.trim()}"`);
+              setStatusMessage(t('copilot.voiceCaptured', { text: currentTranscript.trim() }));
               setTimeout(() => setStatusMessage(null), 2500);
             }
             setIsListening(false);
@@ -81,7 +84,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
           console.warn('Speech recognition error:', event.error);
           setIsListening(false);
           if (event.error !== 'no-speech') {
-            setStatusMessage(`Voice error: ${event.error}`);
+            setStatusMessage(t('copilot.voiceError', { error: event.error }));
             setTimeout(() => setStatusMessage(null), 2500);
           }
         };
@@ -99,12 +102,15 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
     }
   };
 
+  const buttonTitle = isListening ? t('copilot.voiceRecordingStop') : defaultTitle;
+
   return (
     <div className="relative inline-flex items-center shrink-0">
       <button
         type="button"
         onClick={toggleListening}
-        title={isListening ? 'Stop recording voice' : title}
+        title={buttonTitle}
+        aria-label={buttonTitle}
         className={`relative inline-flex items-center justify-center rounded-[6px] transition-all cursor-pointer border ${paddingSizes[size]} ${
           isListening
             ? 'bg-rose-950 text-rose-300 border-rose-600 animate-pulse ring-2 ring-rose-500/40 shadow-lg'

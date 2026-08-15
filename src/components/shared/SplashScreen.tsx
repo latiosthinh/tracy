@@ -1,65 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, Database, FolderOpen, FileCode, CheckCircle2 } from 'lucide-react';
-
-interface LoadingStep {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-}
-
-const LOADING_STEPS: LoadingStep[] = [
-  { id: 'init', label: 'Initializing Tracy Engine...', icon: <Loader2 className="w-4 h-4 animate-spin" /> },
-  { id: 'projects', label: 'Loading projects from disk...', icon: <FolderOpen className="w-4 h-4" /> },
-  { id: 'flows', label: 'Loading flow definitions...', icon: <FileCode className="w-4 h-4" /> },
-  { id: 'snapshots', label: 'Loading DOM snapshots...', icon: <Database className="w-4 h-4" /> },
-  { id: 'ready', label: 'Ready', icon: <CheckCircle2 className="w-4 h-4" /> },
-];
+import { ProQALogo } from '@/src/components/shared/ProQALogo';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface SplashScreenProps {
   isLoading: boolean;
-  currentStep?: string;
+  onFinished?: () => void;
 }
 
-export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, currentStep = 'init' }) => {
-  const [progress, setProgress] = useState(0);
+export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, onFinished }) => {
+  const { t } = useTranslation();
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [progress, setProgress] = useState(10);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const [dots, setDots] = useState('');
 
+  const loadingSteps = [
+    { id: 'init', label: t('splash.initEngine'), icon: <Loader2 className="w-4 h-4 animate-spin" /> },
+    { id: 'projects', label: t('splash.loadProjects'), icon: <FolderOpen className="w-4 h-4" /> },
+    { id: 'flows', label: t('splash.loadFlows'), icon: <FileCode className="w-4 h-4" /> },
+    { id: 'snapshots', label: t('splash.loadSnapshots'), icon: <Database className="w-4 h-4" /> },
+    { id: 'ready', label: t('splash.ready'), icon: <CheckCircle2 className="w-4 h-4" /> },
+  ];
+
+  // Fast, smooth step progression (~160ms per step, ~800ms total)
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading && currentStepIndex === loadingSteps.length - 1) {
+      return;
+    }
 
-    const stepIndex = LOADING_STEPS.findIndex(s => s.id === currentStep);
-    const targetProgress = Math.min(((stepIndex + 1) / LOADING_STEPS.length) * 100, 95);
-
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= targetProgress) return prev;
-        return prev + 1;
+    const stepInterval = setInterval(() => {
+      setCurrentStepIndex((prev) => {
+        if (prev < loadingSteps.length - 1) {
+          const next = prev + 1;
+          const nextProgress = Math.round(((next + 1) / loadingSteps.length) * 100);
+          setProgress(nextProgress);
+          return next;
+        }
+        return prev;
       });
-    }, 30);
+    }, 160);
 
-    return () => clearInterval(interval);
-  }, [isLoading, currentStep]);
+    return () => clearInterval(stepInterval);
+  }, [isLoading, currentStepIndex, loadingSteps.length]);
 
+  // Once all steps are complete and ready, trigger smooth fade out
   useEffect(() => {
-    if (!isLoading) return;
+    if (currentStepIndex === loadingSteps.length - 1) {
+      setProgress(100);
+      const timer = setTimeout(() => {
+        setIsFadingOut(true);
+        const exitTimer = setTimeout(() => {
+          onFinished?.();
+        }, 400);
+        return () => clearTimeout(exitTimer);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStepIndex, loadingSteps.length, onFinished]);
 
-    const interval = setInterval(() => {
-      setDots(prev => (prev.length >= 3 ? '' : prev + '.'));
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  if (!isLoading) return null;
-
-  const currentStepIndex = LOADING_STEPS.findIndex(s => s.id === currentStep);
+  // Dots animation
+  useEffect(() => {
+    const dotInterval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? '' : prev + '.'));
+    }, 300);
+    return () => clearInterval(dotInterval);
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-stone-950 flex items-center justify-center select-none">
+    <div
+      className={`fixed inset-0 z-[9999] bg-stone-950 flex items-center justify-center select-none transition-opacity duration-400 ease-out ${
+        isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
+    >
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950" />
 
-      {/* Animated grid pattern */}
+      {/* Subtle animated grid pattern */}
       <div
         className="absolute inset-0 opacity-5"
         style={{
@@ -73,70 +90,67 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, currentSt
         {/* Logo */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            {/* Outer glow */}
-            <div className="absolute inset-0 w-24 h-24 rounded-2xl bg-amber-500/20 blur-xl animate-pulse" />
-
-            {/* Logo container */}
-            <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-stone-900 p-1 flex items-center justify-center border border-amber-400/60 shadow-2xl shadow-amber-900/40">
-              <div className="w-full h-full bg-stone-950 rounded-xl flex items-center justify-center relative overflow-hidden">
-                <span className="font-display font-black text-amber-300 text-4xl tracking-tight">T</span>
-                <span className="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/60" />
-              </div>
-            </div>
+            {/* Outer warm glow */}
+            <div className="absolute inset-0 w-24 h-24 rounded-2xl bg-amber-600/15 blur-xl" />
+            <ProQALogo size="xl" />
           </div>
 
           {/* Title */}
           <div className="text-center">
-            <h1 className="font-display font-black text-amber-100 text-3xl tracking-wide">
-              Tracy
+            <h1 className="font-serif font-bold text-amber-100 text-3xl tracking-wide">
+              {t('splash.appName')}
             </h1>
-            <p className="text-[11px] font-mono font-bold text-amber-500/90 tracking-[0.3em] uppercase mt-1">
-              Agentic E2E Automation Studio
+            <p className="text-[11px] font-mono font-semibold text-amber-500/90 tracking-[0.3em] uppercase mt-1">
+              {t('splash.appSubtitle')}
             </p>
           </div>
         </div>
 
         {/* Loading Steps */}
-        <div className="w-full bg-stone-900/80 border border-stone-800 rounded-xl p-5 space-y-4 backdrop-blur-sm">
+        <div className="w-full bg-stone-900/80 border border-stone-800 rounded-xl p-5 space-y-4 backdrop-blur-sm shadow-2xl">
           {/* Progress Bar */}
-          <div className="w-full bg-stone-950 rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-stone-950 rounded-full h-1.5 overflow-hidden border border-stone-800/60">
             <div
-              className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-300 ease-out rounded-full"
+              className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 transition-all duration-200 ease-out rounded-full"
               style={{ width: `${progress}%` }}
             />
           </div>
 
           {/* Steps List */}
-          <div className="space-y-2">
-            {LOADING_STEPS.map((step, index) => {
-              const isActive = step.id === currentStep;
+          <div className="space-y-2.5">
+            {loadingSteps.map((step, index) => {
+              const isActive = index === currentStepIndex;
               const isComplete = index < currentStepIndex;
 
               return (
                 <div
                   key={step.id}
-                  className={`flex items-center space-x-3 text-xs transition-all duration-300 ${
+                  className={`flex items-center space-x-3 text-xs transition-colors duration-200 ${
                     isActive
-                      ? 'text-amber-300'
+                      ? 'text-amber-300 font-semibold'
                       : isComplete
                       ? 'text-emerald-400'
                       : 'text-stone-600'
                   }`}
                 >
-                  <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                    isComplete ? 'text-emerald-400' : isActive ? 'text-amber-400' : 'text-stone-700'
-                  }`}>
+                  <div
+                    className={`w-5 h-5 flex items-center justify-center shrink-0 ${
+                      isComplete ? 'text-emerald-400' : isActive ? 'text-amber-400' : 'text-stone-700'
+                    }`}
+                  >
                     {isComplete ? (
                       <CheckCircle2 className="w-4 h-4" />
                     ) : isActive ? (
                       step.icon
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-stone-700" />
+                      <div className="w-2 h-2 rounded-full bg-stone-800" />
                     )}
                   </div>
-                  <span className={`font-mono ${isActive ? 'font-bold' : ''}`}>
+                  <span className="font-mono">
                     {step.label}
-                    {isActive && <span className="inline-block w-6">{dots}</span>}
+                    {isActive && index < loadingSteps.length - 1 && (
+                      <span className="inline-block w-6 text-amber-400">{dots}</span>
+                    )}
                   </span>
                 </div>
               );
@@ -147,10 +161,10 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, currentSt
         {/* Footer */}
         <div className="text-center space-y-1">
           <p className="text-[10px] text-stone-600 font-mono">
-            v1.0.0 • Electron • Chromium Engine
+            {t('splash.versionInfo')}
           </p>
           <p className="text-[10px] text-stone-700">
-            Loading your workspace{dots}
+            {t('splash.loadingWorkspace', { dots })}
           </p>
         </div>
       </div>

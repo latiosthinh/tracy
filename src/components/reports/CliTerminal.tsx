@@ -6,6 +6,7 @@ import {
   FileCode
 } from 'lucide-react';
 import { WorkspaceConfig } from '@/src/types/autoflow';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface CliTerminalProps {
   config: WorkspaceConfig;
@@ -18,6 +19,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
   onConfigChange,
   activeFlowPath,
 }) => {
+  const { t } = useTranslation();
   const [selectedSubTab, setSelectedSubTab] = useState<'cli' | 'config'>('cli');
   const [cliOutput, setCliOutput] = useState<string[]>([
     '$ tracy doctor',
@@ -53,22 +55,22 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
       <div className="bg-stone-900 px-4 py-2 border-b border-stone-800 flex items-center space-x-4">
         <button
           onClick={() => setSelectedSubTab('cli')}
-          className={`flex items-center space-x-1.5 py-1 text-xs font-bold border-b-2 transition-all ${
+          className={`flex items-center space-x-1.5 py-1 text-xs font-bold border-b-2 transition-all cursor-pointer ${
             selectedSubTab === 'cli' ? 'border-amber-500 text-amber-400' : 'border-transparent text-stone-400 hover:text-stone-200'
           }`}
         >
           <Terminal className="w-3.5 h-3.5" />
-          <span>Interactive CLI Runner</span>
+          <span>{t('reports.cliRunner')}</span>
         </button>
 
         <button
           onClick={() => setSelectedSubTab('config')}
-          className={`flex items-center space-x-1.5 py-1 text-xs font-bold border-b-2 transition-all ${
+          className={`flex items-center space-x-1.5 py-1 text-xs font-bold border-b-2 transition-all cursor-pointer ${
             selectedSubTab === 'config' ? 'border-amber-500 text-amber-400' : 'border-transparent text-stone-400 hover:text-stone-200'
           }`}
         >
           <Settings className="w-3.5 h-3.5" />
-          <span>Workspace config.yaml</span>
+          <span>{t('reports.workspaceConfigYaml')}</span>
         </button>
       </div>
 
@@ -77,22 +79,25 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
           <div className="space-y-4">
             {/* CLI Command Box */}
             <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 space-y-2">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">Generated Command String</span>
+              <span className="text-[10px] uppercase font-bold text-stone-400 block">{t('reports.commandString')}</span>
               <div className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800 font-mono text-amber-300 text-xs flex items-center justify-between">
                 <span>$ {cliCommand}</span>
                 <button
                   onClick={handleRunCliCommand}
                   disabled={isRunningCli}
-                  className="px-3 py-1 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 font-sans font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs flex items-center space-x-1"
+                  className="px-3 py-1 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-amber-50 font-sans font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs flex items-center space-x-1 cursor-pointer"
                 >
                   <Play className="w-3 h-3 fill-current" />
-                  <span>Execute CLI</span>
+                  <span>{t('reports.executeCli')}</span>
                 </button>
               </div>
             </div>
 
             {/* Terminal Output Stream */}
-            <div className="bg-stone-950 p-4 rounded-[6px] border border-stone-900 font-mono text-stone-200 text-xs space-y-1 h-64 overflow-y-auto shadow-inner">
+            <div
+              aria-live="polite"
+              className="bg-stone-950 p-4 rounded-[6px] border border-stone-900 font-mono text-stone-200 text-xs space-y-1 h-64 overflow-y-auto shadow-inner"
+            >
               {cliOutput.map((line, idx) => (
                 <div
                   key={idx}
@@ -114,12 +119,12 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
           <div className="bg-stone-900 p-4 rounded-[6px] border border-stone-800 space-y-4">
             <h3 className="font-bold text-amber-100 text-sm flex items-center space-x-2">
               <FileCode className="w-4 h-4 text-amber-400" />
-              <span>Workspace Configuration (config.yaml)</span>
+              <span>{t('reports.workspaceConfigHeader')}</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Target Browser</label>
+                <label className="block text-stone-400 text-[11px] font-bold mb-1">{t('reports.targetBrowser')}</label>
                 <select
                   value={config.browser}
                   onChange={e => onConfigChange({ ...config, browser: e.target.value as any })}
@@ -132,7 +137,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
               </div>
 
               <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Parallel Workers</label>
+                <label className="block text-stone-400 text-[11px] font-bold mb-1">{t('reports.parallelWorkers')}</label>
                 <input
                   type="number"
                   min={1}
@@ -144,7 +149,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
               </div>
 
               <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Step Timeout (ms)</label>
+                <label className="block text-stone-400 text-[11px] font-bold mb-1">{t('reports.stepTimeout')}</label>
                 <input
                   type="number"
                   value={config.timeout}
@@ -154,7 +159,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
               </div>
 
               <div>
-                <label className="block text-stone-400 text-[11px] font-bold mb-1">Max Step Retries</label>
+                <label className="block text-stone-400 text-[11px] font-bold mb-1">{t('reports.maxRetries')}</label>
                 <input
                   type="number"
                   value={config.retries}
@@ -173,7 +178,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
                 className="rounded-xs border-stone-700 bg-stone-950 text-amber-600"
               />
               <label htmlFor="headless-toggle" className="text-stone-300 font-semibold cursor-pointer">
-                Run Headless Mode by Default
+                {t('reports.runHeadlessDefault')}
               </label>
             </div>
           </div>

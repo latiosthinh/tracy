@@ -12,21 +12,23 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { TestRunResult } from '@/src/types/autoflow';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface TestReportsProps {
   lastResult?: TestRunResult | null;
 }
 
 export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
+  const { t } = useTranslation();
   const [activeArtifactTab, setActiveArtifactTab] = useState<'summary' | 'screenshots' | 'video' | 'network'>('summary');
 
   if (!lastResult) {
     return (
       <div className="p-8 bg-stone-950 text-stone-400 text-center rounded-[6px] border border-stone-800 space-y-3 font-sans">
         <BarChart3 className="w-12 h-12 text-stone-600 mx-auto animate-pulse" />
-        <h3 className="text-base font-bold text-stone-200">No Test Execution Reports Yet</h3>
+        <h3 className="text-base font-bold text-stone-200">{t('reports.noReportsTitle')}</h3>
         <p className="text-xs max-w-sm mx-auto">
-          Run your E2E test suite from the runner toolbar to generate interactive HTML/JUnit reports, screenshots, and trace logs.
+          {t('reports.noReportsDesc')}
         </p>
       </div>
     );
@@ -73,24 +75,24 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             </span>
             <h2 className="font-bold text-amber-100 text-sm">{lastResult.flowName}</h2>
           </div>
-          <p className="text-stone-400 text-[11px] mt-1">Executed at {lastResult.timestamp}</p>
+          <p className="text-stone-400 text-[11px] mt-1">{t('reports.executedAt', { time: lastResult.timestamp })}</p>
         </div>
 
         {/* Export Buttons */}
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleExportReport('html')}
-            className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all"
+            className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export HTML</span>
+            <span>{t('reports.exportHtml')}</span>
           </button>
           <button
             onClick={() => handleExportReport('junit')}
-            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs rounded-[6px] border border-stone-700 flex items-center space-x-1"
+            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs rounded-[6px] border border-stone-700 flex items-center space-x-1 cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>JUnit XML</span>
+            <span>{t('reports.exportJunit')}</span>
           </button>
         </div>
       </div>
@@ -102,7 +104,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-stone-400 uppercase font-bold block">Passed Steps</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.passedSteps')}</span>
             <span className="text-lg font-bold text-emerald-400">{lastResult.passedCount}</span>
           </div>
         </div>
@@ -112,7 +114,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             <XCircle className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-stone-400 uppercase font-bold block">Failed Steps</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.failedSteps')}</span>
             <span className="text-lg font-bold text-rose-400">{lastResult.failedCount}</span>
           </div>
         </div>
@@ -122,7 +124,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-stone-400 uppercase font-bold block">Pass Rate</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.passRate')}</span>
             <span className="text-lg font-bold text-amber-400">{passRate}%</span>
           </div>
         </div>
@@ -132,7 +134,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] text-stone-400 uppercase font-bold block">Execution Time</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.executionTime')}</span>
             <span className="text-lg font-bold text-amber-400">{(lastResult.durationMs / 1000).toFixed(2)}s</span>
           </div>
         </div>
@@ -142,38 +144,38 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
       <div className="bg-stone-900 p-2 rounded-[6px] border border-stone-800 flex items-center space-x-2 text-xs font-semibold">
         <button
           onClick={() => setActiveArtifactTab('summary')}
-          className={`px-3 py-1.5 rounded-[6px] transition-all ${
+          className={`px-3 py-1.5 rounded-[6px] transition-all cursor-pointer ${
             activeArtifactTab === 'summary' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
           }`}
         >
-          Step Execution Breakdown
+          {t('reports.tabBreakdown')}
         </button>
         <button
           onClick={() => setActiveArtifactTab('screenshots')}
-          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 cursor-pointer ${
             activeArtifactTab === 'screenshots' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
           }`}
         >
           <ImageIcon className="w-3.5 h-3.5" />
-          <span>Failure Screenshots</span>
+          <span>{t('reports.tabScreenshots')}</span>
         </button>
         <button
           onClick={() => setActiveArtifactTab('video')}
-          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 cursor-pointer ${
             activeArtifactTab === 'video' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
           }`}
         >
           <Film className="w-3.5 h-3.5" />
-          <span>Playwright Recording</span>
+          <span>{t('reports.tabRecording')}</span>
         </button>
         <button
           onClick={() => setActiveArtifactTab('network')}
-          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 ${
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 cursor-pointer ${
             activeArtifactTab === 'network' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
           }`}
         >
           <Network className="w-3.5 h-3.5" />
-          <span>HAR Network Logs</span>
+          <span>{t('reports.tabHarNetwork')}</span>
         </button>
       </div>
 
@@ -197,16 +199,20 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
         ) : activeArtifactTab === 'screenshots' ? (
           <div className="text-center py-6 space-y-3">
             <div className="w-full h-48 bg-stone-950 rounded-[6px] border border-stone-800 flex items-center justify-center text-stone-500 font-mono">
-              [Captured Screen Snapshot at Failure Point]
+              {t('reports.screenshotPlaceholder')}
             </div>
-            <p className="text-stone-400 text-xs">Screenshots automatically saved under <code className="text-amber-400 font-mono">./test-results/screenshots/</code></p>
+            <p className="text-stone-400 text-xs">
+              {t('reports.screenshotPathNotice', { path: './test-results/screenshots/' })}
+            </p>
           </div>
         ) : activeArtifactTab === 'video' ? (
           <div className="text-center py-6 space-y-3">
             <div className="w-full h-48 bg-stone-950 rounded-[6px] border border-stone-800 flex items-center justify-center text-stone-500 font-mono">
-              [Playwright MP4 Video Replay Stream]
+              {t('reports.videoPlaceholder')}
             </div>
-            <p className="text-stone-400 text-xs">Full video recording saved under <code className="text-amber-400 font-mono">./test-results/video.webm</code></p>
+            <p className="text-stone-400 text-xs">
+              {t('reports.videoPathNotice', { path: './test-results/video.webm' })}
+            </p>
           </div>
         ) : (
           <div className="space-y-2 font-mono text-[11px]">

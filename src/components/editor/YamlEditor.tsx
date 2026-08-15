@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { FlowCategory } from '@/src/types/autoflow';
 import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface YamlEditorProps {
   yamlContent: string;
@@ -214,6 +215,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   flowCategory = 'E2E',
   onCategoryChange: _onCategoryChange,
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [lineCount, setLineCount] = useState(1);
   const [syntaxErrors, setSyntaxErrors] = useState<string[]>([]);
@@ -250,11 +252,11 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
     const errors: string[] = [];
     lines.forEach((line, idx) => {
       if (line.includes('\t')) {
-        errors.push(`Line ${idx + 1}: Tab character detected (YAML requires spaces)`);
+        errors.push(t('editor.tabCharWarning', { line: idx + 1 }));
       }
     });
     setSyntaxErrors(errors);
-  }, [yamlContent]);
+  }, [yamlContent, t]);
 
   const triggerAutocomplete = (textarea: HTMLTextAreaElement, manualFilter?: string) => {
     const { selectionStart } = textarea;
@@ -455,26 +457,32 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center space-x-2 text-amber-400 font-bold font-sans text-xs">
             <FileCode className="w-4 h-4 shrink-0" />
-            <span className="truncate">YAML Flow Definition</span>
+            <span className="truncate">{t('editor.yamlFlowDef')}</span>
           </div>
 
           <div className="flex items-center space-x-2 text-[10px] text-stone-400">
             {/* Active Category Status Pill */}
             <div className={`px-2 py-0.5 rounded-[4px] font-mono text-[10px] font-bold uppercase flex items-center space-x-1.5 border ${currentCatInfo.bgColor} ${currentCatInfo.textColor} ${currentCatInfo.borderColor}`}>
               {renderCategoryIcon(currentCatInfo.iconName, `w-3 h-3 ${currentCatInfo.textColor}`)}
-              <span>{currentCatInfo.badgeLabel} SUITE</span>
+              <span>{currentCatInfo.badgeLabel} {t('editor.suiteSuffix')}</span>
             </div>
 
-            <span className="px-2 py-0.5 rounded-[4px] bg-stone-950 border border-stone-800 font-mono">{lineCount} lines</span>
+            <span className="px-2 py-0.5 rounded-[4px] bg-stone-950 border border-stone-800 font-mono">
+              {t('editor.linesCount', { count: lineCount })}
+            </span>
             {syntaxErrors.length === 0 ? (
               <span className="text-emerald-400 font-semibold flex items-center space-x-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Valid Tracy YAML</span>
+                <span>{t('editor.validYaml')}</span>
               </span>
             ) : (
               <span className="text-amber-400 font-semibold flex items-center space-x-1">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                <span>{syntaxErrors.length} Warning</span>
+                <span>
+                  {syntaxErrors.length === 1
+                    ? t('editor.warningCount', { count: syntaxErrors.length })
+                    : t('editor.warningsCount', { count: syntaxErrors.length })}
+                </span>
               </span>
             )}
           </div>
@@ -486,7 +494,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-[6px] font-sans text-[11px] font-semibold flex items-center space-x-1.5 transition-all border border-stone-700 shadow-xs cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-stone-400" />}
-            <span>{copied ? 'Copied' : 'Copy YAML'}</span>
+            <span>{copied ? t('editor.copied') : t('editor.copyYaml')}</span>
           </button>
         </div>
       </div>
@@ -495,29 +503,29 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
       <div className="bg-stone-900/60 px-3 py-1.5 border-b border-stone-800/80 flex items-center space-x-2 overflow-x-auto text-[10px] font-sans text-stone-400 shrink-0">
         <span className="font-bold text-stone-300 flex items-center space-x-1 shrink-0">
           <Sparkles className="w-3 h-3 text-amber-400" />
-          <span>Quick Snippets:</span>
+          <span>{t('editor.quickSnippets')}</span>
         </span>
         <button
           onClick={() => handleInsertSnippet('- leftClick: "Button Text"')}
-          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
+          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0 cursor-pointer"
         >
           + leftClick
         </button>
         <button
           onClick={() => handleInsertSnippet('- fill:\n    selector:\n      placeholder: "Search..."\n    text: "Sample Text"')}
-          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
+          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0 cursor-pointer"
         >
           + fill
         </button>
         <button
           onClick={() => handleInsertSnippet('- assertVisible: "Success Message"')}
-          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
+          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0 cursor-pointer"
         >
           + assertVisible
         </button>
         <button
           onClick={() => handleInsertSnippet('- selectOption:\n    selector: "#select-id"\n    value: "US"')}
-          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0"
+          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-cyan-300 rounded-[4px] border border-stone-700 font-mono shrink-0 cursor-pointer"
         >
           + selectOption
         </button>
@@ -539,7 +547,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             handleInsertSnippet(snippet);
           }}
           size="sm"
-          title="Dictate YAML test step e.g. 'click Submit', 'navigate to /checkout'"
+          title={t('editor.dictateSnippetTitle')}
         />
       </div>
 
@@ -557,6 +565,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         {/* Line Numbers */}
         <div
           ref={lineNumbersRef}
+          aria-hidden="true"
           className="w-10 bg-stone-950 py-3 text-right pr-2 select-none text-stone-600 font-mono text-xs border-r border-stone-900 leading-relaxed overflow-hidden shrink-0"
         >
           {Array.from({ length: Math.max(lineCount, 1) }).map((_, i) => (
@@ -583,12 +592,14 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onScroll={handleScroll}
             spellCheck={false}
             className="absolute inset-0 w-full h-full p-3 m-0 bg-transparent text-transparent caret-amber-400 font-mono text-xs leading-relaxed resize-none focus:outline-hidden selection:bg-amber-700/50 border-0 overflow-auto whitespace-pre"
-            placeholder="# Write Tracy E2E Flow YAML here..."
+            placeholder={t('editor.editorPlaceholder')}
           />
           {/* Autocomplete Menu */}
           {autocomplete.show && (
               <ul
                 ref={autocompleteListRef}
+                role="listbox"
+                aria-label="YAML Autocomplete Suggestions"
                 className="absolute z-50 bg-stone-900 border border-stone-700 rounded-lg shadow-2xl py-1.5 text-[11px] font-mono w-64 max-h-56 overflow-y-auto"
                 style={{ top: autocomplete.y, left: autocomplete.x }}
               >
@@ -598,6 +609,8 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
                   return (
                     <li
                       key={option}
+                      role="option"
+                      aria-selected={isSelected}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         applyAutocomplete(option);
@@ -639,7 +652,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           <span className="text-stone-700">•</span>
           <span className="text-stone-400 font-bold">YAML</span>
           <span className="text-stone-700">•</span>
-          <span className="text-stone-400">{lineCount} lines</span>
+          <span className="text-stone-400">{t('editor.linesCount', { count: lineCount })}</span>
         </div>
       </div>
     </div>

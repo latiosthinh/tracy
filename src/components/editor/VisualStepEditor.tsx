@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { FlowStep, CommandType } from '@/src/types/autoflow';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface VisualStepEditorProps {
   steps: FlowStep[];
@@ -35,6 +36,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
   onRunStep,
   activeStepIndex,
 }) => {
+  const { t } = useTranslation();
   // Drag & Drop State
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -230,9 +232,9 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
       <div className="flex items-center justify-between bg-stone-900 p-3 rounded-[6px] border border-stone-800 shrink-0">
         <div className="flex items-center space-x-2">
           <Layers className="w-4 h-4 text-amber-400" />
-          <span className="font-bold text-amber-100 text-sm">Visual E2E Flow Blocks</span>
+          <span className="font-bold text-amber-100 text-sm">{t('editor.visualBlocksTitle')}</span>
           <span className="bg-stone-950 text-stone-400 px-2 py-0.5 rounded-[6px] border border-stone-800 text-[10px] font-mono">
-            {steps.length} Steps
+            {t('editor.stepsCount', { count: steps.length })}
           </span>
         </div>
 
@@ -240,14 +242,14 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
           <VoiceInputButton
             onTranscript={handleVoiceDictateStep}
             size="sm"
-            title="Speak a test action e.g. 'click Login button', 'navigate to /cart', or 'type john@example.com into Email'"
+            title={t('editor.dictateActionTitle')}
           />
           <button
             onClick={handleAddNewStepInline}
-            className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all shrink-0"
+            className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Step</span>
+            <span>{t('editor.addStep')}</span>
           </button>
         </div>
       </div>
@@ -286,19 +288,20 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                   <div className="flex items-center justify-between border-b border-stone-800 pb-1.5">
                     <span className="font-bold text-amber-300 text-xs flex items-center space-x-1">
                       <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit Step #{idx + 1}</span>
+                      <span>{t('editor.editStepHeader', { index: idx + 1 })}</span>
                     </span>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => handleSaveInlineEdit(idx)}
-                        className="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-[4px] font-bold text-xs flex items-center space-x-1 border border-amber-600"
+                        className="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded-[4px] font-bold text-xs flex items-center space-x-1 border border-amber-600 cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Save</span>
+                        <span>{t('editor.save')}</span>
                       </button>
                       <button
                         onClick={handleCancelInlineEdit}
-                        className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[4px] text-xs border border-stone-700"
+                        className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-[4px] text-xs border border-stone-700 cursor-pointer"
+                        aria-label={t('common.cancel')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -307,7 +310,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-400 mb-0.5">Command</label>
+                      <label className="block text-[10px] font-bold text-stone-400 mb-0.5">{t('editor.commandLabel')}</label>
                       <select
                         value={editCommand}
                         onChange={e => setEditCommand(e.target.value as CommandType)}
@@ -333,24 +336,24 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-stone-400 mb-0.5">Target Selector / Text</label>
+                      <label className="block text-[10px] font-bold text-stone-400 mb-0.5">{t('editor.targetLabel')}</label>
                       <input
                         type="text"
                         value={editTarget}
                         onChange={e => setEditTarget(e.target.value)}
-                        placeholder='e.g., "Sign In" or {"testId": "cart"}'
+                        placeholder={t('editor.targetPlaceholder')}
                         className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[4px] p-1.5 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-stone-400 mb-0.5">Value Parameter (Optional)</label>
+                    <label className="block text-[10px] font-bold text-stone-400 mb-0.5">{t('editor.valueLabel')}</label>
                     <input
                       type="text"
                       value={editValue}
                       onChange={e => setEditValue(e.target.value)}
-                      placeholder='e.g., user@example.com'
+                      placeholder={t('editor.valuePlaceholder')}
                       className="w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[4px] p-1.5 text-xs font-mono focus:border-amber-600 focus:outline-hidden"
                     />
                   </div>
@@ -359,7 +362,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                 /* Standard Card View Mode */
                 <>
                   <div className="flex items-center space-x-2.5 min-w-0 flex-1 overflow-hidden">
-                    <span title="Drag to reorder" className="shrink-0 flex items-center">
+                    <span title={t('editor.dragToReorder')} className="shrink-0 flex items-center">
                       <GripVertical className="w-4 h-4 text-stone-600 hover:text-stone-300 cursor-grab active:cursor-grabbing" />
                     </span>
 
@@ -375,12 +378,12 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                         <span className="font-bold font-mono text-amber-300 text-xs truncate">{step.command}</span>
                         {step.status === 'passed' && (
                           <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-xs border border-emerald-500/20 font-semibold shrink-0">
-                            PASSED
+                            {t('editor.passed')}
                           </span>
                         )}
                         {step.status === 'failed' && (
                           <span className="text-[10px] text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded-xs border border-rose-500/20 font-semibold shrink-0">
-                            FAILED
+                            {t('editor.failed')}
                           </span>
                         )}
                       </div>
@@ -392,7 +395,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                           ? `"${step.target}"`
                           : step.value
                           ? `"${step.value}"`
-                          : '<no target>'}
+                          : t('editor.noTarget')}
                         {step.value && step.target && (
                           <span className="text-stone-400 ml-1.5">→ "{step.value}"</span>
                         )}
@@ -405,8 +408,9 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                     {onRunStep && (
                       <button
                         onClick={() => onRunStep(idx)}
-                        title="Run single step"
-                        className="p-1.5 bg-stone-800 hover:bg-amber-700 text-stone-300 hover:text-amber-50 rounded-[6px] transition-all border border-stone-700"
+                        title={t('editor.runSingleStep')}
+                        aria-label={t('editor.runSingleStep')}
+                        className="p-1.5 bg-stone-800 hover:bg-amber-700 text-stone-300 hover:text-amber-50 rounded-[6px] transition-all border border-stone-700 cursor-pointer"
                       >
                         <Play className="w-3 h-3" />
                       </button>
@@ -414,8 +418,9 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
 
                     <button
                       onClick={() => handleStartEdit(idx, step)}
-                      title="Edit step inline"
-                      className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-300 rounded-[6px] transition-all border border-stone-700"
+                      title={t('editor.editStepInline')}
+                      aria-label={t('editor.editStepInline')}
+                      className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-300 rounded-[6px] transition-all border border-stone-700 cursor-pointer"
                     >
                       <Edit3 className="w-3 h-3" />
                     </button>
@@ -423,23 +428,26 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                     <button
                       onClick={() => handleMove(idx, 'up')}
                       disabled={idx === 0}
-                      title="Move Up"
-                      className="p-1 text-stone-500 hover:text-stone-200 disabled:opacity-30"
+                      title={t('editor.moveUp')}
+                      aria-label={t('editor.moveUp')}
+                      className="p-1 text-stone-500 hover:text-stone-200 disabled:opacity-30 cursor-pointer"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleMove(idx, 'down')}
                       disabled={idx === steps.length - 1}
-                      title="Move Down"
-                      className="p-1 text-stone-500 hover:text-stone-200 disabled:opacity-30"
+                      title={t('editor.moveDown')}
+                      aria-label={t('editor.moveDown')}
+                      className="p-1 text-stone-500 hover:text-stone-200 disabled:opacity-30 cursor-pointer"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(idx)}
-                      title="Delete Step"
-                      className="p-1 text-stone-500 hover:text-rose-400"
+                      title={t('editor.deleteStep')}
+                      aria-label={t('editor.deleteStep')}
+                      className="p-1 text-stone-500 hover:text-rose-400 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

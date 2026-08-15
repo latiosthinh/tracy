@@ -11,6 +11,7 @@ import { VoiceInputButton } from '@/src/components/ai/VoiceInputButton';
 import { Project } from '@/src/types/autoflow';
 import { Button } from '@/src/components/ui/Button';
 import { Textarea } from '@/src/components/ui/Input';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 export interface AttachedFile {
   id: string;
@@ -39,6 +40,7 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
   copilotScope,
   activeProject
 }) => {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,7 +97,7 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-1.5">
         <label className="block font-bold text-stone-300 text-xs">
-          Context
+          {t('copilot.contextLabel')}
         </label>
         <div className="flex items-center space-x-2">
           <input
@@ -110,7 +112,8 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
             type="button"
             variant="icon"
             onClick={() => fileInputRef.current?.click()}
-            title="Attach Files / Docs (.txt, .yaml, .json, .md, logs)"
+            title={t('copilot.attachFilesTitle')}
+            aria-label={t('copilot.attachFilesTitle')}
             className="text-amber-400 hover:text-amber-300 border border-stone-800"
           >
             <Paperclip className="w-3.5 h-3.5" />
@@ -134,7 +137,8 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
                 }
               }}
               className="text-cyan-400 hover:text-cyan-300 border border-stone-800"
-              title="Attach Mined DOM Context"
+              title={t('copilot.attachDomTitle')}
+              aria-label={t('copilot.attachDomTitle')}
             >
               <Database className="w-3.5 h-3.5" />
             </Button>
@@ -144,7 +148,7 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
               setPrompt(prev => prev ? `${prev} ${transcript}` : transcript);
             }}
             size="sm"
-            title="Dictate prompt or requirements via voice"
+            title={t('copilot.voiceDictateTitle')}
           />
         </div>
       </div>
@@ -164,8 +168,8 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
           onChange={e => setPrompt(e.target.value)}
           placeholder={
             copilotScope === 'project'
-              ? `e.g., "Generate a complete test suite for ${activeProject.name} covering home page navigation, search filter, item checkout drawer, and error handling..."\n\n(Tip: Paste long requirements text or drop .txt, .yaml, .json spec files here)`
-              : `e.g., "Add assertions for search bar input, coupon code SUMMER25 validation, and order confirmation modal..."\n\n(Tip: Paste long requirements text or drop files here)`
+              ? t('copilot.projectPromptPlaceholder', { name: activeProject.name })
+              : t('copilot.flowPromptPlaceholder')
           }
           className="w-full bg-transparent border-none min-h-[120px] max-h-[350px] resize-y"
         />
@@ -173,8 +177,8 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
         {isDragging && (
           <div className="absolute inset-0 bg-amber-950/80 backdrop-blur-xs rounded-[8px] flex flex-col items-center justify-center text-amber-200 font-mono text-xs pointer-events-none p-4 text-center z-10">
             <Upload className="w-6 h-6 text-amber-400 animate-bounce mb-1" />
-            <span className="font-bold">Drop files here to attach</span>
-            <span className="text-[10px] text-stone-400">Supports .txt, .yaml, .json, .md, code, logs</span>
+            <span className="font-bold">{t('copilot.dropFiles')}</span>
+            <span className="text-[10px] text-stone-400">{t('copilot.dropSupported')}</span>
           </div>
         )}
       </div>
@@ -184,14 +188,14 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
           <div className="flex items-center justify-between text-[11px] text-stone-400 font-mono font-bold">
             <span className="flex items-center space-x-1">
               <Paperclip className="w-3 h-3 text-amber-400" />
-              <span>Attached Context Files ({attachedFiles.length})</span>
+              <span>{t('copilot.attachedCount', { count: attachedFiles.length })}</span>
             </span>
             <button
               type="button"
               onClick={() => setAttachedFiles([])}
-              className="text-[10px] text-stone-500 hover:text-rose-400 font-normal hover:underline"
+              className="text-[10px] text-stone-500 hover:text-rose-400 font-normal hover:underline cursor-pointer"
             >
-              Clear all
+              {t('copilot.clearAll')}
             </button>
           </div>
           <div className="max-h-[100px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
@@ -214,7 +218,8 @@ export const AiPromptInput: React.FC<AiPromptInputProps> = ({
                   <button
                     type="button"
                     onClick={() => setAttachedFiles(prev => prev.filter(f => f.id !== file.id))}
-                    className="text-stone-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-stone-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    aria-label={t('common.delete')}
                   >
                     <X className="w-3 h-3" />
                   </button>
