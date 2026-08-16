@@ -3,6 +3,7 @@ import { isElectronEnv, tracyApi } from '@/src/lib/ipc';
 import { generateSuggestedSelectors } from '@/src/utils/domMiner';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useUiStore } from '@/src/stores/uiStore';
 import { Info } from 'lucide-react';
 
 interface RealBrowserViewProps {
@@ -32,6 +33,9 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
 }) => {
   const { isWeb } = useEnvironment();
   const { t } = useTranslation();
+  const devicePreset = useUiStore((s) => s.devicePreset);
+  const deviceOrientation = useUiStore((s) => s.deviceOrientation);
+  const showDeviceBezel = useUiStore((s) => s.showDeviceBezel);
   const [, setViewState] = useState<ViewState>('idle');
   const [, setCurrentUrl] = useState<string>('');
   const [, setError] = useState<string | null>(null);
@@ -189,6 +193,199 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
     navigateTo(url);
   }, [buildUrl, navigateTo]);
 
+  // Dimension calculations for bezel frame & orientation
+  const isLandscape = deviceOrientation === 'landscape';
+  const isMobile = devicePreset.startsWith('Mobile');
+  const isTablet = devicePreset.startsWith('Tablet');
+  const isLaptop = devicePreset === 'Laptop 1280';
+  const isDesktop = devicePreset === 'Desktop 1440';
+
+  let screenWidth = viewportWidth || 1280;
+  let screenHeight = 800;
+
+  if (isMobile) {
+    screenWidth = isLandscape ? 812 : 375;
+    screenHeight = isLandscape ? 375 : 812;
+  } else if (isTablet) {
+    screenWidth = isLandscape ? 1024 : 768;
+    screenHeight = isLandscape ? 768 : 1024;
+  } else if (isLaptop) {
+    screenWidth = 1280;
+    screenHeight = 800;
+  } else if (isDesktop) {
+    screenWidth = 1440;
+    screenHeight = 900;
+  }
+
+  // Frame styling based on device preset
+  const renderBezelContent = () => {
+    if (!showDeviceBezel) {
+      return (
+        <div
+          ref={containerRef}
+          className="w-full h-full border-none"
+          style={{
+            maxWidth: viewportWidth && viewportWidth < 1440 ? `${viewportWidth}px` : '100%',
+            margin: '0 auto',
+            display: 'block',
+            backgroundColor: '#ffffff'
+          }}
+        />
+      );
+    }
+
+    if (isMobile) {
+      return (
+        <div className="flex items-center justify-center p-6 min-h-full">
+          <div
+            className="relative bg-stone-900 border-[10px] border-stone-800 shadow-2xl rounded-[44px] p-2 flex flex-col items-center shrink-0 ring-1 ring-stone-700/50"
+            style={{
+              width: `${screenWidth + 24}px`,
+              height: `${screenHeight + 24}px`,
+            }}
+          >
+            {/* Speaker / Dynamic Island / Notch */}
+            {!isLandscape ? (
+              <div className="w-24 h-4 bg-stone-950 rounded-full mb-1.5 flex items-center justify-center shrink-0">
+                <div className="w-2.5 h-2.5 bg-stone-900 rounded-full mr-2"></div>
+                <div className="w-10 h-1 bg-stone-800 rounded-full"></div>
+              </div>
+            ) : (
+              <div className="absolute left-1.5 top-1/2 -translate-y-1/2 h-20 w-3 bg-stone-950 rounded-full flex flex-col items-center justify-center z-10">
+                <div className="w-1.5 h-1.5 bg-stone-900 rounded-full mb-1"></div>
+                <div className="w-1 h-8 bg-stone-800 rounded-full"></div>
+              </div>
+            )}
+
+            {/* Inner Screen Area wrapped with containerRef */}
+            <div
+              ref={containerRef}
+              className="w-full flex-1 rounded-[28px] overflow-hidden bg-white relative"
+              style={{
+                width: `${screenWidth}px`,
+                height: `${screenHeight}px`,
+              }}
+            />
+
+            {/* Home Indicator */}
+            {!isLandscape ? (
+              <div className="w-28 h-1 bg-stone-700 rounded-full mt-2 shrink-0"></div>
+            ) : (
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2 h-20 w-1 bg-stone-700 rounded-full z-10"></div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (isTablet) {
+      return (
+        <div className="flex items-center justify-center p-6 min-h-full">
+          <div
+            className="relative bg-stone-900 border-[12px] border-stone-800 shadow-2xl rounded-[32px] p-2 flex flex-col items-center shrink-0 ring-1 ring-stone-700/50"
+            style={{
+              width: `${screenWidth + 28}px`,
+              height: `${screenHeight + 28}px`,
+            }}
+          >
+            {/* Front Camera */}
+            {!isLandscape ? (
+              <div className="w-2.5 h-2.5 bg-stone-950 rounded-full mb-1.5 shrink-0 border border-stone-700/50"></div>
+            ) : (
+              <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-stone-950 rounded-full shrink-0 border border-stone-700/50 z-10"></div>
+            )}
+
+            {/* Inner Screen Area */}
+            <div
+              ref={containerRef}
+              className="w-full flex-1 rounded-[16px] overflow-hidden bg-white relative"
+              style={{
+                width: `${screenWidth}px`,
+                height: `${screenHeight}px`,
+              }}
+            />
+
+            {/* Home Indicator */}
+            {!isLandscape ? (
+              <div className="w-32 h-1 bg-stone-700 rounded-full mt-2 shrink-0"></div>
+            ) : (
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2 h-24 w-1 bg-stone-700 rounded-full z-10"></div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (isLaptop) {
+      return (
+        <div className="flex items-center justify-center p-6 min-h-full">
+          <div className="flex flex-col items-center shrink-0">
+            <div
+              className="bg-stone-900 border-[8px] border-stone-800 shadow-2xl rounded-t-[14px] p-1.5 flex flex-col items-center ring-1 ring-stone-700/50"
+              style={{
+                width: `${screenWidth + 16}px`,
+                height: `${screenHeight + 16}px`,
+              }}
+            >
+              {/* Laptop WebCam Notch */}
+              <div className="w-2 h-2 bg-stone-950 rounded-full mb-1 shrink-0"></div>
+
+              {/* Inner Screen Area */}
+              <div
+                ref={containerRef}
+                className="w-full flex-1 rounded-[4px] overflow-hidden bg-white relative"
+                style={{
+                  width: `${screenWidth}px`,
+                  height: `${screenHeight}px`,
+                }}
+              />
+            </div>
+
+            {/* Laptop Base / Hinge */}
+            <div
+              className="h-3 bg-stone-800 rounded-b-lg border-t border-stone-700 relative shadow-md flex justify-center items-center"
+              style={{ width: `${screenWidth + 80}px` }}
+            >
+              <div className="w-16 h-1 bg-stone-600 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Desktop
+    return (
+      <div className="flex items-center justify-center p-6 min-h-full">
+        <div className="flex flex-col items-center shrink-0">
+          <div
+            className="bg-stone-900 border-[10px] border-stone-800 shadow-2xl rounded-[10px] p-1 flex flex-col items-center ring-1 ring-stone-700/50"
+            style={{
+              width: `${screenWidth + 20}px`,
+              height: `${screenHeight + 20}px`,
+            }}
+          >
+            {/* Monitor Camera */}
+            <div className="w-1.5 h-1.5 bg-stone-950 rounded-full mb-1 shrink-0"></div>
+
+            {/* Inner Screen Area */}
+            <div
+              ref={containerRef}
+              className="w-full flex-1 rounded-[2px] overflow-hidden bg-white relative"
+              style={{
+                width: `${screenWidth}px`,
+                height: `${screenHeight}px`,
+              }}
+            />
+          </div>
+
+          {/* Desktop Stand */}
+          <div className="w-20 h-10 bg-stone-800 border-x border-stone-700 shrink-0"></div>
+          <div className="w-56 h-3 bg-stone-800 rounded-md border border-stone-700 shadow-lg shrink-0"></div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full h-full bg-stone-900 flex flex-col">
       {isWeb && (
@@ -205,19 +402,11 @@ export const RealBrowserView: React.FC<RealBrowserViewProps> = ({
       )}
       {/* Main View Area */}
       <div
-        className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-hidden bg-white"
+        className={`flex-1 overflow-auto relative focus:outline-hidden ${
+          showDeviceBezel ? 'bg-stone-950 flex items-center justify-center' : 'bg-white'
+        }`}
       >
-        {/* NATIVE CHILD WEBVIEW CONTAINER */}
-        <div
-          ref={containerRef}
-          className="w-full h-full border-none"
-          style={{
-            maxWidth: viewportWidth && viewportWidth < 1440 ? `${viewportWidth}px` : '100%',
-            margin: '0 auto',
-            display: 'block',
-            backgroundColor: '#ffffff'
-          }}
-        />
+        {renderBezelContent()}
       </div>
     </div>
   );

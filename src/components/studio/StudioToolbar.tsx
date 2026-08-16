@@ -15,7 +15,9 @@ import {
   Smartphone,
   ExternalLink,
   Columns2,
-  Rows2
+  Rows2,
+  SmartphoneCharging,
+  RotateCw
 } from 'lucide-react';
 import type { DevicePreset } from '@/src/types/ui';
 import { IconButton } from '@/src/components/ui/IconButton';
@@ -66,6 +68,12 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
   const { t } = useTranslation();
   const splitOrientation = useUiStore((s) => s.splitOrientation);
   const toggleSplitOrientation = useUiStore((s) => s.toggleSplitOrientation);
+  const deviceOrientation = useUiStore((s) => s.deviceOrientation);
+  const toggleDeviceOrientation = useUiStore((s) => s.toggleDeviceOrientation);
+  const showDeviceBezel = useUiStore((s) => s.showDeviceBezel);
+  const toggleDeviceBezel = useUiStore((s) => s.toggleDeviceBezel);
+
+  const canRotate = devicePreset.startsWith('Mobile') || devicePreset.startsWith('Tablet');
 
   return (
     <div className="bg-stone-950 px-3 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 font-sans w-full relative">
@@ -240,6 +248,28 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
           />
 
           <div className="w-px h-4 bg-stone-700"></div>
+
+          {canRotate && (
+            <IconButton
+              onClick={toggleDeviceOrientation}
+              className={`transition-colors cursor-pointer ${
+                deviceOrientation === 'landscape' ? 'text-amber-500' : 'text-stone-400 hover:text-amber-400'
+              }`}
+              titleKey="layout.rotateOrientation"
+              icon={RotateCw}
+              iconClassName="w-3.5 h-3.5"
+            />
+          )}
+
+          <IconButton
+            onClick={toggleDeviceBezel}
+            className={`transition-colors cursor-pointer ${
+              showDeviceBezel ? 'text-amber-500' : 'text-stone-400 hover:text-amber-400'
+            }`}
+            titleKey="layout.deviceFrame"
+            icon={SmartphoneCharging}
+            iconClassName="w-3.5 h-3.5"
+          />
 
           <IconButton
             onClick={toggleSplitOrientation}

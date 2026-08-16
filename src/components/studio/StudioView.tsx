@@ -355,13 +355,16 @@ export const StudioView: React.FC = () => {
     return context;
   };
 
+  const deviceOrientation = useUiStore((s) => s.deviceOrientation);
+
   const getViewportWidthPx = () => {
+    const isLandscape = deviceOrientation === 'landscape';
     switch (devicePreset) {
       case 'Desktop 1440': return 1440;
       case 'Laptop 1280': return 1280;
-      case 'Tablet iPad': return 768;
+      case 'Tablet iPad': return isLandscape ? 1024 : 768;
       case 'Mobile iPhone 14':
-      case 'Mobile Pixel 7': return 375;
+      case 'Mobile Pixel 7': return isLandscape ? 812 : 375;
       default: return 1280;
     }
   };
