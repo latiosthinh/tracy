@@ -173,4 +173,22 @@ describe('uiStore', () => {
       setItemSpy.mockRestore();
     });
   });
+
+  describe('page theme emulation', () => {
+    it('setPageThemeEmulation sets and persists emulation theme', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+      getStore().setPageThemeEmulation('dark');
+      expect(getStore().pageThemeEmulation).toBe('dark');
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_page_theme_emulation', 'dark');
+
+      getStore().setPageThemeEmulation('light');
+      expect(getStore().pageThemeEmulation).toBe('light');
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_page_theme_emulation', 'light');
+
+      getStore().setPageThemeEmulation('system');
+      expect(getStore().pageThemeEmulation).toBe('system');
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_page_theme_emulation', 'system');
+      setItemSpy.mockRestore();
+    });
+  });
 });

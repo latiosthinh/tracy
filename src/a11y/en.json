@@ -722,7 +722,10 @@
     "deviceFrame": "Toggle Device Bezel Frame",
     "rotateOrientation": "Rotate Device Orientation (Portrait / Landscape)",
     "portrait": "Portrait",
-    "landscape": "Landscape"
+    "landscape": "Landscape",
+    "pageThemeDark": "Emulate Dark Theme",
+    "pageThemeLight": "Emulate Light Theme",
+    "pageThemeSystem": "Follow System Theme"
   }
 }
 

@@ -17,13 +17,17 @@ import {
   Columns2,
   Rows2,
   SmartphoneCharging,
-  RotateCw
+  RotateCw,
+  Sun,
+  Moon
 } from 'lucide-react';
 import type { DevicePreset } from '@/src/types/ui';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useUiStore } from '@/src/stores/uiStore';
+import { useProjectStore } from '@/src/stores/projectStore';
+import { tracyApi } from '@/src/lib/ipc';
 
 interface StudioToolbarProps {
   targetPath: string;
@@ -72,8 +76,28 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
   const toggleDeviceOrientation = useUiStore((s) => s.toggleDeviceOrientation);
   const showDeviceBezel = useUiStore((s) => s.showDeviceBezel);
   const toggleDeviceBezel = useUiStore((s) => s.toggleDeviceBezel);
+  const pageThemeEmulation = useUiStore((s) => s.pageThemeEmulation);
+  const setPageThemeEmulation = useUiStore((s) => s.setPageThemeEmulation);
+  const activeProjectId = useProjectStore((s) => s.activeProjectId);
 
   const canRotate = devicePreset.startsWith('Mobile') || devicePreset.startsWith('Tablet');
+
+  const togglePageTheme = () => {
+    // Cycle: system -> dark -> light -> system
+    const nextTheme: 'system' | 'dark' | 'light' =
+      pageThemeEmulation === 'system'
+        ? 'dark'
+        : pageThemeEmulation === 'dark'
+        ? 'light'
+        : 'system';
+    setPageThemeEmulation(nextTheme);
+    if (activeProjectId) {
+      tracyApi.emulateMediaTheme(
+        activeProjectId,
+        nextTheme === 'system' ? 'no-preference' : nextTheme
+      );
+    }
+  };
 
   return (
     <div className="bg-stone-950 px-3 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 font-sans w-full relative">
@@ -268,6 +292,22 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
             }`}
             titleKey="layout.deviceFrame"
             icon={SmartphoneCharging}
+            iconClassName="w-3.5 h-3.5"
+          />
+
+          <IconButton
+            onClick={togglePageTheme}
+            className={`transition-colors cursor-pointer ${
+              pageThemeEmulation !== 'system' ? 'text-amber-500' : 'text-stone-400 hover:text-amber-400'
+            }`}
+            titleKey={
+              pageThemeEmulation === 'dark'
+                ? 'layout.pageThemeDark'
+                : pageThemeEmulation === 'light'
+                ? 'layout.pageThemeLight'
+                : 'layout.pageThemeSystem'
+            }
+            icon={pageThemeEmulation === 'light' ? Sun : Moon}
             iconClassName="w-3.5 h-3.5"
           />
 

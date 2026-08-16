@@ -33,6 +33,9 @@ interface UiState {
   deviceOrientation: 'portrait' | 'landscape';
   showDeviceBezel: boolean;
 
+  // Page Color Scheme Emulation
+  pageThemeEmulation: 'system' | 'dark' | 'light';
+
   // Settings (consolidated from settingsStore)
   uiSettings: UiSettings;
   workspaceConfig: WorkspaceConfig;
@@ -55,6 +58,9 @@ interface UiState {
   toggleDeviceOrientation: () => void;
   setShowDeviceBezel: (show: boolean) => void;
   toggleDeviceBezel: () => void;
+
+  // Page Color Scheme Emulation Actions
+  setPageThemeEmulation: (theme: 'system' | 'dark' | 'light') => void;
 
   // Modal Actions
   setDocsOpen: (open: boolean) => void;
@@ -148,6 +154,17 @@ export const useUiStore = create<UiState>((set, get) => ({
     return false;
   })(),
 
+  // Page Color Scheme Emulation state with localStorage persistence
+  pageThemeEmulation: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_page_theme_emulation');
+      if (saved === 'system' || saved === 'dark' || saved === 'light') return saved;
+    } catch (e) {
+      console.error('Failed to load page theme emulation:', e);
+    }
+    return 'system';
+  })(),
+
   // Settings state with localStorage persistence
   uiSettings: (() => {
     try {
@@ -224,6 +241,16 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   toggleDeviceBezel: () => {
     get().setShowDeviceBezel(!get().showDeviceBezel);
+  },
+
+  // Page Color Scheme Emulation
+  setPageThemeEmulation: (theme) => {
+    set({ pageThemeEmulation: theme });
+    try {
+      localStorage.setItem('tracy_page_theme_emulation', theme);
+    } catch (e) {
+      console.error('Failed to save page theme emulation:', e);
+    }
   },
 
   // Modals
