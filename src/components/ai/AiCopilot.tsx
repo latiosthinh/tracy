@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AiPromptInput, AttachedFile } from '@/src/components/ai/AiPromptInput';
 import { QaRecipeSelector } from '@/src/components/ai/QaRecipeSelector';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
+import { AiDiffPreviewModal } from '@/src/components/ai/AiDiffPreviewModal';
+import { appendStepsToYaml } from '@/src/utils/diffUtils';
 import { QaRecipe } from '@/src/data/qaRecipes';
 import {
   Send,
@@ -17,6 +19,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   CheckCircle2,
+  GitCompare,
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
 import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
@@ -38,6 +41,7 @@ interface AiCopilotProps {
 export const AiCopilot: React.FC<AiCopilotProps> = ({
   activeProject,
   activeFlow,
+  currentYaml,
   onApplyGeneratedYaml,
   onBatchAddFlowsToProject,
   targetUrl,
@@ -94,6 +98,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   // Form State & Attached Files State
   const [prompt, setPrompt] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [diffPreviewYaml, setDiffPreviewYaml] = useState<string | null>(null);
 
   // File processing logic moved to AiPromptInput
 
@@ -329,12 +334,23 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
               </span>
 
               {generatedYaml && (
-                <button
-                  onClick={() => onApplyGeneratedYaml(generatedYaml)}
-                  className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all cursor-pointer"
-                >
-                  {t('copilot.applyToActiveEditor', { name: activeFlow.name })}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDiffPreviewYaml(generatedYaml)}
+                    className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-xs rounded-[6px] border border-stone-700 flex items-center space-x-1.5 transition-all cursor-pointer"
+                  >
+                    <GitCompare className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{t('copilot.diffPreview.previewButton')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onApplyGeneratedYaml(generatedYaml)}
+                    className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 shadow-xs transition-all cursor-pointer"
+                  >
+                    {t('copilot.applyToActiveEditor', { name: activeFlow.name })}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -375,12 +391,23 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
                 <div key={idx} className="p-3 bg-stone-950 rounded-[6px] border border-stone-800 space-y-2">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="font-mono font-bold text-amber-400 text-xs">{flowItem.name}</span>
-                    <button
-                      onClick={() => onApplyGeneratedYaml(flowItem.yaml)}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-amber-700 text-stone-200 text-[10px] font-bold rounded-[6px] border border-stone-700 cursor-pointer"
-                    >
-                      {t('copilot.loadIntoEditor')}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setDiffPreviewYaml(flowItem.yaml)}
+                        className="px-2 py-1 bg-stone-900 hover:bg-stone-800 text-amber-300 text-[10px] font-bold rounded-[6px] border border-stone-800 flex items-center space-x-1 cursor-pointer"
+                      >
+                        <GitCompare className="w-3 h-3 text-amber-400" />
+                        <span>{t('copilot.diffPreview.previewButton')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onApplyGeneratedYaml(flowItem.yaml)}
+                        className="px-2.5 py-1 bg-stone-800 hover:bg-amber-700 text-stone-200 text-[10px] font-bold rounded-[6px] border border-stone-700 cursor-pointer"
+                      >
+                        {t('copilot.loadIntoEditor')}
+                      </button>
+                    </div>
                   </div>
                   <p className="text-stone-400 text-[11px] leading-relaxed">{flowItem.description}</p>
                   <pre className="p-2 bg-stone-900 rounded-[4px] border border-stone-800/80 font-mono text-[10px] text-amber-200/90 overflow-x-auto max-h-24">
@@ -432,6 +459,25 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
           )}
         </div>
       </div>
+
+      {/* AI Diff Preview Modal */}
+      {diffPreviewYaml && (
+        <AiDiffPreviewModal
+          isOpen={!!diffPreviewYaml}
+          onClose={() => setDiffPreviewYaml(null)}
+          originalYaml={currentYaml || activeFlow.yamlContent || ''}
+          generatedYaml={diffPreviewYaml}
+          onReplace={() => {
+            onApplyGeneratedYaml(diffPreviewYaml);
+            setDiffPreviewYaml(null);
+          }}
+          onAppend={() => {
+            const updated = appendStepsToYaml(currentYaml || activeFlow.yamlContent || '', diffPreviewYaml);
+            onApplyGeneratedYaml(updated);
+            setDiffPreviewYaml(null);
+          }}
+        />
+      )}
     </div>
   );
 };
