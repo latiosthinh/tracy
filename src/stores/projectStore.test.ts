@@ -219,6 +219,38 @@ describe('projectStore', () => {
       ]);
       expect(getStore().getActiveProject().flows.length).toBe(before + 2);
     });
+
+    it('duplicateStep clones step at stepIndex + 1 with fresh id and pending status', () => {
+      const flow = getStore().getActiveFlow();
+      const initialCount = flow.steps.length;
+      expect(initialCount).toBeGreaterThan(0);
+
+      const targetStep = flow.steps[0];
+      getStore().duplicateStep(flow.id, 0);
+
+      const updatedFlow = getStore().getActiveFlow();
+      expect(updatedFlow.steps.length).toBe(initialCount + 1);
+      expect(updatedFlow.steps[1].command).toBe(targetStep.command);
+      expect(updatedFlow.steps[1].target).toEqual(targetStep.target);
+      expect(updatedFlow.steps[1].id).not.toBe(targetStep.id);
+      expect(updatedFlow.steps[1].status).toBe('pending');
+    });
+
+    it('bulkDeleteSteps removes steps at specified indices', () => {
+      const flow = getStore().getActiveFlow();
+      // Ensure at least 3 steps
+      getStore().updateFlowSteps([
+        { id: 's1', command: 'navigate', value: '/1', status: 'pending' },
+        { id: 's2', command: 'navigate', value: '/2', status: 'pending' },
+        { id: 's3', command: 'navigate', value: '/3', status: 'pending' },
+        { id: 's4', command: 'navigate', value: '/4', status: 'pending' },
+      ]);
+
+      getStore().bulkDeleteSteps(flow.id, [1, 3]);
+
+      const updatedFlow = getStore().getActiveFlow();
+      expect(updatedFlow.steps.map((s) => s.id)).toEqual(['s1', 's3']);
+    });
   });
 
   describe('browserPaths (per-project browser path isolation)', () => {

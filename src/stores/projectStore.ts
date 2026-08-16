@@ -38,6 +38,8 @@ interface ProjectState {
   updateFlowCategory: (flowId: string, category: FlowCategory) => void;
   updateYamlContent: (newYaml: string) => void;
   updateFlowSteps: (newSteps: FlowStep[]) => void;
+  duplicateStep: (flowId: string, stepIndex: number) => void;
+  bulkDeleteSteps: (flowId: string, stepIndices: number[]) => void;
   batchAddFlows: (newFlows: { name: string; yaml: string; description?: string }[]) => void;
 
   // Legacy DOM mining delegation
@@ -297,6 +299,40 @@ export const useProjectStore = create<ProjectState>()(
         }
       });
       // Persist to IndexedDB in web mode
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
+    },
+
+    duplicateStep: (flowId: string, stepIndex: number) => {
+      set((state) => {
+        const activeProj = state.projects.find((p) => p.id === state.activeProjectId);
+        const flow = activeProj?.flows.find((f) => f.id === flowId);
+        if (!flow || stepIndex < 0 || stepIndex >= flow.steps.length) return;
+
+        const sourceStep = flow.steps[stepIndex];
+        const clonedStep: FlowStep = {
+          ...sourceStep,
+          target: typeof sourceStep.target === 'object' && sourceStep.target !== null ? { ...sourceStep.target } : sourceStep.target,
+          args: sourceStep.args ? { ...sourceStep.args } : undefined,
+          id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          status: 'pending',
+        };
+
+        flow.steps.splice(stepIndex + 1, 0, clonedStep);
+      });
+      const activeProjectId = get().activeProjectId;
+      get().persistProjectToIndexedDb(activeProjectId);
+    },
+
+    bulkDeleteSteps: (flowId: string, stepIndices: number[]) => {
+      set((state) => {
+        const activeProj = state.projects.find((p) => p.id === state.activeProjectId);
+        const flow = activeProj?.flows.find((f) => f.id === flowId);
+        if (!flow || stepIndices.length === 0) return;
+
+        const indexSet = new Set(stepIndices);
+        flow.steps = flow.steps.filter((_, idx) => !indexSet.has(idx));
+      });
       const activeProjectId = get().activeProjectId;
       get().persistProjectToIndexedDb(activeProjectId);
     },

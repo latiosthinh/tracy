@@ -8,6 +8,8 @@ export function useFlowActions() {
   const updateFlowCategory = useProjectStore((s) => s.updateFlowCategory);
   const updateYamlContent = useProjectStore((s) => s.updateYamlContent);
   const updateFlowSteps = useProjectStore((s) => s.updateFlowSteps);
+  const duplicateStep = useProjectStore((s) => s.duplicateStep);
+  const bulkDeleteSteps = useProjectStore((s) => s.bulkDeleteSteps);
   const batchAddFlows = useProjectStore((s) => s.batchAddFlows);
 
   return {
@@ -18,6 +20,8 @@ export function useFlowActions() {
     updateFlowCategory,
     updateYamlContent,
     updateFlowSteps,
+    duplicateStep,
+    bulkDeleteSteps,
     batchAddFlows,
   };
 }
