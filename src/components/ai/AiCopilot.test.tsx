@@ -45,6 +45,36 @@ describe('AiCopilot', () => {
     expect(screen.getByText('QA Test Recipes')).toBeInTheDocument();
   });
 
+  it('displays generation telemetry metrics when flow is generated', async () => {
+    render(
+      <AiCopilot
+        activeProject={mockProject}
+        activeFlow={mockFlow}
+        currentYaml={mockFlow.yamlContent}
+        onApplyGeneratedYaml={vi.fn()}
+        targetUrl="https://example.com"
+      />
+    );
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ yaml: 'url: https://example.com\n---\n- navigate: /\n- leftClick: "#checkout"' }),
+    } as Response);
+
+    const textarea = screen.getByPlaceholderText(/Generate a complete test suite for Test Project/i);
+    fireEvent.change(textarea, { target: { value: 'Add checkout step' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Generate Project Test Steps/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      const chip = screen.getByTestId('copilot-telemetry-chip');
+      expect(chip).toBeInTheDocument();
+      expect(chip.textContent).toMatch(/tokens/i);
+      expect(chip.textContent).toMatch(/t\/s/i);
+    });
+  });
+
   it('allows previewing diff and replacing flow', async () => {
     const onApply = vi.fn();
     render(

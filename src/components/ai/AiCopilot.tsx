@@ -20,6 +20,7 @@ import {
   ChevronDown,
   CheckCircle2,
   GitCompare,
+  Gauge,
 } from 'lucide-react';
 import { Project, FlowFile } from '@/src/types/autoflow';
 import { tracyApi, isElectronEnv } from '@/src/lib/ipc';
@@ -84,16 +85,32 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   const [batchImported, setBatchImported] = useState(false);
   const generatingFlag = useRef(false);
 
+  // Telemetry metrics state
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
+  const [generationDuration, setGenerationDuration] = useState<number>(0);
+  const [tokenCount, setTokenCount] = useState<number>(0);
+  const [tokenSpeed, setTokenSpeed] = useState<number>(0);
+
   // Subscribe to stream chunks during generation
   useEffect(() => {
     if (!isGenerating || !generatingFlag.current) return;
     const unlisten = tracyApi.onAgentStreamChunk((payload) => {
-      setStreamingText((prev) => prev + payload.delta);
+      setStreamingText((prev) => {
+        const next = prev + payload.delta;
+        const tokens = Math.max(1, Math.round(next.length / 4));
+        setTokenCount(tokens);
+        if (generationStartTime) {
+          const elapsedSec = Math.max(0.1, (Date.now() - generationStartTime) / 1000);
+          setGenerationDuration(Number(elapsedSec.toFixed(1)));
+          setTokenSpeed(Number((tokens / elapsedSec).toFixed(1)));
+        }
+        return next;
+      });
     });
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [isGenerating]);
+  }, [isGenerating, generationStartTime]);
 
   // Form State & Attached Files State
   const [prompt, setPrompt] = useState('');
@@ -105,6 +122,12 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   const handleGenerateFlow = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim() && attachedFiles.length === 0) return;
+
+    const startTime = Date.now();
+    setGenerationStartTime(startTime);
+    setGenerationDuration(0);
+    setTokenCount(0);
+    setTokenSpeed(0);
 
     setIsGenerating(true);
     setErrorMessage(null);
@@ -139,6 +162,11 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         generatingFlag.current = false;
         if (streamYaml) {
           setGeneratedYaml(streamYaml);
+          const totalTokens = Math.max(1, Math.round(streamYaml.length / 4));
+          const totalSec = Math.max(0.1, (Date.now() - startTime) / 1000);
+          setTokenCount(totalTokens);
+          setGenerationDuration(Number(totalSec.toFixed(1)));
+          setTokenSpeed(Number((totalTokens / totalSec).toFixed(1)));
         } else {
           setErrorMessage(t('copilot.emptyAgentResponse'));
         }
@@ -165,6 +193,11 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         generatingFlag.current = false;
         if (res.ok && data.yaml) {
           setGeneratedYaml(data.yaml);
+          const totalTokens = Math.max(1, Math.round(data.yaml.length / 4));
+          const totalSec = Math.max(0.1, (Date.now() - startTime) / 1000);
+          setTokenCount(totalTokens);
+          setGenerationDuration(Number(totalSec.toFixed(1)));
+          setTokenSpeed(Number((totalTokens / totalSec).toFixed(1)));
         } else {
           setErrorMessage(data.error || t('copilot.failedGenerateYaml'));
         }
@@ -328,10 +361,35 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
         {(generatedYaml || streamingText) && (
           <div className="bg-stone-900 border border-stone-800 rounded-[6px] p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="font-bold text-emerald-400 text-xs flex items-center space-x-1.5">
-                {generatedYaml ? <Check className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>{generatedYaml ? t('copilot.generatedYaml') : t('copilot.generatedYamlStreaming')}</span>
-              </span>
+              <div className="flex items-center space-x-3 flex-wrap gap-y-1">
+                <span className="font-bold text-emerald-400 text-xs flex items-center space-x-1.5">
+                  {generatedYaml ? <Check className="w-4 h-4" /> : <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{generatedYaml ? t('copilot.generatedYaml') : t('copilot.generatedYamlStreaming')}</span>
+                </span>
+
+                {/* Live / Finished Generation Telemetry Chip */}
+                {(isGenerating || generatedYaml) && tokenCount > 0 && (
+                  <div
+                    data-testid="copilot-telemetry-chip"
+                    className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-stone-950/90 border border-amber-800/60 text-amber-300 font-mono text-[11px]"
+                  >
+                    <Gauge className="w-3 h-3 text-amber-400 shrink-0" />
+                    <span>
+                      {generatedYaml
+                        ? t('copilot.telemetry.completedStats', {
+                            tokens: tokenCount,
+                            duration: generationDuration,
+                            speed: tokenSpeed,
+                          })
+                        : t('copilot.telemetry.stats', {
+                            tokens: tokenCount,
+                            speed: tokenSpeed,
+                            duration: generationDuration,
+                          })}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {generatedYaml && (
                 <div className="flex items-center gap-2">

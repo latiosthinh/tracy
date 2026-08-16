@@ -237,6 +237,14 @@
         "description": "Test cart item count, coupon code discount, shipping form, and order confirmation"
       }
     },
+    "telemetry": {
+      "speed": "{speed} t/s",
+      "tokens": "{count} tokens",
+      "duration": "{duration}s",
+      "liveBadge": "Live Telemetry",
+      "stats": "{tokens} tokens • {speed} t/s ({duration}s)",
+      "completedStats": "{tokens} tokens in {duration}s ({speed} t/s)"
+    },
     "diffPreview": {
       "modalTitle": "AI Step Diff Preview",
       "activeFlow": "Active Flow",
