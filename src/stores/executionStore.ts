@@ -11,6 +11,7 @@ interface ExecutionState {
   eventListenersSet: boolean;
   eventListenersSetting: boolean;
   unlistenFns: UnlistenFn[];
+  runToken: number;
 
   setExecutionSpeed: (speed: number) => void;
   startExecution: (flow: FlowFile, targetBaseUrl: string) => Promise<void>;
@@ -31,6 +32,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
   eventListenersSet: false,
   eventListenersSetting: false,
   unlistenFns: [],
+  runToken: 0,
 
   setExecutionSpeed: (speed: number) => set({ executionSpeed: speed }),
 
@@ -97,11 +99,13 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
     const { executionSpeed, isExecuting } = get();
     if (isExecuting) return;
 
+    const currentToken = get().runToken + 1;
     set({
       isExecuting: true,
       activeStepIndex: 0,
       executionLogs: [],
       lastResult: null,
+      runToken: currentToken,
     });
 
     try {
@@ -114,7 +118,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
         let failed = 0;
 
         for (let i = 0; i < flow.steps.length; i++) {
-          if (!get().isExecuting) break;
+          if (!get().isExecuting || get().runToken !== currentToken) break;
 
           set({ activeStepIndex: i });
           const step = flow.steps[i];
@@ -128,6 +132,8 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           });
 
           await new Promise((resolve) => setTimeout(resolve, executionSpeed));
+
+          if (!get().isExecuting || get().runToken !== currentToken) break;
 
           const isFailTrigger = step.value === 'FailAssertionTrigger';
           if (!isFailTrigger) {
@@ -152,41 +158,54 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           }
         }
 
-        const runResult: TestRunResult = {
-          id: `run-${crypto.randomUUID()}`,
-          flowId: flow.id,
-          flowName: flow.name,
-          timestamp: new Date().toLocaleString(),
-          durationMs: Date.now() - startTime,
-          status: failed === 0 ? 'PASSED' : 'FAILED',
-          passedCount: passed,
-          failedCount: failed,
-          skippedCount: Math.max(0, flow.steps.length - (passed + failed)),
-          totalCount: flow.steps.length,
-          steps: flow.steps,
-          logs: get().executionLogs,
-          artifacts: {
-            screenshots: [],
-          },
-        };
+        if (get().runToken === currentToken) {
+          const totalExecuted = passed + failed;
+          const isPausedOrAborted = !get().isExecuting || totalExecuted < flow.steps.length && failed === 0;
+          const finalStatus = failed > 0 ? 'FAILED' : isPausedOrAborted ? 'PAUSED' : 'PASSED';
 
-        set({ lastResult: runResult });
+          const runResult: TestRunResult = {
+            id: `run-${crypto.randomUUID()}`,
+            flowId: flow.id,
+            flowName: flow.name,
+            timestamp: new Date().toLocaleString(),
+            durationMs: Date.now() - startTime,
+            status: finalStatus,
+            passedCount: passed,
+            failedCount: failed,
+            skippedCount: Math.max(0, flow.steps.length - (passed + failed)),
+            totalCount: flow.steps.length,
+            steps: flow.steps,
+            logs: get().executionLogs,
+            artifacts: {
+              screenshots: [],
+            },
+          };
+
+          set({ lastResult: runResult });
+        }
       }
     } catch (err: any) {
       console.error('Execution engine error:', err);
     } finally {
-      set({ isExecuting: false, activeStepIndex: -1 });
+      if (get().runToken === currentToken) {
+        set({ isExecuting: false, activeStepIndex: -1 });
+      }
     }
   },
 
-  pauseExecution: () => set({ isExecuting: false }),
+  pauseExecution: () =>
+    set((state) => ({
+      isExecuting: false,
+      runToken: state.runToken + 1,
+    })),
 
   resetExecution: () => {
-    set({
+    set((state) => ({
       isExecuting: false,
       activeStepIndex: -1,
       executionLogs: [],
       lastResult: null,
-    });
+      runToken: state.runToken + 1,
+    }));
   },
 }));

@@ -15,7 +15,7 @@ export interface TestRunResult {
   flowName: string;
   timestamp: string;
   durationMs: number;
-  status: 'PASSED' | 'FAILED' | 'RUNNING' | 'CANCELLED';
+  status: 'PASSED' | 'FAILED' | 'RUNNING' | 'CANCELLED' | 'PAUSED';
   passedCount: number;
   failedCount: number;
   skippedCount: number;

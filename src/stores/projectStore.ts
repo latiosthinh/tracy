@@ -122,6 +122,8 @@ export const useProjectStore = create<ProjectState>()(
         state.openProjectIds = state.openProjectIds.filter((id) => id !== projectId);
         if (state.activeProjectId === projectId) {
           state.activeProjectId = state.openProjectIds[0];
+          const targetProj = state.projects.find((p) => p.id === state.activeProjectId);
+          state.activeFlowId = targetProj?.flows[0]?.id || '';
         }
       });
     },
@@ -153,8 +155,13 @@ export const useProjectStore = create<ProjectState>()(
         if (state.projects.length <= 1) return;
         state.projects = state.projects.filter((p) => p.id !== projectId);
         state.openProjectIds = state.openProjectIds.filter((id) => id !== projectId);
+        if (state.openProjectIds.length === 0) {
+          state.openProjectIds = [state.projects[0].id];
+        }
         if (state.activeProjectId === projectId) {
-          state.activeProjectId = state.projects[0].id;
+          state.activeProjectId = state.openProjectIds[0] || state.projects[0].id;
+          const targetProj = state.projects.find((p) => p.id === state.activeProjectId);
+          state.activeFlowId = targetProj?.flows[0]?.id || '';
         }
       });
       // Delete from IndexedDB in web mode

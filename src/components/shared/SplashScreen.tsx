@@ -46,7 +46,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, onFinishe
 
   // Once all steps are complete and ready, trigger smooth fade out
   useEffect(() => {
-    if (currentStepIndex === loadingSteps.length - 1) {
+    if (currentStepIndex === loadingSteps.length - 1 && !isLoading) {
       setProgress(100);
       const timer = setTimeout(() => {
         setIsFadingOut(true);
@@ -57,7 +57,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ isLoading, onFinishe
       }, 250);
       return () => clearTimeout(timer);
     }
-  }, [currentStepIndex, loadingSteps.length, onFinished]);
+  }, [currentStepIndex, isLoading, loadingSteps.length, onFinished]);
 
   // Dots animation
   useEffect(() => {

@@ -17,16 +17,35 @@ export const Modal: React.FC<ModalProps> = ({
   onClose, 
   title, 
   children, 
-  footer,
+  footer, 
   maxWidth = 'max-w-2xl',
   icon
 }) => {
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
+
+    previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusTimer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), [href]:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"]):not(:disabled)'
+        );
+        if (focusable.length > 0) {
+          focusable[0].focus();
+        } else {
+          modalRef.current.focus();
+        }
+      }
+    }, 0);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -36,13 +55,30 @@ export const Modal: React.FC<ModalProps> = ({
       }
 
       if (e.key === 'Tab' && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusableElements.length) return;
+        const focusableElements = Array.from(
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), [href]:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"]):not(:disabled)'
+          )
+        ).filter((el) => el.offsetParent !== null || el.getClientRects().length > 0);
+
+        if (!focusableElements.length) {
+          e.preventDefault();
+          modalRef.current.focus();
+          return;
+        }
 
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (!modalRef.current.contains(document.activeElement)) {
+          e.preventDefault();
+          if (e.shiftKey) {
+            lastElement.focus();
+          } else {
+            firstElement.focus();
+          }
+          return;
+        }
 
         if (e.shiftKey) {
           if (document.activeElement === firstElement) {
@@ -60,7 +96,12 @@ export const Modal: React.FC<ModalProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => {
+      clearTimeout(focusTimer);
       document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+      if (previouslyFocusedElementRef.current && typeof previouslyFocusedElementRef.current.focus === 'function') {
+        previouslyFocusedElementRef.current.focus();
+      }
     };
   }, [isOpen, onClose]);
 
@@ -73,7 +114,8 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`bg-stone-900 border border-stone-700 rounded-lg shadow-2xl w-full ${maxWidth} flex flex-col max-h-[85vh]`}
+        tabIndex={-1}
+        className={`bg-stone-900 border border-stone-700 rounded-lg shadow-2xl w-full ${maxWidth} flex flex-col max-h-[85vh] focus:outline-hidden`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-stone-800 shrink-0">
