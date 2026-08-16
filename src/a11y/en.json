@@ -718,7 +718,11 @@
   "layout": {
     "splitVertical": "Side-by-Side (Vertical Split)",
     "splitHorizontal": "Top-and-Bottom (Horizontal Split)",
-    "toggleSplit": "Toggle Split Orientation (Vertical / Horizontal)"
+    "toggleSplit": "Toggle Split Orientation (Vertical / Horizontal)",
+    "deviceFrame": "Toggle Device Bezel Frame",
+    "rotateOrientation": "Rotate Device Orientation (Portrait / Landscape)",
+    "portrait": "Portrait",
+    "landscape": "Landscape"
   }
 }
 

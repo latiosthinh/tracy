@@ -143,4 +143,34 @@ describe('uiStore', () => {
       setItemSpy.mockRestore();
     });
   });
+
+  describe('device framing and orientation', () => {
+    it('setDeviceOrientation sets and persists orientation', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+      getStore().setDeviceOrientation('landscape');
+      expect(getStore().deviceOrientation).toBe('landscape');
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_device_orientation', 'landscape');
+      setItemSpy.mockRestore();
+    });
+
+    it('toggleDeviceOrientation flips between portrait and landscape', () => {
+      getStore().setDeviceOrientation('portrait');
+      getStore().toggleDeviceOrientation();
+      expect(getStore().deviceOrientation).toBe('landscape');
+      getStore().toggleDeviceOrientation();
+      expect(getStore().deviceOrientation).toBe('portrait');
+    });
+
+    it('setShowDeviceBezel and toggleDeviceBezel persist bezel visibility', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+      getStore().setShowDeviceBezel(true);
+      expect(getStore().showDeviceBezel).toBe(true);
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_show_device_bezel', 'true');
+
+      getStore().toggleDeviceBezel();
+      expect(getStore().showDeviceBezel).toBe(false);
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_show_device_bezel', 'false');
+      setItemSpy.mockRestore();
+    });
+  });
 });

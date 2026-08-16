@@ -29,6 +29,10 @@ interface UiState {
   sidePanelWidth: number;
   sidePanelHeight: number;
 
+  // Device Frame & Orientation
+  deviceOrientation: 'portrait' | 'landscape';
+  showDeviceBezel: boolean;
+
   // Settings (consolidated from settingsStore)
   uiSettings: UiSettings;
   workspaceConfig: WorkspaceConfig;
@@ -45,6 +49,12 @@ interface UiState {
   toggleSplitOrientation: () => void;
   setSidePanelWidth: (width: number) => void;
   setSidePanelHeight: (height: number) => void;
+
+  // Device Frame & Orientation Actions
+  setDeviceOrientation: (orientation: 'portrait' | 'landscape') => void;
+  toggleDeviceOrientation: () => void;
+  setShowDeviceBezel: (show: boolean) => void;
+  toggleDeviceBezel: () => void;
 
   // Modal Actions
   setDocsOpen: (open: boolean) => void;
@@ -118,6 +128,26 @@ export const useUiStore = create<UiState>((set, get) => ({
     return 360;
   })(),
 
+  // Device Frame & Orientation state with localStorage persistence
+  deviceOrientation: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_device_orientation');
+      if (saved === 'portrait' || saved === 'landscape') return saved;
+    } catch (e) {
+      console.error('Failed to load device orientation:', e);
+    }
+    return 'portrait';
+  })(),
+  showDeviceBezel: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_show_device_bezel');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {
+      console.error('Failed to load show device bezel:', e);
+    }
+    return false;
+  })(),
+
   // Settings state with localStorage persistence
   uiSettings: (() => {
     try {
@@ -169,6 +199,31 @@ export const useUiStore = create<UiState>((set, get) => ({
     try {
       localStorage.setItem('tracy_side_panel_height', String(height));
     } catch {}
+  },
+
+  // Device Frame & Orientation
+  setDeviceOrientation: (orientation) => {
+    set({ deviceOrientation: orientation });
+    try {
+      localStorage.setItem('tracy_device_orientation', orientation);
+    } catch (e) {
+      console.error('Failed to save device orientation:', e);
+    }
+  },
+  toggleDeviceOrientation: () => {
+    const next = get().deviceOrientation === 'portrait' ? 'landscape' : 'portrait';
+    get().setDeviceOrientation(next);
+  },
+  setShowDeviceBezel: (show) => {
+    set({ showDeviceBezel: show });
+    try {
+      localStorage.setItem('tracy_show_device_bezel', String(show));
+    } catch (e) {
+      console.error('Failed to save show device bezel:', e);
+    }
+  },
+  toggleDeviceBezel: () => {
+    get().setShowDeviceBezel(!get().showDeviceBezel);
   },
 
   // Modals
