@@ -1,5 +1,5 @@
 import { n as e, r as t, t as n } from "./aiRegistry-YUbyOWOu.js";
-import { n as r } from "./webviewManager-B3wFrCPV.js";
+import { n as r } from "./webviewManager-BJgH45q6.js";
 import { createRequire as i } from "node:module";
 import { BrowserWindow as a, app as o, ipcMain as s } from "electron";
 import c from "path";
@@ -543,7 +543,7 @@ var B = !1;
 async function V() {
 	if (z(), r(), await P(), !B) {
 		B = !0;
-		let { registerPlaywrightHandlers: e } = await import("./playwrightEngine-BJu4bSkV.js");
+		let { registerPlaywrightHandlers: e } = await import("./playwrightEngine-D8P279wB.js");
 		e();
 	}
 }
