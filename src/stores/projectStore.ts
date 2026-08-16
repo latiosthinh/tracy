@@ -59,7 +59,7 @@ export const useProjectStore = create<ProjectState>()(
     projects: DEFAULT_PROJECTS,
     openProjectIds: DEFAULT_PROJECTS.map((p) => p.id),
     activeProjectId: DEFAULT_PROJECTS[0].id,
-    activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || 'checkout-flow',
+    activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || 'flow-smoke',
     defaultSaveLocation: '',
     browserPaths: {},
 
