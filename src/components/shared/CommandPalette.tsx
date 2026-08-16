@@ -19,6 +19,7 @@ import {
   Monitor,
   FolderPlus,
   Compass,
+  Keyboard,
 } from 'lucide-react';
 import { useUiStore } from '@/src/stores/uiStore';
 import { useProjectStore } from '@/src/stores/projectStore';
@@ -53,6 +54,7 @@ export const CommandPalette: React.FC = () => {
   const setActiveTab = useUiStore((s) => s.setActiveTab);
   const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
   const setDocsOpen = useUiStore((s) => s.setDocsOpen);
+  const setShortcutsModalOpen = useUiStore((s) => s.setShortcutsModalOpen);
   const setProjectManagerModalOpen = useUiStore((s) => s.setProjectManagerModalOpen);
   const setCreateFlowModalOpen = useUiStore((s) => s.setCreateFlowModalOpen);
   const setAutoOpenCreateModal = useUiStore((s) => s.setAutoOpenCreateModal);
@@ -167,6 +169,13 @@ export const CommandPalette: React.FC = () => {
         action: () => setDocsOpen(true),
       },
       {
+        id: 'action-open-shortcuts',
+        category: 'actions',
+        title: t('shortcuts.title'),
+        icon: <Keyboard className="w-4 h-4 text-amber-400" />,
+        action: () => setShortcutsModalOpen(true),
+      },
+      {
         id: 'action-open-projects-view',
         category: 'actions',
         title: t('palette.actions.openProjects'),
@@ -255,6 +264,7 @@ export const CommandPalette: React.FC = () => {
     toggleRecordMode,
     setSettingsOpen,
     setDocsOpen,
+    setShortcutsModalOpen,
     setCurrentView,
     setActiveTab,
     selectFlow,

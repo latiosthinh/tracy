@@ -18,6 +18,7 @@ const ProjectManager = React.lazy(() => import('@/src/components/projects/Projec
 const ProjectManagerModal = React.lazy(() => import('@/src/components/projects/ProjectManagerModal').then(m => ({ default: m.ProjectManagerModal })));
 const SettingsModal = React.lazy(() => import('@/src/components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const DocsModal = React.lazy(() => import('@/src/components/shared/DocsModal').then(m => ({ default: m.DocsModal })));
+const ShortcutsModal = React.lazy(() => import('@/src/components/shared/ShortcutsModal').then(m => ({ default: m.ShortcutsModal })));
 const CreateFlowModal = React.lazy(() => import('@/src/components/editor/CreateFlowModal').then(m => ({ default: m.CreateFlowModal })));
 const WelcomeSetup = React.lazy(() => import('@/src/components/setup/WelcomeSetup').then(m => ({ default: m.WelcomeSetup })));
 
@@ -120,6 +121,7 @@ export const AppShell: React.FC = () => {
 
   const isDocsOpen = useUiStore((s) => s.isDocsOpen);
   const setDocsOpen = useUiStore((s) => s.setDocsOpen);
+  const isShortcutsModalOpen = useUiStore((s) => s.isShortcutsModalOpen);
   const isSettingsOpen = useUiStore((s) => s.isSettingsOpen);
   const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
   const isProjectManagerModalOpen = useUiStore((s) => s.isProjectManagerModalOpen);
@@ -128,7 +130,6 @@ export const AppShell: React.FC = () => {
   const setCreateFlowModalOpen = useUiStore((s) => s.setCreateFlowModalOpen);
   const autoOpenCreateModal = useUiStore((s) => s.autoOpenCreateModal);
   const setAutoOpenCreateModal = useUiStore((s) => s.setAutoOpenCreateModal);
-  const toggleCommandPalette = useUiStore((s) => s.toggleCommandPalette);
 
   // Settings store
   const uiSettings = useSettingsStore((s) => s.uiSettings);
@@ -232,6 +233,7 @@ export const AppShell: React.FC = () => {
 
             <Suspense fallback={<ModalFallback />}>
               {isDocsOpen && <DocsModal isOpen={isDocsOpen} onClose={() => setDocsOpen(false)} />}
+              {isShortcutsModalOpen && <ShortcutsModal />}
 
               {isSettingsOpen && (
                 <SettingsModal

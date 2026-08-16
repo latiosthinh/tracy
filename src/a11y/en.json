@@ -688,6 +688,32 @@
       "branding": "ProQA Command Palette",
       "escKey": "ESC"
     }
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "subtitle": "Global shortcuts & productivity hotkeys in ProQA Studio",
+    "close": "Close keyboard shortcuts cheatsheet",
+    "categories": {
+      "execution": "Execution & Runner",
+      "navigation": "Navigation & Tabs",
+      "studio": "Studio & Editor",
+      "palette": "Command Palette & General"
+    },
+    "items": {
+      "runFlow": "Run active test flow",
+      "pauseResume": "Pause / resume test execution",
+      "resetExecution": "Reset runner state",
+      "switchProject": "Switch to project tab {num}",
+      "cycleFlowForward": "Cycle to next flow tab",
+      "cycleFlowBackward": "Cycle to previous flow tab",
+      "openPalette": "Open Command Palette",
+      "openShortcuts": "Open shortcuts cheatsheet",
+      "saveFlow": "Save active flow & project to disk",
+      "toggleInspect": "Toggle DOM inspect mode",
+      "toggleRecord": "Toggle user interaction recorder",
+      "openSettings": "Open Settings modal",
+      "openDocs": "Open Documentation modal"
+    }
   }
 }
 
