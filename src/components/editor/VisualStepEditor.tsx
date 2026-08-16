@@ -4,6 +4,7 @@ import {
   Layers,
   Plus,
   Trash2,
+  Copy,
   ArrowUp,
   ArrowDown,
   Globe,
@@ -18,7 +19,9 @@ import {
   GripVertical,
   Edit3,
   Check,
-  X
+  X,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { FlowStep, CommandType } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -37,6 +40,9 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
   activeStepIndex,
 }) => {
   const { t } = useTranslation();
+  // Multi-selection state
+  const [selectedStepIndices, setSelectedStepIndices] = useState<number[]>([]);
+
   // Drag & Drop State
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -78,6 +84,46 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
     }
   };
 
+  // Selection handlers
+  const handleToggleSelect = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedStepIndices((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  const handleSelectAllToggle = () => {
+    if (selectedStepIndices.length === steps.length) {
+      setSelectedStepIndices([]);
+    } else {
+      setSelectedStepIndices(steps.map((_, idx) => idx));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedStepIndices.length === 0) return;
+    const indexSet = new Set(selectedStepIndices);
+    const newSteps = steps.filter((_, idx) => !indexSet.has(idx));
+    setSelectedStepIndices([]);
+    onStepsChange(newSteps);
+  };
+
+  const handleDuplicate = (index: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (index < 0 || index >= steps.length) return;
+    const sourceStep = steps[index];
+    const clonedStep: FlowStep = {
+      ...sourceStep,
+      target: typeof sourceStep.target === 'object' && sourceStep.target !== null ? { ...sourceStep.target } : sourceStep.target,
+      args: sourceStep.args ? { ...sourceStep.args } : undefined,
+      id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      status: 'pending',
+    };
+    const newSteps = [...steps];
+    newSteps.splice(index + 1, 0, clonedStep);
+    onStepsChange(newSteps);
+  };
+
   // Move via Up/Down buttons
   const handleMove = (index: number, direction: 'up' | 'down') => {
     const newSteps = [...steps];
@@ -92,6 +138,11 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
 
   const handleDelete = (index: number) => {
     const newSteps = steps.filter((_, i) => i !== index);
+    setSelectedStepIndices((prev) =>
+      prev
+        .filter((i) => i !== index)
+        .map((i) => (i > index ? i - 1 : i))
+    );
     onStepsChange(newSteps);
   };
 
@@ -231,6 +282,20 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
     <div className="flex flex-col h-full bg-stone-950 text-stone-100 p-3 sm:p-4 overflow-y-auto space-y-3 font-sans text-xs">
       <div className="flex items-center justify-between bg-stone-900 p-3 rounded-[6px] border border-stone-800 shrink-0">
         <div className="flex items-center space-x-2">
+          {steps.length > 0 && (
+            <button
+              onClick={handleSelectAllToggle}
+              title={selectedStepIndices.length === steps.length ? t('editor.deselectAll') : t('editor.selectAll')}
+              aria-label={selectedStepIndices.length === steps.length ? t('editor.deselectAll') : t('editor.selectAll')}
+              className="text-stone-400 hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              {selectedStepIndices.length > 0 && selectedStepIndices.length === steps.length ? (
+                <CheckSquare className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Square className="w-4 h-4 text-stone-500" />
+              )}
+            </button>
+          )}
           <Layers className="w-4 h-4 text-amber-400" />
           <span className="font-bold text-amber-100 text-sm">{t('editor.visualBlocksTitle')}</span>
           <span className="bg-stone-950 text-stone-400 px-2 py-0.5 rounded-[6px] border border-stone-800 text-[10px] font-mono">
@@ -239,6 +304,17 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
+          {selectedStepIndices.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="px-2.5 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800 text-xs font-semibold rounded-[6px] flex items-center space-x-1.5 transition-all cursor-pointer"
+              title={t('editor.bulkDelete', { count: selectedStepIndices.length })}
+              aria-label={t('editor.bulkDelete', { count: selectedStepIndices.length })}
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>{t('editor.bulkDelete', { count: selectedStepIndices.length })}</span>
+            </button>
+          )}
           <VoiceInputButton
             onTranscript={handleVoiceDictateStep}
             size="sm"
@@ -259,6 +335,7 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
         {steps.map((step, idx) => {
           const isActive = activeStepIndex === idx;
           const isEditing = editingStepIdx === idx;
+          const isSelected = selectedStepIndices.includes(idx);
 
           return (
             <div
@@ -273,6 +350,8 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                   ? 'opacity-40 border-amber-500 border-dashed bg-amber-950/20'
                   : dragOverIdx === idx
                   ? 'border-amber-400 bg-amber-950/40 ring-1 ring-amber-400'
+                  : isSelected
+                  ? 'bg-amber-950/30 border-amber-500/80 ring-1 ring-amber-500/40'
                   : isActive
                   ? 'bg-amber-950/60 border-amber-500 ring-1 ring-amber-500/50 shadow-md'
                   : step.status === 'passed'
@@ -362,6 +441,19 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                 /* Standard Card View Mode */
                 <>
                   <div className="flex items-center space-x-2.5 min-w-0 flex-1 overflow-hidden">
+                    <button
+                      onClick={e => handleToggleSelect(idx, e)}
+                      title={t('editor.selectStep', { index: idx + 1 })}
+                      aria-label={t('editor.selectStep', { index: idx + 1 })}
+                      className="shrink-0 text-stone-500 hover:text-amber-400 transition-colors cursor-pointer"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5 text-stone-600" />
+                      )}
+                    </button>
+
                     <span title={t('editor.dragToReorder')} className="shrink-0 flex items-center">
                       <GripVertical className="w-4 h-4 text-stone-600 hover:text-stone-300 cursor-grab active:cursor-grabbing" />
                     </span>
@@ -423,6 +515,15 @@ export const VisualStepEditor: React.FC<VisualStepEditorProps> = ({
                       className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-300 rounded-[6px] transition-all border border-stone-700 cursor-pointer"
                     >
                       <Edit3 className="w-3 h-3" />
+                    </button>
+
+                    <button
+                      onClick={e => handleDuplicate(idx, e)}
+                      title={t('editor.duplicateStep')}
+                      aria-label={t('editor.duplicateStep')}
+                      className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-amber-300 rounded-[6px] transition-all border border-stone-700 cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
                     </button>
 
                     <button
