@@ -18,6 +18,7 @@ interface UiState {
   isCreateFlowModalOpen: boolean;
   autoOpenCreateModal: boolean;
   isCommandPaletteOpen: boolean;
+  isShortcutsModalOpen: boolean;
 
   // Inspector & Mode Flags
   inspectMode: boolean;
@@ -42,6 +43,8 @@ interface UiState {
   setAutoOpenCreateModal: (open: boolean) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   toggleCommandPalette: () => void;
+  setShortcutsModalOpen: (open: boolean) => void;
+  toggleShortcutsModal: () => void;
 
   // Inspector Actions
   setInspectMode: (mode: boolean) => void;
@@ -68,6 +71,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   isCreateFlowModalOpen: false,
   autoOpenCreateModal: false,
   isCommandPaletteOpen: false,
+  isShortcutsModalOpen: false,
 
   inspectMode: false,
   recordMode: false,
@@ -107,6 +111,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   setAutoOpenCreateModal: (open) => set({ autoOpenCreateModal: open }),
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
+  setShortcutsModalOpen: (open) => set({ isShortcutsModalOpen: open }),
+  toggleShortcutsModal: () => set((state) => ({ isShortcutsModalOpen: !state.isShortcutsModalOpen })),
 
   // Inspector
   setInspectMode: (mode) => set({ inspectMode: mode }),

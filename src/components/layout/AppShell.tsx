@@ -6,6 +6,7 @@ import { useUiStore } from '@/src/stores/uiStore';
 import { useAgentStore } from '@/src/stores/agentStore';
 import { useAiConfigStore } from '@/src/stores/aiConfigStore';
 import { useAutoSave } from '@/src/hooks/useAutoSave';
+import { useGlobalShortcuts } from '@/src/hooks/useGlobalShortcuts';
 import { SplashScreen } from '@/src/components/shared/SplashScreen';
 
 import { Header } from '@/src/components/layout/Header';
@@ -33,6 +34,9 @@ export const AppShell: React.FC = () => {
 
   // Auto-save hook
   useAutoSave(30);
+
+  // Global shortcuts manager hook
+  useGlobalShortcuts();
 
   // Initial load sequence using real async tasks in background
   useEffect(() => {
@@ -145,21 +149,6 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     applyThemeCssVars();
   }, [uiSettings, applyThemeCssVars]);
-
-  // Global Keyboard Shortcuts (Ctrl+K / Ctrl+P / Cmd+K / Cmd+P)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-      const isModifier = isMac ? e.metaKey : e.ctrlKey;
-      if (isModifier && (e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P')) {
-        e.preventDefault();
-        toggleCommandPalette();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleCommandPalette]);
 
   return (
     <>
