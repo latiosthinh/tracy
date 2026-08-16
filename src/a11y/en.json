@@ -562,7 +562,23 @@
     "parallelWorkers": "Parallel Workers",
     "stepTimeout": "Step Timeout (ms)",
     "maxRetries": "Max Step Retries",
-    "runHeadlessDefault": "Run Headless Mode by Default"
+    "runHeadlessDefault": "Run Headless Mode by Default",
+    "flamechart": {
+      "title": "Latency Flamechart & Step Waterfall",
+      "subtitle": "Visual timeline of step latencies and performance bottlenecks",
+      "totalDuration": "Total Duration",
+      "longestStep": "Slowest Step",
+      "bottlenecks": "Bottlenecks (>800ms)",
+      "avgLatency": "Avg Step Latency",
+      "slowWarning": "Slow (>800ms)",
+      "criticalWarning": "Bottleneck (>1.5s)",
+      "percentOfTotal": "{percent}% of total",
+      "noSteps": "No step duration metrics available.",
+      "viewSteps": "Step List",
+      "viewFlamechart": "Latency Flamechart",
+      "timelineRuler": "Timeline",
+      "stepLabel": "Step {index}: {command}"
+    }
   },
   "editor": {
     "yamlFlowDef": "YAML Flow Definition",
