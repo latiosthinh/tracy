@@ -167,7 +167,7 @@ export const AppShell: React.FC = () => {
           isLoading ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        {!isLoading && !selectedAgentId ? (
+        {!isLoading && (!selectedAgentId || projects.length === 0) ? (
           <Suspense fallback={<ModalFallback />}>
             <WelcomeSetup />
           </Suspense>
