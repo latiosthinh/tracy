@@ -27,6 +27,7 @@ import { CliTerminal } from '@/src/components/reports/CliTerminal';
 import { UiSettingsPanel } from '@/src/components/settings/UiSettingsPanel';
 import { useAgentStore } from '@/src/stores/agentStore';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
+import { useUiStore } from '@/src/stores/uiStore';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 interface SettingsModalProps {
@@ -85,7 +86,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [reportFormat, setReportFormat] = useState<'html' | 'json' | 'junit' | 'markdown'>('html');
 
   // Storage State
-  const [defaultSaveLocation, setDefaultSaveLocation] = useState('');
+  const defaultSaveLocation = useUiStore((s) => s.defaultSaveLocation);
+  const setDefaultSaveLocation = useUiStore((s) => s.setDefaultSaveLocation);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveInterval, setAutoSaveInterval] = useState(30);
 

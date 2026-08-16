@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useProjectStore } from '@/src/stores/projectStore';
+import { useUiStore } from '@/src/stores/uiStore';
+import { useDomSnapshotStore } from '@/src/stores/domSnapshotStore';
 import { tracyApi } from '@/src/lib/ipc';
 
 export function useAutoSave(intervalSeconds: number = 30) {
   const lastSaveRef = useRef<number>(0);
   const projects = useProjectStore((s) => s.projects);
   const activeProjectId = useProjectStore((s) => s.activeProjectId);
-  const defaultSaveLocation = useProjectStore((s) => s.defaultSaveLocation);
+  const defaultSaveLocation = useUiStore((s) => s.defaultSaveLocation);
 
   useEffect(() => {
     if (!defaultSaveLocation) return;
@@ -16,9 +18,10 @@ export function useAutoSave(intervalSeconds: number = 30) {
       if (now - lastSaveRef.current < intervalSeconds * 1000) return;
 
       const activeProject = projects.find((p) => p.id === activeProjectId);
-      if (!activeProject || !activeProject.saveLocation) return;
+      if (!activeProject) return;
 
       const saveLocation = activeProject.saveLocation || defaultSaveLocation;
+      if (!saveLocation) return;
 
       try {
         const projectData = JSON.stringify(activeProject, null, 2);
@@ -33,15 +36,19 @@ export function useAutoSave(intervalSeconds: number = 30) {
           );
         }
 
-        if (activeProject.domSnapshots) {
-          for (const [path, snapshot] of Object.entries(activeProject.domSnapshots)) {
-            await tracyApi.saveDomSnapshot(
-              activeProject.id,
-              saveLocation,
-              path,
-              JSON.stringify(snapshot, null, 2)
-            );
-          }
+        const liveSnapshots = useDomSnapshotStore.getState().getAllDomSnapshots(activeProject.id);
+        const allSnapshots = {
+          ...(activeProject.domSnapshots || {}),
+          ...liveSnapshots,
+        };
+
+        for (const [path, snapshot] of Object.entries(allSnapshots)) {
+          await tracyApi.saveDomSnapshot(
+            activeProject.id,
+            saveLocation,
+            path,
+            JSON.stringify(snapshot, null, 2)
+          );
         }
 
         lastSaveRef.current = now;
