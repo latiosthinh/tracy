@@ -9,8 +9,8 @@ import {
 } from './aiRegistry';
 
 describe('AGENT_REGISTRY', () => {
-  it('has exactly 15 entries', () => {
-    expect(AGENT_REGISTRY).toHaveLength(15);
+  it('has exactly 16 entries', () => {
+    expect(AGENT_REGISTRY).toHaveLength(16);
   });
 
   it('all ids are unique', () => {
@@ -32,6 +32,7 @@ describe('AGENT_REGISTRY', () => {
       'byok-openai',
       'byok-claude',
       'byok-mimo',
+      'byok-deepseek',
       'byok-grok',
       'byok-cursor',
       'custom-gateway',
@@ -113,6 +114,20 @@ describe('AGENT_REGISTRY', () => {
     }
   });
 
+  it('byok-mimo has openai protocol and Singapore default endpoint', () => {
+    const mimo = getAgentDef('byok-mimo');
+    expect(mimo).toBeDefined();
+    expect(mimo?.protocol).toBe('openai');
+    expect(mimo?.defaultEndpoint).toBe('https://token-plan-sgp.xiaomimimo.com/v1');
+  });
+
+  it('byok-deepseek has openai protocol and deepseek default endpoint', () => {
+    const deepseek = getAgentDef('byok-deepseek');
+    expect(deepseek).toBeDefined();
+    expect(deepseek?.protocol).toBe('openai');
+    expect(deepseek?.defaultEndpoint).toBe('https://api.deepseek.com/v1');
+  });
+
   it('byok-grok has openai protocol and x.ai default endpoint', () => {
     const grok = getAgentDef('byok-grok');
     expect(grok).toBeDefined();
@@ -174,7 +189,7 @@ describe('getAgentDef', () => {
 describe('agentsByCategory', () => {
   it('returns correct counts per category', () => {
     expect(agentsByCategory('local-cli')).toHaveLength(8);
-    expect(agentsByCategory('cloud-api')).toHaveLength(7);
+    expect(agentsByCategory('cloud-api')).toHaveLength(8);
   });
 
   it('empty array for unknown category', () => {

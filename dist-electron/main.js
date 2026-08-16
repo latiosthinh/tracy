@@ -1,4 +1,4 @@
-import { n as e, r as t, t as n } from "./aiRegistry-YUbyOWOu.js";
+import { n as e, r as t, t as n } from "./aiRegistry-D7KO9J8B.js";
 import { n as r } from "./webviewManager-BJgH45q6.js";
 import { createRequire as i } from "node:module";
 import { BrowserWindow as a, app as o, ipcMain as s } from "electron";
@@ -426,7 +426,7 @@ function z() {
 	}), s.handle("run_agent_cli_stream", async (n, r) => {
 		let { agentId: i, prompt: a, systemInstruction: o, model: s } = r, c = t(i), l = e(c);
 		if (!l) try {
-			let { createProvider: e } = await import("./aiProvider-fmyn_NzE.js");
+			let { createProvider: e } = await import("./aiProvider-B5QQdvU_.js");
 			return await (await e(c, {})).generateFlow(a, o);
 		} catch (e) {
 			let t = e instanceof Error ? e.message : String(e);
@@ -450,7 +450,7 @@ function z() {
 			throw console.error("CLI agent error:", e), Error(`AI generation failed: ${R(t)}`);
 		}
 		try {
-			let { createProvider: e } = await import("./aiProvider-fmyn_NzE.js"), t = await e(c, {
+			let { createProvider: e } = await import("./aiProvider-B5QQdvU_.js"), t = await e(c, {
 				apiKey: u,
 				customEndpoint: m,
 				model: p
