@@ -726,6 +726,19 @@
     "pageThemeDark": "Emulate Dark Theme",
     "pageThemeLight": "Emulate Light Theme",
     "pageThemeSystem": "Follow System Theme"
+  },
+  "diff": {
+    "title": "YAML Flow Differences",
+    "original": "Saved Baseline",
+    "modified": "Current Buffer",
+    "revert": "Revert to Saved",
+    "noChanges": "No changes detected between current buffer and saved baseline.",
+    "additions": "+{count}",
+    "deletions": "-{count}",
+    "content": "Content",
+    "viewDiff": "View Changes Diff",
+    "copyModified": "Copy Current YAML",
+    "close": "Close"
   }
 }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VoiceInputButton } from '@/src/components/ai/VoiceInputButton';
+import { YamlDiffModal } from '@/src/components/editor/YamlDiffModal';
 import {
   Copy,
   Check,
@@ -13,7 +14,8 @@ import {
   Eye,
   Box,
   Tag,
-  Zap
+  Zap,
+  GitCompare
 } from 'lucide-react';
 import { FlowCategory } from '@/src/types/autoflow';
 import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
@@ -26,6 +28,7 @@ interface YamlEditorProps {
   isExecuting?: boolean;
   flowCategory?: FlowCategory;
   onCategoryChange?: (category: FlowCategory) => void;
+  savedBaselineYaml?: string;
 }
 
 // Helper to escape HTML characters
@@ -182,11 +185,15 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   isExecuting: _isExecuting,
   flowCategory = 'E2E',
   onCategoryChange: _onCategoryChange,
+  savedBaselineYaml,
 }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [lineCount, setLineCount] = useState(1);
   const [syntaxErrors, setSyntaxErrors] = useState<string[]>([]);
+  const [showDiffModal, setShowDiffModal] = useState(false);
+  const baseline = savedBaselineYaml ?? yamlContent;
+  const hasDiff = baseline !== yamlContent;
 
   const [autocomplete, setAutocomplete] = useState<{
     show: boolean;
@@ -457,6 +464,17 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
+          {hasDiff && (
+            <button
+              onClick={() => setShowDiffModal(true)}
+              title={t('diff.viewDiff')}
+              aria-label={t('diff.viewDiff')}
+              className="px-2.5 py-1.5 bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 rounded-[6px] font-sans text-[11px] font-semibold flex items-center space-x-1.5 transition-all border border-amber-700/60 shadow-xs cursor-pointer"
+            >
+              <GitCompare className="w-3.5 h-3.5 text-amber-400" />
+              <span>{t('diff.viewDiff')}</span>
+            </button>
+          )}
           <button
             onClick={handleCopy}
             className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-[6px] font-sans text-[11px] font-semibold flex items-center space-x-1.5 transition-all border border-stone-700 shadow-xs cursor-pointer"
@@ -623,6 +641,17 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           <span className="text-stone-400">{t('editor.linesCount', { count: lineCount })}</span>
         </div>
       </div>
+
+      {/* Diff Modal */}
+      {showDiffModal && (
+        <YamlDiffModal
+          isOpen={showDiffModal}
+          onClose={() => setShowDiffModal(false)}
+          originalYaml={baseline}
+          modifiedYaml={yamlContent}
+          onRevert={() => onChange(baseline)}
+        />
+      )}
     </div>
   );
 };
