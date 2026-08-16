@@ -7,13 +7,22 @@ import { agentsByCategory, resolveAgentId, getAgentDef } from '../../src/lib/aiR
 import { detectCliAgents, runCliAgent, buildChildEnv } from './cliRunner.js';
 import { getResolvedCredentials } from './aiConfig.js';
 
-function assertSafePath(basePath: string, ...segments: string[]): string {
-  if (!basePath || typeof basePath !== 'string') {
+export function resolveSafeBase(saveLocation: string): string {
+  if (!saveLocation || typeof saveLocation !== 'string' || !saveLocation.trim()) {
+    throw new Error('Invalid save location: path cannot be empty');
+  }
+  return path.resolve(saveLocation.trim());
+}
+
+export function assertSafePath(basePath: string, ...segments: string[]): string {
+  if (!basePath || typeof basePath !== 'string' || !basePath.trim()) {
     throw new Error('Invalid base path specified');
   }
-  const resolvedBase = path.resolve(basePath);
+  const resolvedBase = path.resolve(basePath.trim());
   const resolvedTarget = path.resolve(resolvedBase, ...segments);
-  if (!resolvedTarget.startsWith(resolvedBase)) {
+  const isExactBase = resolvedTarget === resolvedBase;
+  const isChild = resolvedTarget.startsWith(resolvedBase + path.sep);
+  if (!isExactBase && !isChild) {
     throw new Error(`Path traversal blocked: target "${resolvedTarget}" is outside base directory "${resolvedBase}"`);
   }
   return resolvedTarget;
@@ -38,9 +47,10 @@ export function registerFileSystemHandlers() {
 
   ipcMain.handle('save_project', async (event, { project }) => {
     if (!project || !project.saveLocation) return;
-    const targetFile = assertSafePath(project.saveLocation, 'project.json');
+    const base = resolveSafeBase(project.saveLocation);
+    const targetFile = assertSafePath(base, 'project.json');
     const data = JSON.stringify(project, null, 2);
-    await fs.mkdir(project.saveLocation, { recursive: true });
+    await fs.mkdir(base, { recursive: true });
     await fs.writeFile(targetFile, data, 'utf-8');
   });
 
@@ -171,19 +181,22 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('save_project_to_disk', async (event, { projectId, saveLocation, data }) => {
-    const targetFile = assertSafePath(saveLocation, 'project.json');
-    await fs.mkdir(saveLocation, { recursive: true });
+    const base = resolveSafeBase(saveLocation);
+    const targetFile = assertSafePath(base, 'project.json');
+    await fs.mkdir(base, { recursive: true });
     await fs.writeFile(targetFile, data, 'utf-8');
-    return saveLocation;
+    return base;
   });
 
   ipcMain.handle('load_project_from_disk', async (event, { projectId, saveLocation }) => {
-    const targetFile = assertSafePath(saveLocation, 'project.json');
+    const base = resolveSafeBase(saveLocation);
+    const targetFile = assertSafePath(base, 'project.json');
     return await fs.readFile(targetFile, 'utf-8');
   });
 
   ipcMain.handle('save_flow_to_disk', async (event, { projectId, saveLocation, flowName, yamlContent }) => {
-    const flowsDir = assertSafePath(saveLocation, 'flows');
+    const base = resolveSafeBase(saveLocation);
+    const flowsDir = assertSafePath(base, 'flows');
     const targetFile = assertSafePath(flowsDir, flowName);
     await fs.mkdir(flowsDir, { recursive: true });
     await fs.writeFile(targetFile, yamlContent, 'utf-8');
@@ -191,7 +204,8 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('save_dom_snapshot', async (event, { projectId, saveLocation, pagePath, snapshotData }) => {
-    const snapsDir = assertSafePath(saveLocation, 'snapshots');
+    const base = resolveSafeBase(saveLocation);
+    const snapsDir = assertSafePath(base, 'snapshots');
     await fs.mkdir(snapsDir, { recursive: true });
     const filename = pagePath.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json';
     const targetFile = assertSafePath(snapsDir, filename);
@@ -200,7 +214,8 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('load_dom_snapshots', async (event, { projectId, saveLocation }) => {
-    const snapsDir = assertSafePath(saveLocation, 'snapshots');
+    const base = resolveSafeBase(saveLocation);
+    const snapsDir = assertSafePath(base, 'snapshots');
     try {
       const files = await fs.readdir(snapsDir);
       const results: Array<[string, string]> = [];
@@ -218,7 +233,8 @@ export function registerFileSystemHandlers() {
   });
 
   ipcMain.handle('save_playwright_code', async (event, { projectId, saveLocation, fileName, code }) => {
-    const testsDir = assertSafePath(saveLocation, 'tests');
+    const base = resolveSafeBase(saveLocation);
+    const testsDir = assertSafePath(base, 'tests');
     const targetFile = assertSafePath(testsDir, fileName);
     await fs.mkdir(testsDir, { recursive: true });
     await fs.writeFile(targetFile, code, 'utf-8');

@@ -136,6 +136,19 @@ export function buildChildEnv(def: AgentDef, apiKey?: string): Record<string, st
   return env;
 }
 
+/**
+ * Escape and quote arguments for Windows cmd.exe invocations (e.g. .cmd or .bat shims).
+ * Escapes meta-characters and doubles existing double-quotes.
+ */
+export function quoteCmdArg(arg: string): string {
+  // Replace cmd meta-characters with caret-escaped versions
+  // cmd meta chars: & | < > ^ %
+  // Note: inside double quotes, % and ^ can still be expanded in cmd, but caret escaping & | < > ^ % protects against chaining.
+  const escapedQuotes = arg.replace(/"/g, '""');
+  const escapedMeta = escapedQuotes.replace(/([&|<>\^%])/g, '^$1');
+  return `"${escapedMeta}"`;
+}
+
 type OnChunkFn = (chunk: string) => void;
 
 /**
@@ -152,11 +165,15 @@ export async function runCliAgent(
     throw new Error(`CLI binary not found: ${def.cliBinary}`);
   }
 
-  const args = def.buildArgs
+  let args = def.buildArgs
     ? def.buildArgs({ model: opts.model, ...(def.promptViaArgv ? { prompt } : {}) })
     : [];
   const isWin = process.platform === 'win32';
   const useShell = isWin && (resolvedPath.endsWith('.cmd') || resolvedPath.endsWith('.bat'));
+
+  if (useShell) {
+    args = args.map(arg => quoteCmdArg(arg));
+  }
 
   const child = spawn(resolvedPath, args, {
     shell: useShell,
@@ -167,8 +184,14 @@ export async function runCliAgent(
 
   let fullText = '';
   let stderrBuf = '';
+  let childError: Error | null = null;
   const FIRST_OUTPUT_TIMEOUT = 30_000;
   const INACTIVITY_TIMEOUT = 120_000;
+
+  // Handle spawn or runtime errors
+  child.on('error', (err) => {
+    childError = err;
+  });
 
   // Hard timeout: first output budget + inactivity budget.
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -203,6 +226,10 @@ export async function runCliAgent(
       return [1, 'SIGTERM'];
     }),
   ] as [number | null, NodeJS.Signals | null][]);
+
+  if (childError) {
+    throw new Error(`CLI process error: ${redactSecrets(childError.message || String(childError))}`);
+  }
 
   if (exitCode !== 0 || exitCode === null) {
     const tail = stderrBuf.slice(-500);
