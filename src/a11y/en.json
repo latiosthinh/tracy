@@ -213,7 +213,30 @@
     "voiceListening": "Listening...",
     "voicePromptFallback": "Voice Input (Browser Speech API unavailable, enter text or test prompt):",
     "voiceCaptured": "Captured: \"{text}\"",
-    "voiceError": "Voice error: {error}"
+    "voiceError": "Voice error: {error}",
+    "recipes": {
+      "title": "QA Test Recipes",
+      "formValidation": {
+        "label": "Form Validation & Errors",
+        "description": "Test required field triggers, invalid formats, and boundary inputs"
+      },
+      "responsiveNav": {
+        "label": "Responsive & Mobile Menu",
+        "description": "Test hamburger toggles, viewport breakpoints, and mobile drawer transitions"
+      },
+      "a11yAudit": {
+        "label": "Accessibility & ARIA Audit",
+        "description": "Assert ARIA roles, label bindings, keyboard focus order, and screen-reader states"
+      },
+      "authEdgeCases": {
+        "label": "Auth & Session Edge Cases",
+        "description": "Test invalid credentials, token expiry, logout redirects, and protected routes"
+      },
+      "checkoutFlow": {
+        "label": "E-Commerce Checkout & Payment",
+        "description": "Test cart item count, coupon code discount, shipping form, and order confirmation"
+      }
+    }
   },
   "settings": {
     "title": "Settings",
