@@ -72,7 +72,7 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md — QA Recipe prompt preset library (form validation, responsive nav, accessibility audit, edge-case auth, checkout flows)
 - [x] 07-02-PLAN.md — Side-by-side visual diff preview modal before applying AI-generated YAML steps (Replace vs. Append vs. Discard)
-- [ ] 07-03-PLAN.md — Live generation speed metrics (tokens/sec, total tokens, provider latency indicator)
+- [x] 07-03-PLAN.md — Live generation speed metrics (tokens/sec, total tokens, provider latency indicator)
 
 ---
 
@@ -83,7 +83,7 @@ Plans:
 **Requirements:** REPORT-01, REPORT-02
 
 Plans:
-- [ ] 08-01-PLAN.md — Standalone zero-dependency HTML test report exporter with embedded CSS, base64 failure screenshots, and step timeline
+- [x] 08-01-PLAN.md — Standalone zero-dependency HTML test report exporter with embedded CSS, base64 failure screenshots, and step timeline
 - [ ] 08-02-PLAN.md — Execution latency waterfall flamechart inspector highlighting step bottlenecks and slow selector warnings
 
 
