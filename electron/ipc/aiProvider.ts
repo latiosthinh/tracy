@@ -60,6 +60,7 @@ async function createOpenAiProvider(config: AiProviderConfig): Promise<AiProvide
           ],
           temperature: 0.3,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!res.ok) {
@@ -92,6 +93,7 @@ async function createClaudeProvider(config: AiProviderConfig): Promise<AiProvide
           system: systemInstruction || 'You are a test automation engineer. Generate valid YAML test flows.',
           messages: [{ role: 'user', content: prompt }],
         }),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!res.ok) {
@@ -124,6 +126,7 @@ async function createCustomGatewayProvider(config: AiProviderConfig): Promise<Ai
           ],
           temperature: 0.3,
         }),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!res.ok) {
@@ -156,6 +159,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
           model,
           messages: [{ role: 'user', content: userContent }],
         }),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!createRes.ok) {
@@ -173,6 +177,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
       const completeRes = await fetch(`${endpoint}/v1/agents/tasks/${taskId}/complete`, {
         method: 'POST',
         headers,
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!completeRes.ok) {
@@ -180,7 +185,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
         throw new Error(`Cursor API error (${completeRes.status}): ${redactSecrets(err)}`);
       }
 
-      // 3. Poll until completed or error (cap 5 min = 150 iterations @ 2s)
+      // 3. Poll until completed or terminal error (cap 5 min = 150 iterations @ 2s)
       const maxIterations = 150;
       let completed = false;
 
@@ -190,6 +195,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
         const pollRes = await fetch(`${endpoint}/v1/agents/tasks/${taskId}`, {
           method: 'GET',
           headers,
+          signal: AbortSignal.timeout(15_000),
         });
 
         if (!pollRes.ok) {
@@ -203,8 +209,8 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
         if (status === 'completed') {
           completed = true;
           break;
-        } else if (status === 'error' || status === 'failed') {
-          throw new Error(`Cursor agent task failed: ${redactSecrets(JSON.stringify(pollData))}`);
+        } else if (['error', 'failed', 'cancelled', 'expired'].includes(status)) {
+          throw new Error(`Cursor agent task failed with status '${status}': ${redactSecrets(JSON.stringify(pollData))}`);
         }
       }
 
@@ -212,23 +218,48 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
         throw new Error('Cursor agent task timed out');
       }
 
-      // 4. Fetch messages
-      const msgRes = await fetch(`${endpoint}/v1/agents/tasks/${taskId}/messages`, {
-        method: 'GET',
-        headers,
-      });
+      // 4. Fetch messages (handle pagination if has_more)
+      let allMessages: Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }> = [];
+      let cursor: string | undefined = undefined;
 
-      if (!msgRes.ok) {
-        const err = await msgRes.text().catch(() => '');
-        throw new Error(`Cursor API error (${msgRes.status}): ${redactSecrets(err)}`);
+      while (true) {
+        const queryUrl = cursor
+          ? `${endpoint}/v1/agents/tasks/${taskId}/messages?cursor=${encodeURIComponent(cursor)}`
+          : `${endpoint}/v1/agents/tasks/${taskId}/messages`;
+
+        const msgRes = await fetch(queryUrl, {
+          method: 'GET',
+          headers,
+          signal: AbortSignal.timeout(15_000),
+        });
+
+        if (!msgRes.ok) {
+          const err = await msgRes.text().catch(() => '');
+          throw new Error(`Cursor API error (${msgRes.status}): ${redactSecrets(err)}`);
+        }
+
+        const msgData = (await msgRes.json()) as
+          | {
+              messages?: Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }>;
+              has_more?: boolean;
+              next_cursor?: string;
+            }
+          | Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }>;
+
+        if (Array.isArray(msgData)) {
+          allMessages.push(...msgData);
+          break;
+        } else {
+          allMessages.push(...(msgData.messages || []));
+          if (msgData.has_more && msgData.next_cursor) {
+            cursor = msgData.next_cursor;
+          } else {
+            break;
+          }
+        }
       }
 
-      const msgData = (await msgRes.json()) as
-        | { messages?: Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }> }
-        | Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }>;
-
-      const messages = Array.isArray(msgData) ? msgData : msgData.messages || [];
-      const assistantMessages = messages.filter((m) => m.role === 'assistant');
+      const assistantMessages = allMessages.filter((m) => m.role === 'assistant');
       const lastMsg = assistantMessages[assistantMessages.length - 1];
 
       if (!lastMsg || !lastMsg.content) {
@@ -264,6 +295,7 @@ async function streamFromSSE(
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(60_000),
   });
 
   if (!res.ok) {
@@ -325,6 +357,7 @@ async function streamFromAnthropic(
       accept: 'text/event-stream',
     },
     body: JSON.stringify({ ...body, stream: true }),
+    signal: AbortSignal.timeout(60_000),
   });
 
   if (!res.ok) {

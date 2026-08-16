@@ -122,6 +122,108 @@ describe('createProvider', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
+  it('handles terminal failure states (cancelled, expired, failed) in Cursor provider', async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const urlStr = typeof url === 'string' ? url : url.toString();
+
+      if (urlStr.endsWith('/v1/agents/tasks') && init?.method === 'POST') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ task_id: 'task-cancelled' }),
+        } as Response;
+      }
+
+      if (urlStr.endsWith('/v1/agents/tasks/task-cancelled/complete') && init?.method === 'POST') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true }),
+        } as Response;
+      }
+
+      if (urlStr.endsWith('/v1/agents/tasks/task-cancelled') && (!init?.method || init.method === 'GET')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ status: 'cancelled' }),
+        } as Response;
+      }
+
+      return { ok: false, status: 404 } as Response;
+    });
+
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const provider = await createProvider('byok-cursor', { apiKey: 'cursor-key' });
+    await expect(provider.generateFlow('test prompt')).rejects.toThrow(/Cursor agent task failed with status 'cancelled'/);
+  });
+
+  it('handles message pagination in Cursor provider', async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const urlStr = typeof url === 'string' ? url : url.toString();
+
+      if (urlStr.endsWith('/v1/agents/tasks') && init?.method === 'POST') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ task_id: 'task-paged' }),
+        } as Response;
+      }
+
+      if (urlStr.endsWith('/v1/agents/tasks/task-paged/complete') && init?.method === 'POST') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true }),
+        } as Response;
+      }
+
+      if (urlStr.endsWith('/v1/agents/tasks/task-paged') && (!init?.method || init.method === 'GET')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ status: 'completed' }),
+        } as Response;
+      }
+
+      if (urlStr.includes('/v1/agents/tasks/task-paged/messages')) {
+        if (urlStr.includes('cursor=page2')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              messages: [
+                { role: 'assistant', content: 'name: Paged Flow\nsteps: []' },
+              ],
+              has_more: false,
+            }),
+          } as Response;
+        } else {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              messages: [
+                { role: 'user', content: 'Generate test flow' },
+              ],
+              has_more: true,
+              next_cursor: 'page2',
+            }),
+          } as Response;
+        }
+      }
+
+      return { ok: false, status: 404 } as Response;
+    });
+
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const provider = await createProvider('byok-cursor', { apiKey: 'cursor-key' });
+    const result = await provider.generateFlow('Generate test flow');
+    expect(result).toBe('name: Paged Flow\nsteps: []');
+  });
+
   it('falls back to custom gateway for unknown agents', async () => {
     const provider = await createProvider('unknown-agent', {});
     expect(provider).toBeDefined();
