@@ -30,3 +30,15 @@ Plans:
 - [x] 02-03-PLAN.md — Settings, Setup, Projects & Modals text extraction: SettingsModal, UiSettingsPanel, WelcomeSetup, ProjectManager, AgentSelector, CreateFlowModal, DocsModal, BatchMinerModal, ErrorBoundary
 - [x] 02-04-PLAN.md — AI, Editor, Reports & Guard tests: AiCopilot, AiPromptInput, VoiceInputButton, YamlEditor, VisualStepEditor, TestReports, CliTerminal, SplashScreen, a11yTextGuard test
 
+### Phase 03: Post-Audit Hardening (Security, Core Correctness, CI & A11y Integrity)
+
+**Goal:** Close all security vulnerabilities (command injection on Windows, path traversal, navigation jail), fix broken core functional features (auto-save, duplicate IPC listeners, crash on inspect, fetch timeouts, real modal focus trap), and restore strict CI lint/guard gates.
+
+**Requirements:** SEC-01, SEC-02, SEC-03, FIX-01, FIX-02, FIX-03, FIX-04, CIX-01, CIX-02
+
+Plans:
+- [x] 03-01-PLAN.md — Security wave: Windows command injection mitigation, path.sep traversal fix + constrained project base, renderer navigation jail, URL allowlist everywhere, webview input validation, fetch timeouts & cursor polling
+- [ ] 03-02-PLAN.md — Core correctness wave: auto-save wiring with uiStore & domSnapshotStore, IPC listener dedupe & cleanup, web-mode ipc guards, playwrightEngine require fix, full WAI-ARIA modal focus trap, run generation pause token
+- [ ] 03-03-PLAN.md — CI & A11y integrity wave: restore strict ESLint rules at error level with --max-warnings 0, rebuild guard test covering all attributes & expressions, extract remaining ~59 strings, en.json dedupe, typed useTranslation keys
+
+

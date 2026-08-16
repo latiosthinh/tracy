@@ -2,24 +2,31 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-08-16T00:08:00.000Z"
+status: ready
+last_updated: "2026-08-16T09:20:00.000Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_plans: 10
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
 
-**Status:** Completed Phase 02
-**Phase:** 02-a11y-and-text-extraction
-**Current Plan:** Complete
+**Status:** Ready to execute Phase 03 Plan 02
+**Phase:** 03-hardening
+**Current Plan:** 03-02-PLAN.md
 
 ## Decisions
 
+- User approved Full Phase 03 remediation (Security, Correctness, CI & A11y integrity)
+- Phase 03 executed in 3 serial waves with atomic commits
+- Hardened CLI runner on Windows using `quoteCmdArg` to caret-escape meta-characters and double double-quotes
+- Enforced `path.sep` boundary and base directory validation in `assertSafePath` / `resolveSafeBase`
+- Locked down main window with `setWindowOpenHandler(deny)` and navigation jail on `will-navigate`
+- Standardized URL scheme validation (`http:`, `https:`, `about:blank`) across webviews, playwrightEngine, flow runner, and batch miner
+- Added `AbortSignal.timeout` on all AI provider fetch requests (60s generation, 15s poll/messages) and handled terminal Cursor states
 - Extracted 100% of user-facing strings across AI Copilot, YAML/Visual Editors, Test Reports, and Splash screen into `src/a11y/en.json`
 - Implemented automated guard test `src/a11y/a11yTextGuard.test.ts` scanning 40 component files to prevent hardcoded text regressions
 - Added `aria-live="polite"` to streaming generated YAML output and CLI terminal execution streams
@@ -43,6 +50,7 @@ progress:
 
 ## Recent Activity
 
+- 2026-08-16 — Completed 03-01-PLAN.md: Security hardening (command injection quoteCmdArg, path traversal path.sep check, navigation jail, URL allowlist, AI fetch timeouts & cursor terminal states)
 - 2026-08-16 — Completed 02-04-PLAN.md: AI Copilot, YAML/Visual Editors, Reports, Splash text extraction and no-hardcoded-text guard test
 - 2026-08-16 — Completed 02-03-PLAN.md: Settings, Setup, Projects & Modals text extraction (SettingsModal, UiSettingsPanel, WelcomeSetup, AgentSelector, ProjectManager, ProjectManagerModal, ExportImportPanel, DocsModal, BatchMinerModal, CreateFlowModal, ErrorBoundary)
 - 2026-08-15 — Completed 02-02-PLAN.md: Layout & Studio text extraction (Header, Tabs, StudioToolbar, RealBrowserView, StepTimeline, ElementInspector, DomMinerPanel, StudioRightSidebar, StudioTabs, StudioView)
