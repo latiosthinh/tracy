@@ -9,11 +9,14 @@ import {
   Film,
   Network,
   Zap,
+  Activity,
+  List,
   Image as ImageIcon
 } from 'lucide-react';
 import { TestRunResult } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { generateStandaloneHtmlReport } from '@/src/utils/htmlReportExporter';
+import { LatencyFlamechart } from '@/src/components/reports/LatencyFlamechart';
 
 interface TestReportsProps {
   lastResult?: TestRunResult | null;
@@ -22,6 +25,7 @@ interface TestReportsProps {
 export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
   const { t } = useTranslation();
   const [activeArtifactTab, setActiveArtifactTab] = useState<'summary' | 'screenshots' | 'video' | 'network'>('summary');
+  const [summaryViewMode, setSummaryViewMode] = useState<'list' | 'flamechart'>('list');
 
   if (!lastResult) {
     return (
@@ -185,19 +189,62 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
       {/* Artifact Tab Content */}
       <div className="bg-stone-900 p-4 rounded-[6px] border border-stone-800 flex-1">
         {activeArtifactTab === 'summary' ? (
-          <div className="space-y-2 font-mono">
-            {lastResult.steps.map((step, idx) => (
-              <div key={idx} className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800/80 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-[10px] text-stone-500 w-4">{idx + 1}.</span>
-                  <span className="font-bold text-amber-400">{step.command}</span>
-                  <span className="text-stone-300 truncate max-w-xs">{typeof step.target === 'string' ? step.target : JSON.stringify(step.target)}</span>
-                </div>
-                <span className={`text-[10px] font-bold uppercase ${step.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {step.status}
-                </span>
+          <div className="space-y-3">
+            {/* View Mode Toggle: List vs Flamechart */}
+            <div className="flex items-center justify-between border-b border-stone-800 pb-2.5">
+              <span className="text-[11px] font-bold text-stone-400">
+                {summaryViewMode === 'list'
+                  ? t('reports.tabBreakdown')
+                  : t('reports.flamechart.title')}
+              </span>
+              <div className="flex items-center bg-stone-950 p-0.5 rounded-[6px] border border-stone-800 space-x-1">
+                <button
+                  type="button"
+                  onClick={() => setSummaryViewMode('list')}
+                  className={`px-2 py-1 rounded-[4px] text-[10px] font-bold flex items-center space-x-1 transition-all cursor-pointer ${
+                    summaryViewMode === 'list'
+                      ? 'bg-amber-700 text-amber-50 shadow-xs'
+                      : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                  aria-label={t('reports.flamechart.viewSteps')}
+                >
+                  <List className="w-3 h-3" />
+                  <span>{t('reports.flamechart.viewSteps')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSummaryViewMode('flamechart')}
+                  className={`px-2 py-1 rounded-[4px] text-[10px] font-bold flex items-center space-x-1 transition-all cursor-pointer ${
+                    summaryViewMode === 'flamechart'
+                      ? 'bg-amber-700 text-amber-50 shadow-xs'
+                      : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                  aria-label={t('reports.flamechart.viewFlamechart')}
+                >
+                  <Activity className="w-3 h-3" />
+                  <span>{t('reports.flamechart.viewFlamechart')}</span>
+                </button>
               </div>
-            ))}
+            </div>
+
+            {summaryViewMode === 'flamechart' ? (
+              <LatencyFlamechart result={lastResult} />
+            ) : (
+              <div className="space-y-2 font-mono">
+                {lastResult.steps.map((step, idx) => (
+                  <div key={idx} className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800/80 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[10px] text-stone-500 w-4">{idx + 1}.</span>
+                      <span className="font-bold text-amber-400">{step.command}</span>
+                      <span className="text-stone-300 truncate max-w-xs">{typeof step.target === 'string' ? step.target : JSON.stringify(step.target)}</span>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase ${step.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {step.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeArtifactTab === 'screenshots' ? (
           <div className="text-center py-6 space-y-3">
