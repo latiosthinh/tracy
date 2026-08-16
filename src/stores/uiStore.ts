@@ -24,6 +24,11 @@ interface UiState {
   inspectMode: boolean;
   recordMode: boolean;
 
+  // Split Layout
+  splitOrientation: 'vertical' | 'horizontal';
+  sidePanelWidth: number;
+  sidePanelHeight: number;
+
   // Settings (consolidated from settingsStore)
   uiSettings: UiSettings;
   workspaceConfig: WorkspaceConfig;
@@ -34,6 +39,12 @@ interface UiState {
   setActiveTab: (tab: ActiveTab) => void;
   setDevicePreset: (preset: DevicePreset) => void;
   setBrowser: (browser: 'chromium' | 'firefox' | 'webkit') => void;
+
+  // Split Layout Actions
+  setSplitOrientation: (orientation: 'vertical' | 'horizontal') => void;
+  toggleSplitOrientation: () => void;
+  setSidePanelWidth: (width: number) => void;
+  setSidePanelHeight: (height: number) => void;
 
   // Modal Actions
   setDocsOpen: (open: boolean) => void;
@@ -76,6 +87,37 @@ export const useUiStore = create<UiState>((set, get) => ({
   inspectMode: false,
   recordMode: false,
 
+  // Split Layout state with localStorage persistence
+  splitOrientation: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_split_orientation');
+      if (saved === 'horizontal' || saved === 'vertical') return saved;
+    } catch (e) {
+      console.error('Failed to load split orientation:', e);
+    }
+    return 'vertical';
+  })(),
+  sidePanelWidth: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_side_panel_width');
+      if (saved) {
+        const parsed = Number(saved);
+        if (!isNaN(parsed) && parsed >= 280) return parsed;
+      }
+    } catch {}
+    return 520;
+  })(),
+  sidePanelHeight: (() => {
+    try {
+      const saved = localStorage.getItem('tracy_side_panel_height');
+      if (saved) {
+        const parsed = Number(saved);
+        if (!isNaN(parsed) && parsed >= 180) return parsed;
+      }
+    } catch {}
+    return 360;
+  })(),
+
   // Settings state with localStorage persistence
   uiSettings: (() => {
     try {
@@ -102,6 +144,32 @@ export const useUiStore = create<UiState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   setDevicePreset: (preset) => set({ devicePreset: preset }),
   setBrowser: (browser) => set({ browser }),
+
+  // Split Layout
+  setSplitOrientation: (orientation) => {
+    set({ splitOrientation: orientation });
+    try {
+      localStorage.setItem('tracy_split_orientation', orientation);
+    } catch (e) {
+      console.error('Failed to save split orientation:', e);
+    }
+  },
+  toggleSplitOrientation: () => {
+    const next = get().splitOrientation === 'vertical' ? 'horizontal' : 'vertical';
+    get().setSplitOrientation(next);
+  },
+  setSidePanelWidth: (width) => {
+    set({ sidePanelWidth: width });
+    try {
+      localStorage.setItem('tracy_side_panel_width', String(width));
+    } catch {}
+  },
+  setSidePanelHeight: (height) => {
+    set({ sidePanelHeight: height });
+    try {
+      localStorage.setItem('tracy_side_panel_height', String(height));
+    } catch {}
+  },
 
   // Modals
   setDocsOpen: (open) => set({ isDocsOpen: open }),
