@@ -33,7 +33,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Command Palette modal (`Ctrl+K` / `Ctrl+P`), action registry, search filtering, and keyboard navigation (`Up`/`Down`/`Enter`)
-- [ ] 04-02-PLAN.md — Global shortcuts manager (`Ctrl+Enter` run, `Ctrl+Shift+P` pause, `Ctrl+1..9` project tabs, `Ctrl+Tab` flow tabs, `Ctrl+S` save) and Shortcuts Cheatsheet modal
+- [x] 04-02-PLAN.md — Global shortcuts manager (`Ctrl+Enter` run, `Ctrl+Shift+P` pause, `Ctrl+1..9` project tabs, `Ctrl+Tab` flow tabs, `Ctrl+S` save) and Shortcuts Cheatsheet modal
 
 ---
 

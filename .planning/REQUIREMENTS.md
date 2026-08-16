@@ -12,7 +12,7 @@ Acceptance:
 - Selecting an item executes the action or switches focus immediately
 - Arrow navigation (`Up`/`Down`), `Enter` to execute, `Escape` to dismiss
 
-**PALETTE-02: Global Keyboard Shortcut Map**
+**PALETTE-02: Global Keyboard Shortcut Map** [x]
 Standardized shortcuts for power-user navigation.
 Acceptance:
 - `Ctrl+Enter`: Run active test flow
@@ -21,7 +21,7 @@ Acceptance:
 - `Ctrl+Tab` / `Ctrl+Shift+Tab`: Cycle through open flow tabs
 - `Ctrl+S`: Save active flow YAML immediately
 
-**PALETTE-03: Keyboard Shortcuts Cheatsheet Modal**
+**PALETTE-03: Keyboard Shortcuts Cheatsheet Modal** [x]
 Interactive keyboard cheatsheet accessible via `?` or from Settings.
 Acceptance:
 - Shows all categorized shortcuts with searchable filter
