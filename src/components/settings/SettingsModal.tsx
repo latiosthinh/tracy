@@ -92,13 +92,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [autoSaveInterval, setAutoSaveInterval] = useState(30);
 
   // Skill Templates
-  const [skillTemplates] = useState([
-    { id: 'skill-1', name: 'E-Commerce Flow', category: 'Shopping', desc: 'Validates product search, add-to-cart, cart drawer & checkout modal.' },
-    { id: 'skill-2', name: 'Auth & Login RBAC', category: 'Security', desc: 'Handles session login, token verification, and role-based redirect checks.' },
-    { id: 'skill-3', name: 'Network Interception', category: 'API Testing', desc: 'Mocks REST endpoints and inspects payload requests/responses.' },
-    { id: 'skill-4', name: 'Responsive Audit', category: 'Visual QA', desc: 'Runs cross-device viewport assertions for mobile, tablet, and ultra-wide layouts.' },
-    { id: 'skill-5', name: 'Accessibility Standard', category: 'a11y', desc: 'Checks ARIA labels, focus states, and color contrast ratios.' },
-  ]);
+  const skillTemplates = [
+    { id: 'skill-1', name: t('settings.skills.ecommerce.name'), category: t('settings.skills.ecommerce.category'), desc: t('settings.skills.ecommerce.desc') },
+    { id: 'skill-2', name: t('settings.skills.auth.name'), category: t('settings.skills.auth.category'), desc: t('settings.skills.auth.desc') },
+    { id: 'skill-3', name: t('settings.skills.network.name'), category: t('settings.skills.network.category'), desc: t('settings.skills.network.desc') },
+    { id: 'skill-4', name: t('settings.skills.responsive.name'), category: t('settings.skills.responsive.category'), desc: t('settings.skills.responsive.desc') },
+    { id: 'skill-5', name: t('settings.skills.a11y.name'), category: t('settings.skills.a11y.category'), desc: t('settings.skills.a11y.desc') },
+  ];
 
   const [saveToast, setSaveToast] = useState(false);
 

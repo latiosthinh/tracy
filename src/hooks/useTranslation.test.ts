@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useTranslation } from './useTranslation';
+import { useTranslation, type TranslationKey } from './useTranslation';
 
 describe('useTranslation', () => {
   it('translates simple nested key', () => {
@@ -10,7 +10,12 @@ describe('useTranslation', () => {
 
   it('interpolates parameters correctly with {param}', () => {
     const { result } = renderHook(() => useTranslation());
-    expect(result.current.t('test.greeting', { name: 'Alice', count: 5 })).toBe('Hello Alice, you have 5 items');
+    expect(result.current.t('splash.versionInfo', { version: 'v1.0.0' })).toBe('v1.0.0 • Electron • Chromium Engine');
+  });
+
+  it('provides compile-time type checking for translation keys', () => {
+    const validKey: TranslationKey = 'common.close';
+    expect(validKey).toBe('common.close');
   });
 
   it('returns full key path if missing', () => {
@@ -21,4 +26,5 @@ describe('useTranslation', () => {
     warnSpy.mockRestore();
   });
 });
+
 

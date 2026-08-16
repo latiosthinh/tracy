@@ -183,7 +183,7 @@ export const ExportImportPanel: React.FC<ExportImportPanelProps> = ({
               ref={fileInputRef}
               type="file"
               accept=".json,application/json"
-              aria-label="Upload JSON file"
+              aria-label={t('modals.uploadJsonAria')}
               onChange={handleFileChange}
               className="block w-full text-xs text-stone-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-stone-800 file:text-emerald-400 hover:file:bg-stone-700 cursor-pointer mb-3"
             />

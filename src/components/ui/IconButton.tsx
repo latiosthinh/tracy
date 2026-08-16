@@ -30,6 +30,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       <button
         type="button"
         title={label}
+        aria-label={label}
         className={`focus:outline-hidden ${className || ''}`}
         {...props}
       >

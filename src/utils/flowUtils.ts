@@ -1,4 +1,5 @@
 import { FlowFile, FlowCategory } from '@/src/types/autoflow';
+import enTranslations from '@/src/a11y/en.json';
 
 export interface CategoryInfo {
   id: FlowCategory;
@@ -16,65 +17,66 @@ export interface CategoryInfo {
 export const PLAYWRIGHT_CATEGORIES: CategoryInfo[] = [
   {
     id: 'E2E',
-    label: 'E2E User Journeys',
-    badgeLabel: 'E2E',
+    label: enTranslations.common.flowCategories.e2e.label,
+    badgeLabel: enTranslations.common.flowCategories.e2e.badge,
     iconName: 'Globe',
     color: 'emerald',
     textColor: 'text-emerald-400',
     bgColor: 'bg-emerald-950/60',
     borderColor: 'border-emerald-800/60',
     activeBg: 'bg-emerald-900/40',
-    description: 'Full browser UI flows (pages, checkout, forms, clicks)',
+    description: enTranslations.common.flowCategories.e2e.description,
   },
   {
     id: 'API',
-    label: 'API Request & Mocking',
-    badgeLabel: 'API',
+    label: enTranslations.common.flowCategories.api.label,
+    badgeLabel: enTranslations.common.flowCategories.api.badge,
     iconName: 'Server',
     color: 'cyan',
     textColor: 'text-cyan-400',
     bgColor: 'bg-cyan-950/60',
     borderColor: 'border-cyan-800/60',
     activeBg: 'bg-cyan-900/40',
-    description: 'REST / GraphQL endpoints & network route interceptions',
+    description: enTranslations.common.flowCategories.api.description,
   },
   {
     id: 'Smoke',
-    label: 'Smoke Tests',
-    badgeLabel: 'SMOKE',
+    label: enTranslations.common.flowCategories.smoke.label,
+    badgeLabel: enTranslations.common.flowCategories.smoke.badge,
     iconName: 'Flame',
     color: 'amber',
     textColor: 'text-amber-400',
     bgColor: 'bg-amber-950/60',
     borderColor: 'border-amber-800/60',
     activeBg: 'bg-amber-900/40',
-    description: 'High-priority build verification & health check flows',
+    description: enTranslations.common.flowCategories.smoke.description,
   },
   {
     id: 'Visual',
-    label: 'Visual & Responsive',
-    badgeLabel: 'VISUAL',
+    label: enTranslations.common.flowCategories.visual.label,
+    badgeLabel: enTranslations.common.flowCategories.visual.badge,
     iconName: 'Eye',
     color: 'purple',
     textColor: 'text-purple-400',
     bgColor: 'bg-purple-950/60',
     borderColor: 'border-purple-800/60',
     activeBg: 'bg-purple-900/40',
-    description: 'Visual screenshot regression & viewport responsiveness',
+    description: enTranslations.common.flowCategories.visual.description,
   },
   {
     id: 'Component',
-    label: 'Component Specs',
-    badgeLabel: 'COMPONENT',
+    label: enTranslations.common.flowCategories.component.label,
+    badgeLabel: enTranslations.common.flowCategories.component.badge,
     iconName: 'Box',
     color: 'blue',
     textColor: 'text-blue-400',
     bgColor: 'bg-blue-950/60',
     borderColor: 'border-blue-800/60',
     activeBg: 'bg-blue-900/40',
-    description: 'Isolated component states & widget interactions',
+    description: enTranslations.common.flowCategories.component.description,
   },
 ];
+
 
 export function getFlowCategory(flow: FlowFile): FlowCategory {
   if (flow.category) return flow.category;

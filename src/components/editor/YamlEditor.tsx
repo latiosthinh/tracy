@@ -175,38 +175,6 @@ const AUTOCOMPLETE_ATTRIBUTES = [
   'label', 'method', 'response', 'status', 'body', 'url', 'args', 'output', 'state'
 ];
 
-const AUTOCOMPLETE_DESCRIPTIONS: Record<string, string> = {
-  navigate: 'Go to a URL',
-  leftClick: 'Standard click',
-  rightClick: 'Context menu click',
-  doubleClick: 'Fast double click',
-  hover: 'Hover over element',
-  tap: 'Mobile tap',
-  twoFingersTap: 'Mobile double tap',
-  fill: 'Type into input',
-  press: 'Press a keyboard key',
-  eraseText: 'Clear input value',
-  scroll: 'Scroll the page',
-  waitFor: 'Wait for condition',
-  assertVisible: 'Check element visible',
-  assertNotVisible: 'Check element hidden',
-  selectOption: 'Dropdown select',
-  interceptNetwork: 'Mock an API',
-  copyTextFrom: 'Extract text',
-  // Attributes
-  selector: 'CSS or XPath',
-  text: 'Text content',
-  value: 'Input value',
-  role: 'ARIA role',
-  name: 'ARIA name',
-  testId: 'data-testid',
-  placeholder: 'Input placeholder',
-  label: 'Aria label',
-  method: 'HTTP method',
-  status: 'HTTP status',
-  url: 'Endpoint URL'
-};
-
 export const YamlEditor: React.FC<YamlEditorProps> = ({
   yamlContent,
   onChange,
@@ -632,7 +600,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
                         </span>
                       </div>
                       <span className={`text-[10px] truncate ml-2 ${isSelected ? 'text-stone-400' : 'text-stone-600'}`}>
-                        {AUTOCOMPLETE_DESCRIPTIONS[option] || ''}
+                        {t(`editor.autocomplete.${option}` as any) || ''}
                       </span>
                     </li>
                   );

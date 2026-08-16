@@ -15,7 +15,41 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
-    "done": "Done"
+    "done": "Done",
+    "clear": "Clear",
+    "renameFlow": "Rename flow",
+    "stepsCount": "{count} Steps",
+    "aiCopilot": "AI Copilot",
+    "yamlEditor": "YAML Editor",
+    "proqa": "ProQA",
+    "createProject": "Create Project",
+    "flowCategories": {
+      "e2e": {
+        "label": "E2E User Journeys",
+        "badge": "E2E",
+        "description": "Full browser UI flows (pages, checkout, forms, clicks)"
+      },
+      "api": {
+        "label": "API Request & Mocking",
+        "badge": "API",
+        "description": "REST / GraphQL endpoints & network route interceptions"
+      },
+      "smoke": {
+        "label": "Smoke Tests",
+        "badge": "SMOKE",
+        "description": "High-priority build verification & health check flows"
+      },
+      "visual": {
+        "label": "Visual & Responsive",
+        "badge": "VISUAL",
+        "description": "Visual screenshot regression & viewport responsiveness"
+      },
+      "component": {
+        "label": "Component Specs",
+        "badge": "COMPONENT",
+        "description": "Isolated component states & widget interactions"
+      }
+    }
   },
   "toolbar": {
     "navBack": "Back to root",
@@ -266,6 +300,33 @@
     "skillsDesc": "Pre-built agent skills guiding AI test generation.",
     "useSkill": "Use Skill",
     "activatedSkill": "Activated template: {name}",
+    "skills": {
+      "ecommerce": {
+        "name": "E-Commerce Flow",
+        "category": "Shopping",
+        "desc": "Validates product search, add-to-cart, cart drawer & checkout modal."
+      },
+      "auth": {
+        "name": "Auth & Login RBAC",
+        "category": "Security",
+        "desc": "Handles session login, token verification, and role-based redirect checks."
+      },
+      "network": {
+        "name": "Network Interception",
+        "category": "API Testing",
+        "desc": "Mocks REST endpoints and inspects payload requests/responses."
+      },
+      "responsive": {
+        "name": "Responsive Audit",
+        "category": "Visual QA",
+        "desc": "Runs cross-device viewport assertions for mobile, tablet, and ultra-wide layouts."
+      },
+      "a11y": {
+        "name": "Accessibility Standard",
+        "category": "a11y",
+        "desc": "Checks ARIA labels, focus states, and color contrast ratios."
+      }
+    },
     "savedSuccess": "Settings saved successfully!",
     "saveSettings": "Save Settings",
     "themeTitle": "Theme & Workspace Appearance",
@@ -487,7 +548,37 @@
     "deleteStep": "Delete Step",
     "categoryTitle": "Playwright Category",
     "categoryStructure": "Structure",
-    "categoryTooltip": "Category: {label}. Click to change Playwright structure."
+    "categoryTooltip": "Category: {label}. Click to change Playwright structure.",
+    "autocomplete": {
+      "navigate": "Go to a URL",
+      "leftClick": "Standard click",
+      "rightClick": "Context menu click",
+      "doubleClick": "Fast double click",
+      "hover": "Hover over element",
+      "tap": "Mobile tap",
+      "twoFingersTap": "Mobile double tap",
+      "fill": "Type into input",
+      "press": "Press a keyboard key",
+      "eraseText": "Clear input value",
+      "scroll": "Scroll the page",
+      "waitFor": "Wait for condition",
+      "assertVisible": "Check element visible",
+      "assertNotVisible": "Check element hidden",
+      "selectOption": "Dropdown select",
+      "interceptNetwork": "Mock an API",
+      "copyTextFrom": "Extract text",
+      "selector": "CSS or XPath",
+      "text": "Text content",
+      "value": "Input value",
+      "role": "ARIA role",
+      "name": "ARIA name",
+      "testId": "data-testid",
+      "placeholder": "Input placeholder",
+      "label": "Aria label",
+      "method": "HTTP method",
+      "status": "HTTP status",
+      "url": "Endpoint URL"
+    }
   },
   "splash": {
     "initEngine": "Initializing ProQA Engine...",
@@ -550,9 +641,7 @@
     "interactive": "Interactive:",
     "text": "Text:",
     "selectSnapshotPrompt": "Select a snapshot from the list to view its DOM tree."
-  },
-  "test": {
-    "greeting": "Hello {name}, you have {count} items"
   }
 }
+
 

@@ -136,7 +136,7 @@ export const BatchMinerModal: React.FC<BatchMinerModalProps> = ({ isOpen, onClos
                 accept=".json"
                 ref={fileInputRef}
                 className="hidden"
-                aria-label="Upload JSON batch file"
+                aria-label={t('modals.uploadJsonAria')}
                 onChange={handleJsonUpload}
               />
               <button
@@ -189,7 +189,7 @@ export const BatchMinerModal: React.FC<BatchMinerModalProps> = ({ isOpen, onClos
                       type="button"
                       onClick={() => handleRemoveTarget(idx)}
                       disabled={targets.length === 1}
-                      aria-label={`Remove row ${idx + 1}`}
+                      aria-label={t('modals.removeRowAria', { index: idx + 1 })}
                       className="p-1.5 text-stone-500 hover:text-rose-400 disabled:opacity-30 mx-auto cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -210,7 +210,7 @@ export const BatchMinerModal: React.FC<BatchMinerModalProps> = ({ isOpen, onClos
               <div className="space-y-2">
                 <textarea
                   value={jsonInput}
-                  aria-label="JSON targets input"
+                  aria-label={t('modals.jsonTargetsAria')}
                   onChange={(e) => setJsonInput(e.target.value)}
                   className="w-full h-[300px] bg-stone-900 border border-stone-700 rounded p-3 text-amber-200 font-mono text-[10px] focus:outline-hidden focus:border-amber-500"
                   spellCheck={false}
