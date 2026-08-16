@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AiPromptInput, AttachedFile } from '@/src/components/ai/AiPromptInput';
+import { QaRecipeSelector } from '@/src/components/ai/QaRecipeSelector';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
+import { QaRecipe } from '@/src/data/qaRecipes';
 import {
   Send,
   Loader2,
@@ -258,6 +260,14 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
             <span>{t('copilot.singleFlow')}</span>
           </button>
         </div>
+
+        {/* QA Recipe Presets Selector */}
+        <QaRecipeSelector
+          disabled={isGenerating}
+          onSelectRecipe={(recipe: QaRecipe) => {
+            setPrompt(recipe.promptTemplate);
+          }}
+        />
 
         {/* Prompt Form with Long Text Support & File Drag & Drop / Upload */}
         <form onSubmit={handleGenerateFlow} className="space-y-3">
