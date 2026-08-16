@@ -113,4 +113,34 @@ describe('uiStore', () => {
       setItemSpy.mockRestore();
     });
   });
+
+  describe('split layout', () => {
+    it('setSplitOrientation sets and persists orientation', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+      getStore().setSplitOrientation('horizontal');
+      expect(getStore().splitOrientation).toBe('horizontal');
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_split_orientation', 'horizontal');
+      setItemSpy.mockRestore();
+    });
+
+    it('toggleSplitOrientation toggles between vertical and horizontal', () => {
+      getStore().setSplitOrientation('vertical');
+      getStore().toggleSplitOrientation();
+      expect(getStore().splitOrientation).toBe('horizontal');
+      getStore().toggleSplitOrientation();
+      expect(getStore().splitOrientation).toBe('vertical');
+    });
+
+    it('setSidePanelWidth and setSidePanelHeight persist dimensions', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+      getStore().setSidePanelWidth(600);
+      expect(getStore().sidePanelWidth).toBe(600);
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_side_panel_width', '600');
+
+      getStore().setSidePanelHeight(400);
+      expect(getStore().sidePanelHeight).toBe(400);
+      expect(setItemSpy).toHaveBeenCalledWith('tracy_side_panel_height', '400');
+      setItemSpy.mockRestore();
+    });
+  });
 });

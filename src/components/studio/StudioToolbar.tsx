@@ -13,12 +13,15 @@ import {
   Laptop,
   Tablet,
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  Columns2,
+  Rows2
 } from 'lucide-react';
 import type { DevicePreset } from '@/src/types/ui';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useEnvironment } from '@/src/hooks/useEnvironment';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useUiStore } from '@/src/stores/uiStore';
 
 interface StudioToolbarProps {
   targetPath: string;
@@ -61,6 +64,8 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
 }) => {
   const { isWeb } = useEnvironment();
   const { t } = useTranslation();
+  const splitOrientation = useUiStore((s) => s.splitOrientation);
+  const toggleSplitOrientation = useUiStore((s) => s.toggleSplitOrientation);
 
   return (
     <div className="bg-stone-950 px-3 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 font-sans w-full relative">
@@ -235,6 +240,14 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
           />
 
           <div className="w-px h-4 bg-stone-700"></div>
+
+          <IconButton
+            onClick={toggleSplitOrientation}
+            className="transition-colors cursor-pointer text-stone-400 hover:text-amber-400"
+            titleKey="layout.toggleSplit"
+            icon={splitOrientation === 'horizontal' ? Rows2 : Columns2}
+            iconClassName="w-3.5 h-3.5 text-amber-500"
+          />
 
           <IconButton
             onClick={() => {

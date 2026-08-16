@@ -27,6 +27,8 @@ import type { FlowFile, Project, ActiveTab } from '@/src/types/index';
 
 interface StudioRightSidebarProps {
   sidePanelWidth: number;
+  sidePanelHeight?: number;
+  splitOrientation?: 'vertical' | 'horizontal';
   activeFlow: FlowFile;
   activeProject: Project | undefined;
   activeTab: ActiveTab;
@@ -59,6 +61,8 @@ interface StudioRightSidebarProps {
 
 export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
   sidePanelWidth,
+  sidePanelHeight = 360,
+  splitOrientation = 'vertical',
   activeFlow,
   activeProject,
   activeTab,
@@ -99,8 +103,14 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
 
   return (
     <div
-      className="h-full bg-stone-950 flex flex-col overflow-hidden shrink-0 border-l border-stone-800"
-      style={{ width: `${sidePanelWidth}px` }}
+      className={`bg-stone-950 flex flex-col overflow-hidden shrink-0 ${
+        splitOrientation === 'horizontal' ? 'w-full border-t border-stone-800' : 'h-full border-l border-stone-800'
+      }`}
+      style={
+        splitOrientation === 'horizontal'
+          ? { height: `${sidePanelHeight}px` }
+          : { width: `${sidePanelWidth}px` }
+      }
     >
       {/* Flow Header */}
       <div className="bg-stone-950 px-3.5 py-2 border-b border-stone-800 flex items-center justify-between gap-2 shrink-0 font-sans">

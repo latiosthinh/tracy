@@ -62,6 +62,11 @@ export const StudioView: React.FC = () => {
   const toggleRecordMode = useUiStore((s) => s.toggleRecordMode);
   const devicePreset = useUiStore((s) => s.devicePreset);
   const setDevicePreset = useUiStore((s) => s.setDevicePreset);
+  const splitOrientation = useUiStore((s) => s.splitOrientation);
+  const sidePanelWidth = useUiStore((s) => s.sidePanelWidth);
+  const setSidePanelWidth = useUiStore((s) => s.setSidePanelWidth);
+  const sidePanelHeight = useUiStore((s) => s.sidePanelHeight);
+  const setSidePanelHeight = useUiStore((s) => s.setSidePanelHeight);
 
   const isDocsOpen = useUiStore((s) => s.isDocsOpen);
   const isSettingsOpen = useUiStore((s) => s.isSettingsOpen);
@@ -133,25 +138,38 @@ export const StudioView: React.FC = () => {
   }, [activeProjectId, setTargetPath]);
 
   // Resizable split panel state
-  const [sidePanelWidth, setSidePanelWidth] = useState(520);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragStartWidth = useRef(0);
+  const dragStartPos = useRef(0);
+  const dragStartDimension = useRef(0);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    dragStartX.current = e.clientX;
-    dragStartWidth.current = sidePanelWidth;
-  }, [sidePanelWidth]);
+    if (splitOrientation === 'horizontal') {
+      dragStartPos.current = e.clientY;
+      dragStartDimension.current = sidePanelHeight;
+    } else {
+      dragStartPos.current = e.clientX;
+      dragStartDimension.current = sidePanelWidth;
+    }
+  }, [splitOrientation, sidePanelWidth, sidePanelHeight]);
 
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const delta = dragStartX.current - e.clientX;
-      const newWidth = Math.min(Math.max(dragStartWidth.current + delta, 320), window.innerWidth - 400);
-      setSidePanelWidth(newWidth);
+      if (splitOrientation === 'horizontal') {
+        const delta = dragStartPos.current - e.clientY;
+        const newHeight = Math.min(Math.max(dragStartDimension.current + delta, 180), window.innerHeight - 250);
+        setSidePanelHeight(newHeight);
+      } else {
+        const isLeftPosition = uiSettings.yamlPosition === 'left';
+        const delta = isLeftPosition
+          ? e.clientX - dragStartPos.current
+          : dragStartPos.current - e.clientX;
+        const newWidth = Math.min(Math.max(dragStartDimension.current + delta, 320), window.innerWidth - 400);
+        setSidePanelWidth(newWidth);
+      }
     };
 
     const handleMouseUp = () => {
@@ -160,7 +178,7 @@ export const StudioView: React.FC = () => {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = splitOrientation === 'horizontal' ? 'row-resize' : 'col-resize';
     document.body.style.userSelect = 'none';
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -168,7 +186,7 @@ export const StudioView: React.FC = () => {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isDragging]);
+  }, [isDragging, splitOrientation, uiSettings.yamlPosition, setSidePanelWidth, setSidePanelHeight]);
 
   const handleYamlChange = (newYaml: string) => {
     updateYamlContent(newYaml);
@@ -348,8 +366,18 @@ export const StudioView: React.FC = () => {
     }
   };
 
+  const isHorizontal = splitOrientation === 'horizontal';
+
   return (
-    <div className={`flex-1 flex flex-col ${uiSettings.yamlPosition === 'left' ? 'lg:flex-row-reverse' : 'lg:flex-row'} overflow-hidden relative`}>
+    <div
+      className={`flex-1 flex overflow-hidden relative ${
+        isHorizontal
+          ? 'flex-col'
+          : uiSettings.yamlPosition === 'left'
+          ? 'flex-col lg:flex-row-reverse'
+          : 'flex-col lg:flex-row'
+      }`}
+    >
       <div className="flex-1 flex flex-col bg-stone-900 overflow-hidden relative">
         <StudioToolbar
           targetPath={targetPath}
@@ -427,23 +455,52 @@ export const StudioView: React.FC = () => {
         role="slider"
         tabIndex={0}
         aria-label={t('studio.resizeDividerAria')}
-        aria-valuenow={sidePanelWidth}
-        aria-valuemin={280}
-        aria-valuemax={800}
+        aria-orientation={isHorizontal ? 'horizontal' : 'vertical'}
+        aria-valuenow={isHorizontal ? sidePanelHeight : sidePanelWidth}
+        aria-valuemin={isHorizontal ? 180 : 280}
+        aria-valuemax={isHorizontal ? 700 : 800}
         onMouseDown={handleMouseDown}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowLeft') setSidePanelWidth((prev) => Math.min(prev + 20, 800));
-          if (e.key === 'ArrowRight') setSidePanelWidth((prev) => Math.max(prev - 20, 280));
+          if (isHorizontal) {
+            if (e.key === 'ArrowUp') setSidePanelHeight(Math.min(sidePanelHeight + 20, 700));
+            if (e.key === 'ArrowDown') setSidePanelHeight(Math.max(sidePanelHeight - 20, 180));
+          } else {
+            if (e.key === 'ArrowLeft') {
+              if (uiSettings.yamlPosition === 'left') {
+                setSidePanelWidth(Math.max(sidePanelWidth - 20, 280));
+              } else {
+                setSidePanelWidth(Math.min(sidePanelWidth + 20, 800));
+              }
+            }
+            if (e.key === 'ArrowRight') {
+              if (uiSettings.yamlPosition === 'left') {
+                setSidePanelWidth(Math.min(sidePanelWidth + 20, 800));
+              } else {
+                setSidePanelWidth(Math.max(sidePanelWidth - 20, 280));
+              }
+            }
+          }
         }}
-        className={`w-1.5 bg-stone-800 hover:bg-amber-600 cursor-col-resize shrink-0 transition-colors flex items-center justify-center ${isDragging ? 'bg-amber-500' : ''
-          }`}
+        className={`${
+          isHorizontal
+            ? 'h-1.5 w-full cursor-row-resize'
+            : 'w-1.5 h-full cursor-col-resize'
+        } bg-stone-800 hover:bg-amber-600 shrink-0 transition-colors flex items-center justify-center ${
+          isDragging ? 'bg-amber-500' : ''
+        }`}
       >
-        <div className={`w-0.5 h-8 rounded-full ${isDragging ? 'bg-amber-300' : 'bg-stone-600'}`} />
+        <div
+          className={`${
+            isHorizontal ? 'h-0.5 w-8' : 'w-0.5 h-8'
+          } rounded-full ${isDragging ? 'bg-amber-300' : 'bg-stone-600'}`}
+        />
       </div>
 
       {/* Side Panel */}
       <StudioRightSidebar
         sidePanelWidth={sidePanelWidth}
+        sidePanelHeight={sidePanelHeight}
+        splitOrientation={splitOrientation}
         activeFlow={activeFlow}
         activeProject={activeProject}
         activeTab={activeTab}
