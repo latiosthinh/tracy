@@ -88,3 +88,45 @@ export function getDiffStats(diffLines: DiffLine[]): DiffStats {
 
   return { additions, deletions, unchanged };
 }
+
+/**
+ * Extract steps portion from YAML content (after `---` if present, or all step lines).
+ */
+export function extractStepsFromYaml(yamlContent: string): string {
+  if (!yamlContent || !yamlContent.trim()) return '';
+
+  const lines = yamlContent.split(/\r?\n/);
+  const separatorIndex = lines.findIndex((line) => line.trim() === '---');
+
+  if (separatorIndex !== -1) {
+    return lines.slice(separatorIndex + 1).join('\n').trim();
+  }
+
+  return yamlContent.trim();
+}
+
+/**
+ * Append generated steps to current YAML flow.
+ */
+export function appendStepsToYaml(currentYaml: string, generatedYaml: string): string {
+  if (!currentYaml || !currentYaml.trim()) {
+    return generatedYaml;
+  }
+
+  const stepsToAppend = extractStepsFromYaml(generatedYaml);
+  if (!stepsToAppend) {
+    return currentYaml;
+  }
+
+  const trimmedCurrent = currentYaml.trimEnd();
+
+  // If current YAML does not have a --- separator but has header keys, ensure separator exists
+  if (!trimmedCurrent.includes('---') && (trimmedCurrent.startsWith('url:') || trimmedCurrent.startsWith('tags:') || trimmedCurrent.startsWith('#'))) {
+    const hasSteps = trimmedCurrent.split(/\r?\n/).some((l) => l.trim().startsWith('- '));
+    if (!hasSteps) {
+      return `${trimmedCurrent}\n---\n${stepsToAppend}`;
+    }
+  }
+
+  return `${trimmedCurrent}\n\n# --- Appended AI Steps ---\n${stepsToAppend}`;
+}

@@ -236,6 +236,18 @@
         "label": "E-Commerce Checkout & Payment",
         "description": "Test cart item count, coupon code discount, shipping form, and order confirmation"
       }
+    },
+    "diffPreview": {
+      "modalTitle": "AI Step Diff Preview",
+      "activeFlow": "Active Flow",
+      "aiGenerated": "AI Generated Flow",
+      "replaceFlow": "Replace Entire Flow",
+      "appendSteps": "Append Steps to End",
+      "cancel": "Cancel",
+      "previewButton": "Preview Diff Before Apply",
+      "noChanges": "No differences detected between active flow and AI output.",
+      "additions": "+{count} lines",
+      "deletions": "-{count} lines"
     }
   },
   "settings": {

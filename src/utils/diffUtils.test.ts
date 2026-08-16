@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeLineDiff, DiffLine } from './diffUtils';
+import { computeLineDiff, DiffLine, extractStepsFromYaml, appendStepsToYaml } from './diffUtils';
 
 describe('diffUtils', () => {
   it('handles identical text', () => {
@@ -68,5 +68,24 @@ describe('diffUtils', () => {
     const removedCount = result.filter(l => l.type === 'removed').length;
     expect(addedCount).toBe(2);
     expect(removedCount).toBe(1);
+  });
+
+  describe('extractStepsFromYaml & appendStepsToYaml', () => {
+    it('extracts steps after separator', () => {
+      const yaml = 'url: https://example.com\n---\n- navigate: /\n- leftClick: "#btn"';
+      expect(extractStepsFromYaml(yaml)).toBe('- navigate: /\n- leftClick: "#btn"');
+    });
+
+    it('returns full content if no separator', () => {
+      const yaml = '- navigate: /\n- leftClick: "#btn"';
+      expect(extractStepsFromYaml(yaml)).toBe('- navigate: /\n- leftClick: "#btn"');
+    });
+
+    it('appends steps cleanly to current flow', () => {
+      const current = 'url: https://example.com\n---\n- navigate: /';
+      const generated = 'url: https://other.com\n---\n- leftClick: "#btn"';
+      const result = appendStepsToYaml(current, generated);
+      expect(result).toBe('url: https://example.com\n---\n- navigate: /\n\n# --- Appended AI Steps ---\n- leftClick: "#btn"');
+    });
   });
 });
