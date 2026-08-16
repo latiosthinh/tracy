@@ -1,112 +1,114 @@
-# Requirements: Tracy
+# Requirements: ProQA
 
-## WEBVIEW — Embedded Browser Sessions
+## Milestone v2.0 — Atomic UI/UX Perfection & Power Studio Workflows
 
-**WEBVIEW-01: Per-project embedded browser sessions**
-Each project owns an isolated embedded browser session (Electron `WebContentsView`) in the
-main process, keyed by project id. The shared-singleton webview must not remain.
+### PALETTE — Command Palette & Global Keyboard Shortcuts
+
+**PALETTE-01: Global Command Palette (`Ctrl+K` / `Ctrl+P`)**
+Users can invoke a fast spotlight-style command palette from anywhere in the app.
 Acceptance:
-- Main process keeps a registry of webviews keyed by project id (no module-level single view)
-- Opening a webview for project A never changes project B's webview URL or content
-- Session lifecycle: webviews are created per project, hidden/shown per project, and a
-  bounded cap prevents unbounded view growth (memory)
+- Pressing `Ctrl+K` or `Ctrl+P` opens the palette with immediate input focus
+- Search queries match across: open flows, projects, studio actions (run, pause, record, inspect, mine), settings tabs, and help docs
+- Selecting an item executes the action or switches focus immediately
+- Arrow navigation (`Up`/`Down`), `Enter` to execute, `Escape` to dismiss
 
-**WEBVIEW-02: Project identity flows through the browser control stack**
-The renderer passes project identity with every embedded-browser IPC call.
+**PALETTE-02: Global Keyboard Shortcut Map**
+Standardized shortcuts for power-user navigation.
 Acceptance:
-- `tracyApi.openChildWebview / resizeChildWebview / setChildWebviewVisible / closeChildWebview`
-  all take and forward a project id
-- `RealBrowserView` receives the active project id from `StudioView` and uses it for all
-  webview IPC calls
-- Switching the active project in the studio shows that project's own browser view
-- Per-project browser path state (no shared `targetPath` leaking across projects)
+- `Ctrl+Enter`: Run active test flow
+- `Ctrl+Shift+P`: Toggle pause/resume on running flow
+- `Ctrl+1` through `Ctrl+9`: Switch directly to open project tab N
+- `Ctrl+Tab` / `Ctrl+Shift+Tab`: Cycle through open flow tabs
+- `Ctrl+S`: Save active flow YAML immediately
 
-**WEBVIEW-03: Security posture and quality gates preserved**
+**PALETTE-03: Keyboard Shortcuts Cheatsheet Modal**
+Interactive keyboard cheatsheet accessible via `?` or from Settings.
 Acceptance:
-- `WebContentsView` instances keep `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
-- Existing URL scheme validation (`http/https/about:blank` only) preserved on open
-- Preload whitelist channel names unchanged (payload-only change); wrapper in `src/lib/ipc.ts`
-  updated per IPC contract convention
-- `pnpm lint` and `pnpm test` green; electron main bundle builds (`pnpm exec vite build`)
+- Shows all categorized shortcuts with searchable filter
+- Accessible with full WAI-ARIA modal trap
 
-## A11Y — Accessibility & Zero-Hardcoded-Text Refactor
+---
 
-**A11Y-01: Zero hardcoded user-visible text in components**
-All user-facing strings, button labels, tooltips, titles, placeholders, and error templates are extracted into `src/a11y/en.json` and consumed via `useTranslation()`. Dynamic runtime IPC errors are the documented exception.
+### LAYOUT — Studio Layout Versatility & Device Viewports
+
+**LAYOUT-01: Horizontal vs. Vertical Studio Split**
+Users can switch between side-by-side (vertical divider) and top-and-bottom (horizontal divider) layouts.
 Acceptance:
-- `src/a11y/en.json` is organized into feature domains (common, header, tabs, studio, copilot, settings, projects, modals, reports, setup, docs)
-- `useTranslation()` supports typed keys and `{param}` interpolation
-- All 40 component files use `t('domain.key')` for static text, titles, placeholders, and aria-labels
+- Toggle button in studio toolbar and shortcut to swap split orientation
+- Draggable divider adjusts widths or heights smoothly with `role="slider"` keyboard support
+- Layout preference persists in `uiStore`
 
-**A11Y-02: jsx-a11y lint rule enforcement**
-ESLint enforces standard React accessibility rules as errors in CI.
+**LAYOUT-02: Realistic Device Bezel Frames**
+Device presets can be previewed inside realistic device frames.
 Acceptance:
-- `eslint-plugin-jsx-a11y` configured in ESLint
-- Zero `jsx-a11y` lint errors across the entire codebase
+- Device frames for Desktop, Laptop, iPad/Tablet, and iPhone/Mobile with realistic dimensions and rounded bezels
+- Orientation flip toggle (Portrait vs. Landscape) for mobile/tablet viewports
+- Scale-to-fit toggle ensuring device frame fits within the studio pane
 
-**A11Y-03: Modal and interactive accessibility hardening**
-Interactive components follow WAI-ARIA authoring practices.
+**LAYOUT-03: Page Dark/Light Emulation Toggle**
+Studio toolbar allows emulating `prefers-color-scheme: dark` or `light` on the embedded page.
 Acceptance:
-- Shared `Modal.tsx` implements `role="dialog"`, `aria-modal="true"`, focus trapping, initial focus, and Escape-to-close
-- Form inputs have associated labels (`<label htmlFor>` or `aria-label`)
-- Icon-only buttons have accessible names (`aria-label` matching tooltip title)
-- Execution logs and streaming statuses use `aria-live="polite"`
-- Decorative logos/icons use `aria-hidden="true"`
+- One-click toggle in toolbar injecting color-scheme emulation into the webview
 
-**A11Y-04: No-hardcoded-text guard test**
-An automated test scans `src/components/**/*.tsx` to ensure no raw JSX text nodes exist outside documented exceptions.
+---
+
+### EDIT — Editor Polish, YAML Diffing & Playwright TS Exporter
+
+**EDIT-01: Side-by-Side YAML Diff View**
+Users can compare active flow YAML against last-run snapshot or saved baseline.
 Acceptance:
-- `src/a11y/a11yTextGuard.test.ts` scans all component files and passes
+- Side-by-side split visual diff highlighting added, modified, and removed steps
+- One-click revert or accept individual changes
 
-## SEC — Security Hardening (Post-Audit)
-
-**SEC-01: No command execution via renderer-controlled input**
-Prompts passed to CLI agents must never be interpretable as shell commands.
+**EDIT-02: Visual Step Editor Productivity**
+Advanced multi-step manipulation in the visual builder.
 Acceptance:
-- `cliRunner.ts` never spawns with `shell: true` carrying unescaped renderer text, or renders shell metacharacters inert (quoted/escaped per cmd.exe rules); verified by unit test with a hostile prompt
-- All fetch calls in `aiProvider.ts` carry `AbortSignal.timeout` so a hanging endpoint cannot freeze the UI indefinitely
+- Step duplication (`Alt+Drag` or duplicate button)
+- Multi-step selection for bulk delete or category re-tagging
+- Step reorder drag handles with smooth insertion indicator
 
-**SEC-02: No filesystem escape via renderer-controlled paths**
+**EDIT-03: One-Click Playwright TypeScript Exporter**
+Generate executable Playwright test code from any YAML flow.
 Acceptance:
-- `assertSafePath` uses `path.sep` boundary checks (no prefix bypass such as `flowsEvil/` matching base `flows`)
-- `saveLocation` values from the renderer are validated against allowed project workspace roots before use as a base path
+- Export button producing idiomatic `@playwright/test` TypeScript code
+- Copy to clipboard or download `.spec.ts` file
 
-**SEC-03: Renderer navigation jail + URL scheme allowlist everywhere**
+---
+
+### AI — AI Copilot QA Recipes & Diff Preview
+
+**AI-01: QA Recipe Prompt Library**
+Pre-engineered prompt presets for common QA testing patterns.
 Acceptance:
-- Main window denies external navigation (`will-navigate`) and new windows (`setWindowOpenHandler`) outside dev-server/app routes
-- Every URL-accepting IPC handler (webview open, `navigate_browser`, `run_flow`, `mine_batch_urls`) enforces `http/https/about:blank` only
-- Webview bounds/url inputs are type-checked (no `NaN`/non-string crash paths)
+- Preset buttons: "Form Validation & Error States", "Responsive Navigation & Hamburger Menu", "Accessibility & ARIA Audit", "Auth & Session Edge Cases", "E-Commerce Checkout Flow"
+- Clicking a preset populates the prompt with tailored system instructions and active DOM context
 
-## FIX — Core Correctness (Post-Audit)
-
-**FIX-01: Auto-save actually saves**
+**AI-02: Side-by-Side AI Diff Preview**
+Preview AI-generated changes against active flow before applying.
 Acceptance:
-- One wired source of truth for `defaultSaveLocation`; Settings field writes it; `useAutoSave` reads it and persists projects + DOM snapshots from `domSnapshotStore`
+- Shows green/red diff comparison before replacing or appending to the editor
+- Options: "Replace Entire Flow", "Append Steps to End", or "Discard"
 
-**FIX-02: No duplicate IPC listeners, no unguarded renderer listeners, no crash-on-event**
+**AI-03: Live Telemetry & Speed Metrics**
+Real-time streaming feedback during generation.
 Acceptance:
-- StrictMode double-mount cannot double-subscribe execution events; AppShell cleans up listeners
-- All `onX` wrappers in `ipc.ts` guard non-Electron environments
-- No ESM-illegal `require()` in bundled code; `event.sender.send` guarded against destroyed senders
+- Displays token generation speed (tokens/sec), total tokens, and active provider latency
 
-**FIX-03: Modal trap actually traps**
+---
+
+### REPORT — Interactive HTML Reports & Latency Flamechart
+
+**REPORT-01: Standalone Single-File HTML Report Export**
+Generate a zero-dependency HTML test report bundle for sharing.
 Acceptance:
-- On open: focus moves into dialog; on close: focus returns to trigger; Tab/Shift+Tab can never leave the dialog; Escape closes only the topmost modal; body scroll locked while open; disabled controls cannot break the Tab cycle
+- Standalone HTML file with embedded CSS, base64 failure screenshots, and step timeline
+- Openable in any web browser without needing ProQA running
 
-**FIX-04: Pause cannot corrupt results**
+**REPORT-02: Execution Latency Flamechart & Bottleneck Inspector**
+Visual timing breakdown for each step in a test flow.
 Acceptance:
-- A paused/timed-out run never reports `PASSED`; superseded runs cannot interleave logs; run state uses a generation token
+- Horizontal waterfall / flamechart displaying step durations
+- Flags steps taking > 1000ms (slow selectors, network waits) with optimization hints
 
-## CIX — CI & A11y Integrity (Post-Audit)
-
-**CIX-01: Lint is an enforcement gate again**
-Acceptance:
-- `unused-imports`, `typescript-eslint`, `react-hooks`, `jsx-a11y` rule blocks configured; a11y interactive rules and unused-imports at `error`; `pnpm lint` fails on new warnings via `--max-warnings 0`
-
-**CIX-02: Guard test has no blind spots; zero hardcoded UI strings remain**
-Acceptance:
-- Guard scans JSX text, attribute strings (`aria-label`/`title`/`placeholder`), string literals in JSX expressions, and all of `src/` (incl. `src/utils`)
-- All remaining audited strings extracted to `en.json`; duplicate values deduped to `common.*`
-- `useTranslation` key parameter typed against the dictionary structure
 
 
