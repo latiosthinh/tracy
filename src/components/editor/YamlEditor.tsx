@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VoiceInputButton } from '@/src/components/ai/VoiceInputButton';
 import { YamlDiffModal } from '@/src/components/editor/YamlDiffModal';
+import { PlaywrightExportModal } from '@/src/components/editor/PlaywrightExportModal';
 import {
   Copy,
   Check,
   FileCode,
+  FileCode2,
   CheckCircle2,
   AlertTriangle,
   Sparkles,
@@ -17,7 +19,7 @@ import {
   Zap,
   GitCompare
 } from 'lucide-react';
-import { FlowCategory } from '@/src/types/autoflow';
+import { FlowCategory, FlowFile } from '@/src/types/autoflow';
 import { PLAYWRIGHT_CATEGORIES } from '@/src/utils/flowUtils';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -29,6 +31,8 @@ interface YamlEditorProps {
   flowCategory?: FlowCategory;
   onCategoryChange?: (category: FlowCategory) => void;
   savedBaselineYaml?: string;
+  flow?: FlowFile;
+  targetUrl?: string;
 }
 
 // Helper to escape HTML characters
@@ -186,12 +190,15 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   flowCategory = 'E2E',
   onCategoryChange: _onCategoryChange,
   savedBaselineYaml,
+  flow,
+  targetUrl,
 }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [lineCount, setLineCount] = useState(1);
   const [syntaxErrors, setSyntaxErrors] = useState<string[]>([]);
   const [showDiffModal, setShowDiffModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const baseline = savedBaselineYaml ?? yamlContent;
   const hasDiff = baseline !== yamlContent;
 
@@ -464,6 +471,15 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
+          <button
+            onClick={() => setShowExportModal(true)}
+            title={t('editor.exportPlaywright')}
+            aria-label={t('editor.exportPlaywright')}
+            className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 hover:text-amber-200 rounded-[6px] font-sans text-[11px] font-semibold flex items-center space-x-1.5 transition-all border border-stone-700 shadow-xs cursor-pointer"
+          >
+            <FileCode2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>{t('editor.exportPlaywright')}</span>
+          </button>
           {hasDiff && (
             <button
               onClick={() => setShowDiffModal(true)}
@@ -650,6 +666,26 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           originalYaml={baseline}
           modifiedYaml={yamlContent}
           onRevert={() => onChange(baseline)}
+        />
+      )}
+
+      {/* Playwright Export Modal */}
+      {showExportModal && (
+        <PlaywrightExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          flow={
+            flow || {
+              id: 'exported-flow',
+              name: 'flow.yaml',
+              path: 'flows/flow.yaml',
+              tags: [],
+              metadata: { url: targetUrl },
+              yamlContent,
+              steps: [],
+            }
+          }
+          targetUrl={targetUrl}
         />
       )}
     </div>

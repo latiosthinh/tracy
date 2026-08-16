@@ -559,6 +559,10 @@
     "categoryStructure": "Structure",
     "categoryTooltip": "Category: {label}. Click to change Playwright structure.",
     "autocompleteAria": "YAML Autocomplete Suggestions",
+    "exportPlaywright": "Export Playwright Spec",
+    "downloadSpec": "Download .spec.ts",
+    "copiedPlaywright": "Copied Playwright Code!",
+    "playwrightExportTitle": "Export Playwright TypeScript Spec",
     "autocomplete": {
       "navigate": "Go to a URL",
       "leftClick": "Standard click",

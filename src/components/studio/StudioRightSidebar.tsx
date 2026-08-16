@@ -314,6 +314,8 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
           flowCategory={getFlowCategory(activeFlow)}
           onCategoryChange={(cat) => handleFlowCategoryChange(activeFlow.id, cat)}
           savedBaselineYaml={activeProject?.flows?.find((f) => f.id === activeFlow.id)?.yamlContent}
+          flow={activeFlow}
+          targetUrl={activeProject?.targetUrl}
         />
       )}
 
