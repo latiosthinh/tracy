@@ -673,13 +673,20 @@
       "openStudio": "Go to Studio View"
     },
     "navigation": {
-      "tabYaml": "Switch to YAML Editor tab",
+      "tabEditor": "Switch to YAML Editor tab",
       "tabSteps": "Switch to Visual Steps tab",
       "tabAi": "Switch to AI Copilot tab",
       "tabTimeline": "Switch to Execution Timeline tab",
       "tabReports": "Switch to Reports tab",
       "tabCli": "Switch to CLI Agents tab",
       "tabConfig": "Switch to Config tab"
+    },
+    "footer": {
+      "navigate": "↑↓ Navigate",
+      "select": "↵ Select",
+      "close": "ESC Close",
+      "branding": "ProQA Command Palette",
+      "escKey": "ESC"
     }
   }
 }

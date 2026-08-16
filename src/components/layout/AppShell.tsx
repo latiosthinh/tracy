@@ -11,6 +11,7 @@ import { SplashScreen } from '@/src/components/shared/SplashScreen';
 import { Header } from '@/src/components/layout/Header';
 import { StudioView } from '@/src/components/studio/StudioView';
 import { ErrorBoundary } from '@/src/components/shared/ErrorBoundary';
+import { CommandPalette } from '@/src/components/shared/CommandPalette';
 
 const ProjectManager = React.lazy(() => import('@/src/components/projects/ProjectManager').then(m => ({ default: m.ProjectManager })));
 const ProjectManagerModal = React.lazy(() => import('@/src/components/projects/ProjectManagerModal').then(m => ({ default: m.ProjectManagerModal })));
@@ -123,6 +124,7 @@ export const AppShell: React.FC = () => {
   const setCreateFlowModalOpen = useUiStore((s) => s.setCreateFlowModalOpen);
   const autoOpenCreateModal = useUiStore((s) => s.autoOpenCreateModal);
   const setAutoOpenCreateModal = useUiStore((s) => s.setAutoOpenCreateModal);
+  const toggleCommandPalette = useUiStore((s) => s.toggleCommandPalette);
 
   // Settings store
   const uiSettings = useSettingsStore((s) => s.uiSettings);
@@ -143,6 +145,21 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     applyThemeCssVars();
   }, [uiSettings, applyThemeCssVars]);
+
+  // Global Keyboard Shortcuts (Ctrl+K / Ctrl+P / Cmd+K / Cmd+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const isModifier = isMac ? e.metaKey : e.ctrlKey;
+      if (isModifier && (e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        toggleCommandPalette();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleCommandPalette]);
 
   return (
     <>
@@ -270,6 +287,8 @@ export const AppShell: React.FC = () => {
                 />
               )}
             </Suspense>
+
+            <CommandPalette />
           </>
         )}
       </div>
