@@ -38,7 +38,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Security wave: Windows command injection mitigation, path.sep traversal fix + constrained project base, renderer navigation jail, URL allowlist everywhere, webview input validation, fetch timeouts & cursor polling
-- [ ] 03-02-PLAN.md — Core correctness wave: auto-save wiring with uiStore & domSnapshotStore, IPC listener dedupe & cleanup, web-mode ipc guards, playwrightEngine require fix, full WAI-ARIA modal focus trap, run generation pause token
+- [x] 03-02-PLAN.md — Core correctness wave: auto-save wiring with uiStore & domSnapshotStore, IPC listener dedupe & cleanup, web-mode ipc guards, playwrightEngine require fix, full WAI-ARIA modal focus trap, run generation pause token
 - [ ] 03-03-PLAN.md — CI & A11y integrity wave: restore strict ESLint rules at error level with --max-warnings 0, rebuild guard test covering all attributes & expressions, extract remaining ~59 strings, en.json dedupe, typed useTranslation keys
 
 

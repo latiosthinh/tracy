@@ -3,25 +3,31 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready
-last_updated: "2026-08-16T09:20:00.000Z"
+last_updated: "2026-08-16T09:25:00.000Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
 
-**Status:** Ready to execute Phase 03 Plan 02
+**Status:** Ready to execute Phase 03 Plan 03
 **Phase:** 03-hardening
-**Current Plan:** 03-02-PLAN.md
+**Current Plan:** 03-03-PLAN.md
 
 ## Decisions
 
 - User approved Full Phase 03 remediation (Security, Correctness, CI & A11y integrity)
 - Phase 03 executed in 3 serial waves with atomic commits
+- Wired auto-save location to single source of truth in `uiStore` with localStorage persistence
+- Included live snapshots from `domSnapshotStore` during auto-save serialization
+- Added synchronous `eventListenersSetting` guard in `executionStore` to eliminate race conditions on listener registration
+- Guarded all `sender.send()` calls against `sender.isDestroyed()` and replaced `require('electron')` in `playwrightEngine.ts`
+- Upgraded `Modal.tsx` focus trapping to trap Tab navigation without escaping, respect `:not(:disabled)`, lock body scroll, and restore previous trigger focus
+- Added run generation token (`runToken`) and `PAUSED` status in `executionStore` to eliminate false `PASSED` status on aborted or paused runs
 - Hardened CLI runner on Windows using `quoteCmdArg` to caret-escape meta-characters and double double-quotes
 - Enforced `path.sep` boundary and base directory validation in `assertSafePath` / `resolveSafeBase`
 - Locked down main window with `setWindowOpenHandler(deny)` and navigation jail on `will-navigate`
@@ -50,6 +56,7 @@ progress:
 
 ## Recent Activity
 
+- 2026-08-16 — Completed 03-02-PLAN.md: Core correctness hardening (auto-save setting synchronization, DOM snapshot serialization, IPC listener lifecycle deduplication, electron sender destruction guards, WAI-ARIA modal focus trap, execution run tokens & pause semantics)
 - 2026-08-16 — Completed 03-01-PLAN.md: Security hardening (command injection quoteCmdArg, path traversal path.sep check, navigation jail, URL allowlist, AI fetch timeouts & cursor terminal states)
 - 2026-08-16 — Completed 02-04-PLAN.md: AI Copilot, YAML/Visual Editors, Reports, Splash text extraction and no-hardcoded-text guard test
 - 2026-08-16 — Completed 02-03-PLAN.md: Settings, Setup, Projects & Modals text extraction (SettingsModal, UiSettingsPanel, WelcomeSetup, AgentSelector, ProjectManager, ProjectManagerModal, ExportImportPanel, DocsModal, BatchMinerModal, CreateFlowModal, ErrorBoundary)
@@ -60,4 +67,5 @@ progress:
 - 2026-08-15 — Completed 01-02-PLAN.md: Renderer browser stack updated with projectId prop, per-project browser paths, and keyed RealBrowserView
 - 2026-08-15 — Completed 01-01-PLAN.md: Main-process webview registry & IPC contract updated with projectId
 - 2026-08-15 — GSD scaffold bootstrapped from bug report; phase 01 planned
+
 

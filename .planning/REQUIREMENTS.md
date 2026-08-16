@@ -58,3 +58,55 @@ An automated test scans `src/components/**/*.tsx` to ensure no raw JSX text node
 Acceptance:
 - `src/a11y/a11yTextGuard.test.ts` scans all component files and passes
 
+## SEC — Security Hardening (Post-Audit)
+
+**SEC-01: No command execution via renderer-controlled input**
+Prompts passed to CLI agents must never be interpretable as shell commands.
+Acceptance:
+- `cliRunner.ts` never spawns with `shell: true` carrying unescaped renderer text, or renders shell metacharacters inert (quoted/escaped per cmd.exe rules); verified by unit test with a hostile prompt
+- All fetch calls in `aiProvider.ts` carry `AbortSignal.timeout` so a hanging endpoint cannot freeze the UI indefinitely
+
+**SEC-02: No filesystem escape via renderer-controlled paths**
+Acceptance:
+- `assertSafePath` uses `path.sep` boundary checks (no prefix bypass such as `flowsEvil/` matching base `flows`)
+- `saveLocation` values from the renderer are validated against allowed project workspace roots before use as a base path
+
+**SEC-03: Renderer navigation jail + URL scheme allowlist everywhere**
+Acceptance:
+- Main window denies external navigation (`will-navigate`) and new windows (`setWindowOpenHandler`) outside dev-server/app routes
+- Every URL-accepting IPC handler (webview open, `navigate_browser`, `run_flow`, `mine_batch_urls`) enforces `http/https/about:blank` only
+- Webview bounds/url inputs are type-checked (no `NaN`/non-string crash paths)
+
+## FIX — Core Correctness (Post-Audit)
+
+**FIX-01: Auto-save actually saves**
+Acceptance:
+- One wired source of truth for `defaultSaveLocation`; Settings field writes it; `useAutoSave` reads it and persists projects + DOM snapshots from `domSnapshotStore`
+
+**FIX-02: No duplicate IPC listeners, no unguarded renderer listeners, no crash-on-event**
+Acceptance:
+- StrictMode double-mount cannot double-subscribe execution events; AppShell cleans up listeners
+- All `onX` wrappers in `ipc.ts` guard non-Electron environments
+- No ESM-illegal `require()` in bundled code; `event.sender.send` guarded against destroyed senders
+
+**FIX-03: Modal trap actually traps**
+Acceptance:
+- On open: focus moves into dialog; on close: focus returns to trigger; Tab/Shift+Tab can never leave the dialog; Escape closes only the topmost modal; body scroll locked while open; disabled controls cannot break the Tab cycle
+
+**FIX-04: Pause cannot corrupt results**
+Acceptance:
+- A paused/timed-out run never reports `PASSED`; superseded runs cannot interleave logs; run state uses a generation token
+
+## CIX — CI & A11y Integrity (Post-Audit)
+
+**CIX-01: Lint is an enforcement gate again**
+Acceptance:
+- `unused-imports`, `typescript-eslint`, `react-hooks`, `jsx-a11y` rule blocks configured; a11y interactive rules and unused-imports at `error`; `pnpm lint` fails on new warnings via `--max-warnings 0`
+
+**CIX-02: Guard test has no blind spots; zero hardcoded UI strings remain**
+Acceptance:
+- Guard scans JSX text, attribute strings (`aria-label`/`title`/`placeholder`), string literals in JSX expressions, and all of `src/` (incl. `src/utils`)
+- All remaining audited strings extracted to `en.json`; duplicate values deduped to `common.*`
+- `useTranslation` key parameter typed against the dictionary structure
+
+
