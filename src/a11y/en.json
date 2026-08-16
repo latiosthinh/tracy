@@ -645,6 +645,42 @@
     "interactive": "Interactive:",
     "text": "Text:",
     "selectSnapshotPrompt": "Select a snapshot from the list to view its DOM tree."
+  },
+  "palette": {
+    "placeholder": "Type a command or search flows, projects, and actions...",
+    "noResults": "No commands or matching items found",
+    "searchAria": "Search commands, flows, and projects",
+    "dialogAria": "Command Palette",
+    "categories": {
+      "actions": "Actions",
+      "flows": "Flows",
+      "projects": "Projects",
+      "navigation": "Navigation"
+    },
+    "actions": {
+      "runFlow": "Run Active Flow",
+      "stopFlow": "Stop Flow Execution",
+      "runSuite": "Run Full Test Suite",
+      "resetExecution": "Reset Execution State",
+      "newFlow": "Create New Flow",
+      "newProject": "Create New Project",
+      "toggleInspect": "Toggle DOM Element Inspector",
+      "toggleRecord": "Toggle Interaction Recording",
+      "mineDom": "Mine Current Page DOM",
+      "openSettings": "Open Settings & AI Configuration",
+      "openDocs": "Open Documentation",
+      "openProjects": "Go to Projects View",
+      "openStudio": "Go to Studio View"
+    },
+    "navigation": {
+      "tabYaml": "Switch to YAML Editor tab",
+      "tabSteps": "Switch to Visual Steps tab",
+      "tabAi": "Switch to AI Copilot tab",
+      "tabTimeline": "Switch to Execution Timeline tab",
+      "tabReports": "Switch to Reports tab",
+      "tabCli": "Switch to CLI Agents tab",
+      "tabConfig": "Switch to Config tab"
+    }
   }
 }
 

@@ -17,6 +17,7 @@ interface UiState {
   isProjectManagerModalOpen: boolean;
   isCreateFlowModalOpen: boolean;
   autoOpenCreateModal: boolean;
+  isCommandPaletteOpen: boolean;
 
   // Inspector & Mode Flags
   inspectMode: boolean;
@@ -39,6 +40,8 @@ interface UiState {
   setProjectManagerModalOpen: (open: boolean) => void;
   setCreateFlowModalOpen: (open: boolean) => void;
   setAutoOpenCreateModal: (open: boolean) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
+  toggleCommandPalette: () => void;
 
   // Inspector Actions
   setInspectMode: (mode: boolean) => void;
@@ -64,6 +67,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   isProjectManagerModalOpen: false,
   isCreateFlowModalOpen: false,
   autoOpenCreateModal: false,
+  isCommandPaletteOpen: false,
 
   inspectMode: false,
   recordMode: false,
@@ -101,6 +105,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   setProjectManagerModalOpen: (open) => set({ isProjectManagerModalOpen: open }),
   setCreateFlowModalOpen: (open) => set({ isCreateFlowModalOpen: open }),
   setAutoOpenCreateModal: (open) => set({ autoOpenCreateModal: open }),
+  setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
+  toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
 
   // Inspector
   setInspectMode: (mode) => set({ inspectMode: mode }),
