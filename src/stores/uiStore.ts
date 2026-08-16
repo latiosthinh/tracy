@@ -87,7 +87,7 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
-  currentView: 'studio',
+  currentView: 'projects',
   activeTab: 'ai',
   devicePreset: 'Desktop 1440',
   browser: 'chromium',

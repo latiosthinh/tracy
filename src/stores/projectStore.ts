@@ -57,15 +57,37 @@ interface ProjectState {
 export const useProjectStore = create<ProjectState>()(
   immer((set, get) => ({
     projects: DEFAULT_PROJECTS,
-    openProjectIds: DEFAULT_PROJECTS.map((p) => p.id),
-    activeProjectId: DEFAULT_PROJECTS[0].id,
-    activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || 'flow-smoke',
+    openProjectIds: [],
+    activeProjectId: '',
+    activeFlowId: '',
     defaultSaveLocation: '',
     browserPaths: {},
 
     getActiveProject: () => {
       const { projects, activeProjectId } = get();
-      return projects.find((p) => p.id === activeProjectId) || projects[0];
+      return (
+        projects.find((p) => p.id === activeProjectId) ||
+        projects[0] || {
+          id: '',
+          name: '',
+          description: '',
+          targetUrl: '',
+          environment: 'local',
+          tags: [],
+          createdAt: '',
+          updatedAt: '',
+          lastRunStatus: 'NEVER_RUN',
+          lastRunTime: '',
+          passRate: 0,
+          flows: [],
+          config: {
+            browser: 'chromium',
+            headless: false,
+            timeout: 10000,
+            retries: 0,
+          },
+        }
+      );
     },
 
     getOpenProjects: () => {
@@ -76,7 +98,7 @@ export const useProjectStore = create<ProjectState>()(
     getActiveFlow: () => {
       const activeProject = get().getActiveProject();
       const { activeFlowId } = get();
-      const flows = activeProject.flows;
+      const flows = activeProject?.flows || [];
       return (
         flows.find((f) => f.id === activeFlowId) ||
         flows[0] || {
@@ -84,8 +106,8 @@ export const useProjectStore = create<ProjectState>()(
           name: 'empty.yaml',
           path: 'flows/empty.yaml',
           tags: [],
-          metadata: { url: activeProject.targetUrl },
-          yamlContent: `# Empty Flow\nurl: ${activeProject.targetUrl}\n---\n- navigate: /`,
+          metadata: { url: activeProject?.targetUrl || '' },
+          yamlContent: `# Empty Flow\nurl: ${activeProject?.targetUrl || ''}\n---\n- navigate: /`,
           steps: [],
         }
       );

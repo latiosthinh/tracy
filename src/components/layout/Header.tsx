@@ -123,27 +123,29 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ROW 2: Active Project Tag & Flow Tabs */}
-      <div className="px-3 py-1 flex items-center justify-between gap-2 bg-stone-950">
-        <div className="flex items-center space-x-2 flex-1 min-w-0">
-          <div className="flex items-center space-x-1 bg-stone-900 border border-stone-800 rounded-[6px] px-2.5 py-1 shrink-0">
-            <Server className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-            <span className="text-amber-100 font-extrabold text-xs max-w-[120px] truncate">
-              {activeProject.name}
-            </span>
-          </div>
+      {activeProject && activeProject.id && allProjects.length > 0 && (
+        <div className="px-3 py-1 flex items-center justify-between gap-2 bg-stone-950">
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
+            <div className="flex items-center space-x-1 bg-stone-900 border border-stone-800 rounded-[6px] px-2.5 py-1 shrink-0">
+              <Server className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+              <span className="text-amber-100 font-extrabold text-xs max-w-[120px] truncate">
+                {activeProject.name}
+              </span>
+            </div>
 
-          <FlowTabs
-            flows={flows}
-            activeFlow={activeFlow}
-            isExecuting={isExecuting}
-            onSelectFlow={onSelectFlow}
-            onCloseFlowTab={onCloseFlowTab}
-            onCreateNewFlow={onCreateNewFlow}
-            onRenameFlow={onRenameFlow}
-            onUpdateFlowCategory={onUpdateFlowCategory}
-          />
+            <FlowTabs
+              flows={flows}
+              activeFlow={activeFlow}
+              isExecuting={isExecuting}
+              onSelectFlow={onSelectFlow}
+              onCloseFlowTab={onCloseFlowTab}
+              onCreateNewFlow={onCreateNewFlow}
+              onRenameFlow={onRenameFlow}
+              onUpdateFlowCategory={onUpdateFlowCategory}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };

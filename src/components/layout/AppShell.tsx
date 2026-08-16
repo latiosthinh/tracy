@@ -75,7 +75,7 @@ export const AppShell: React.FC = () => {
   const activeFlowId = useProjectStore((s) => s.activeFlowId);
 
   // Derived state
-  const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+  const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
   const openProjects = projects.filter((p) => openProjectIds.includes(p.id));
   const activeFlow =
     activeProject?.flows.find((f) => f.id === activeFlowId) ||
@@ -84,8 +84,8 @@ export const AppShell: React.FC = () => {
       name: 'empty.yaml',
       path: 'flows/empty.yaml',
       tags: [],
-      metadata: { url: activeProject?.targetUrl },
-      yamlContent: `# Empty Flow\nurl: ${activeProject?.targetUrl}\n---\n- navigate: /`,
+      metadata: { url: activeProject?.targetUrl || '' },
+      yamlContent: `# Empty Flow\nurl: ${activeProject?.targetUrl || ''}\n---\n- navigate: /`,
       steps: [],
     };
 
@@ -118,6 +118,13 @@ export const AppShell: React.FC = () => {
   const setDevicePreset = useUiStore((s) => s.setDevicePreset);
   const inspectMode = useUiStore((s) => s.inspectMode);
   const toggleInspectMode = useUiStore((s) => s.toggleInspectMode);
+
+  // When no projects exist, ensure view is 'projects' (Project & Environment Manager)
+  useEffect(() => {
+    if (projects.length === 0 && currentView !== 'projects') {
+      setCurrentView('projects');
+    }
+  }, [projects.length, currentView, setCurrentView]);
 
   const isDocsOpen = useUiStore((s) => s.isDocsOpen);
   const setDocsOpen = useUiStore((s) => s.setDocsOpen);

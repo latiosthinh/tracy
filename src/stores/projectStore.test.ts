@@ -1,21 +1,86 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useProjectStore } from './projectStore';
 import type { Project } from '@/src/types/project';
-import { DEFAULT_PROJECTS } from '@/src/data/defaultProjects';
 import { useDomSnapshotStore } from './domSnapshotStore';
+
+const MOCK_TEST_PROJECTS: Project[] = [
+  {
+    id: 'test-proj-1',
+    name: 'Project 1',
+    description: 'Test project 1',
+    targetUrl: 'https://p1.example.com',
+    environment: 'local',
+    tags: ['test'],
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    lastRunStatus: 'NEVER_RUN',
+    lastRunTime: 'Never',
+    passRate: 0,
+    flows: [
+      {
+        id: 'flow-1',
+        name: 'flow-1.yaml',
+        path: 'flows/flow-1.yaml',
+        category: 'Smoke',
+        tags: ['smoke'],
+        metadata: { url: 'https://p1.example.com' },
+        yamlContent: '- navigate: /',
+        steps: [
+          { id: 'step-1', command: 'navigate', value: '/', status: 'pending' },
+        ],
+      },
+      {
+        id: 'flow-2',
+        name: 'flow-2.yaml',
+        path: 'flows/flow-2.yaml',
+        category: 'E2E',
+        tags: ['regression'],
+        metadata: { url: 'https://p1.example.com' },
+        yamlContent: '- navigate: /about',
+        steps: [],
+      },
+    ],
+    config: { browser: 'chromium', headless: false, timeout: 10000, retries: 0 },
+  },
+  {
+    id: 'test-proj-2',
+    name: 'Project 2',
+    description: 'Test project 2',
+    targetUrl: 'https://p2.example.com',
+    environment: 'staging',
+    tags: ['test'],
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    lastRunStatus: 'NEVER_RUN',
+    lastRunTime: 'Never',
+    passRate: 0,
+    flows: [
+      {
+        id: 'flow-3',
+        name: 'flow-3.yaml',
+        path: 'flows/flow-3.yaml',
+        category: 'Smoke',
+        tags: ['smoke'],
+        metadata: { url: 'https://p2.example.com' },
+        yamlContent: '- navigate: /login',
+        steps: [],
+      },
+    ],
+    config: { browser: 'chromium', headless: false, timeout: 10000, retries: 0 },
+  },
+];
 
 function getStore() {
   return useProjectStore.getState();
 }
 
-function resetStore() {
+function resetStore(projects: Project[] = structuredClone(MOCK_TEST_PROJECTS)) {
   useDomSnapshotStore.setState({ snapshotsByProject: {} });
-  // Replace the entire state with a fresh copy to avoid immer proxy issues
   useProjectStore.setState({
-    projects: structuredClone(DEFAULT_PROJECTS),
-    openProjectIds: DEFAULT_PROJECTS.map((p) => p.id),
-    activeProjectId: DEFAULT_PROJECTS[0].id,
-    activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || '',
+    projects: structuredClone(projects),
+    openProjectIds: projects.map((p) => p.id),
+    activeProjectId: projects[0]?.id || '',
+    activeFlowId: projects[0]?.flows[0]?.id || '',
     defaultSaveLocation: '',
     browserPaths: {},
   } as any);
@@ -26,15 +91,13 @@ describe('projectStore', () => {
     resetStore();
   });
 
-  describe('initial state', () => {
-    it('has default projects loaded', () => {
-      const { projects } = getStore();
-      expect(projects.length).toBeGreaterThan(0);
-    });
-
-    it('has first project active', () => {
-      const { activeProjectId, projects } = getStore();
-      expect(activeProjectId).toBe(projects[0].id);
+  describe('initial state without projects', () => {
+    it('handles zero projects gracefully', () => {
+      resetStore([]);
+      const { projects, getActiveProject, getActiveFlow } = getStore();
+      expect(projects).toHaveLength(0);
+      expect(getActiveProject().id).toBe('');
+      expect(getActiveFlow().id).toBe('empty');
     });
   });
 
@@ -79,20 +142,17 @@ describe('projectStore', () => {
     });
 
     it('does not close last remaining tab', () => {
-      // Set up state with only 2 projects open
       useProjectStore.setState({
-        projects: structuredClone([DEFAULT_PROJECTS[0], DEFAULT_PROJECTS[1]]),
-        openProjectIds: [DEFAULT_PROJECTS[0].id, DEFAULT_PROJECTS[1].id],
-        activeProjectId: DEFAULT_PROJECTS[1].id,
-        activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || '',
+        projects: structuredClone([MOCK_TEST_PROJECTS[0], MOCK_TEST_PROJECTS[1]]),
+        openProjectIds: [MOCK_TEST_PROJECTS[0].id, MOCK_TEST_PROJECTS[1].id],
+        activeProjectId: MOCK_TEST_PROJECTS[1].id,
+        activeFlowId: MOCK_TEST_PROJECTS[0].flows[0]?.id || '',
       } as any);
 
-      // Close one tab, leaving 1
-      getStore().closeProjectTab(DEFAULT_PROJECTS[1].id);
+      getStore().closeProjectTab(MOCK_TEST_PROJECTS[1].id);
       expect(getStore().openProjectIds.length).toBe(1);
 
-      // Try to close the last tab — should be refused
-      getStore().closeProjectTab(DEFAULT_PROJECTS[0].id);
+      getStore().closeProjectTab(MOCK_TEST_PROJECTS[0].id);
       expect(getStore().openProjectIds.length).toBe(1);
     });
 
@@ -138,19 +198,17 @@ describe('projectStore', () => {
     });
 
     it('does not delete last project', () => {
-      // Set up state with only 2 projects
       useProjectStore.setState({
-        projects: structuredClone([DEFAULT_PROJECTS[0], DEFAULT_PROJECTS[1]]),
-        openProjectIds: [DEFAULT_PROJECTS[0].id, DEFAULT_PROJECTS[1].id],
-        activeProjectId: DEFAULT_PROJECTS[0].id,
-        activeFlowId: DEFAULT_PROJECTS[0].flows[0]?.id || '',
+        projects: structuredClone([MOCK_TEST_PROJECTS[0], MOCK_TEST_PROJECTS[1]]),
+        openProjectIds: [MOCK_TEST_PROJECTS[0].id, MOCK_TEST_PROJECTS[1].id],
+        activeProjectId: MOCK_TEST_PROJECTS[0].id,
+        activeFlowId: MOCK_TEST_PROJECTS[0].flows[0]?.id || '',
       } as any);
 
-      getStore().deleteProject(DEFAULT_PROJECTS[1].id);
+      getStore().deleteProject(MOCK_TEST_PROJECTS[1].id);
       expect(getStore().projects.length).toBe(1);
 
-      // Try to delete the last one — should be refused
-      getStore().deleteProject(DEFAULT_PROJECTS[0].id);
+      getStore().deleteProject(MOCK_TEST_PROJECTS[0].id);
       expect(getStore().projects.length).toBe(1);
     });
   });
@@ -238,7 +296,6 @@ describe('projectStore', () => {
 
     it('bulkDeleteSteps removes steps at specified indices', () => {
       const flow = getStore().getActiveFlow();
-      // Ensure at least 3 steps
       getStore().updateFlowSteps([
         { id: 's1', command: 'navigate', value: '/1', status: 'pending' },
         { id: 's2', command: 'navigate', value: '/2', status: 'pending' },
