@@ -70,8 +70,8 @@ Plans:
 **Requirements:** AI-01, AI-02, AI-03
 
 Plans:
-- [ ] 07-01-PLAN.md — QA Recipe prompt preset library (form validation, responsive nav, accessibility audit, edge-case auth, checkout flows)
-- [ ] 07-02-PLAN.md — Side-by-side visual diff preview modal before applying AI-generated YAML steps (Replace vs. Append vs. Discard)
+- [x] 07-01-PLAN.md — QA Recipe prompt preset library (form validation, responsive nav, accessibility audit, edge-case auth, checkout flows)
+- [x] 07-02-PLAN.md — Side-by-side visual diff preview modal before applying AI-generated YAML steps (Replace vs. Append vs. Discard)
 - [ ] 07-03-PLAN.md — Live generation speed metrics (tokens/sec, total tokens, provider latency indicator)
 
 ---
