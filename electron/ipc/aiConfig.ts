@@ -57,7 +57,7 @@ export interface AiConnectionTestResult {
   errorMessage?: string;
 }
 
-let inMemoryKeys: Map<string, string> = new Map();
+const inMemoryKeys: Map<string, string> = new Map();
 
 // ── Helpers ───────────────────────────────────────────────
 

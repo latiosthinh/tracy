@@ -219,7 +219,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
       }
 
       // 4. Fetch messages (handle pagination if has_more)
-      let allMessages: Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }> = [];
+      const allMessages: Array<{ role?: string; content?: string | Array<{ text?: string; type?: string }> }> = [];
       let cursor: string | undefined = undefined;
 
       while (true) {

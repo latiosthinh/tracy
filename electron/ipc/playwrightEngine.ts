@@ -1,6 +1,6 @@
-import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { chromium, Browser, Page, BrowserContext } from 'playwright-core';
-import { runCompactObserve, formatCompactTree, discoverSiteUrls, authenticate } from 'dom-miner';
+import { runCompactObserve, formatCompactTree, authenticate } from 'dom-miner';
 import { isAllowedNavigationUrl } from './webviewManager.js';
 
 let browser: Browser | null = null;
@@ -78,7 +78,7 @@ export function registerPlaywrightHandlers() {
   });
 
   ipcMain.handle('mine_batch_urls', async (event, { targets, returnToUrl }: { targets: any[], returnToUrl?: string }) => {
-    let currentPage = await getActivePage();
+    const currentPage = await getActivePage();
     if (!currentPage) throw new Error('Browser not launched');
 
     if (returnToUrl && !isAllowedNavigationUrl(returnToUrl)) {

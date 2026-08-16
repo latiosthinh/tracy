@@ -1,39 +1,35 @@
+import tseslint from 'typescript-eslint';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
-import babelParser from '@babel/eslint-parser';
+import reactHooks from 'eslint-plugin-react-hooks';
+import unusedImports from 'eslint-plugin-unused-imports';
 
-const jsxA11yWarnRules = Object.fromEntries(
-  Object.entries(jsxA11y.configs.recommended.rules).map(([key, value]) => [
-    key,
-    value === 'error' || (Array.isArray(value) && value[0] === 'error') ? (Array.isArray(value) ? ['warn', ...value.slice(1)] : 'warn') : value,
-  ])
-);
-
-export default [
+export default tseslint.config(
   {
-    ignores: ['dist/**', 'dist-electron/**', 'release/**', 'node_modules/**'],
+    ignores: ['dist/**', 'dist-electron/**', 'dist-web/**', 'release/**', 'node_modules/**', 'api/**', 'scripts/**'],
   },
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.{jsx,tsx,ts,js,mjs}'],
-    languageOptions: {
-      parser: babelParser,
-      parserOptions: {
-        requireConfigFile: false,
-        babelOptions: {
-          presets: [
-            '@babel/preset-react',
-            '@babel/preset-typescript',
-          ],
-        },
-      },
-    },
     plugins: {
       'jsx-a11y': jsxA11y,
+      'react-hooks': reactHooks,
+      'unused-imports': unusedImports,
     },
     rules: {
-      ...jsxA11yWarnRules,
+      ...jsxA11y.configs.recommended.rules,
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
-];
+);
+
+
+
 
 
 

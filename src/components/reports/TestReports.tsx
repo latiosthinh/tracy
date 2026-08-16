@@ -38,7 +38,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
 
   const handleExportReport = (format: 'html' | 'json' | 'junit') => {
     let content = '';
-    let filename = `tracy-report.${format === 'junit' ? 'xml' : format}`;
+    const filename = `tracy-report.${format === 'junit' ? 'xml' : format}`;
     let mimeType = 'text/plain';
 
     if (format === 'json') {
