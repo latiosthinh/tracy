@@ -28,6 +28,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'resize_child_webview',
   'set_child_webview_visible',
   'close_child_webview',
+  'emulate_media_theme',
 ];
 
 const ALLOWED_ON_CHANNELS = [
@@ -40,7 +41,7 @@ const ALLOWED_ON_CHANNELS = [
 
 describe('IPC channel whitelists', () => {
   it('invoke whitelist has expected count', () => {
-    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(27);
+    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(28);
   });
 
   it('on whitelist has expected count', () => {

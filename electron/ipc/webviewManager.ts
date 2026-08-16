@@ -164,4 +164,16 @@ export function registerWebviewHandlers() {
     entry.view.webContents.close();
     webviews.delete(projectId);
   });
+
+  ipcMain.handle('emulate_media_theme', async (_event, { projectId, theme }: { projectId: string; theme: 'dark' | 'light' | 'no-preference' }) => {
+    if (!isValidProjectId(projectId)) return;
+    const validThemes = ['dark', 'light', 'no-preference'];
+    if (!validThemes.includes(theme)) return;
+    const entry = webviews.get(projectId);
+    if (!entry) return;
+
+    entry.view.webContents.emulateMedia({
+      colorScheme: theme === 'no-preference' ? 'no-preference' : theme,
+    });
+  });
 }

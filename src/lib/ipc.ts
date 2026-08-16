@@ -269,4 +269,9 @@ export const tracyApi = {
     if (!isElectronEnv()) return;
     return invoke('close_child_webview', { projectId });
   },
+
+  emulateMediaTheme: async (projectId: string, theme: 'dark' | 'light' | 'no-preference'): Promise<void> => {
+    if (!isElectronEnv()) return;
+    return invoke('emulate_media_theme', { projectId, theme });
+  },
 };

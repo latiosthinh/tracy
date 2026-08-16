@@ -34,6 +34,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'resize_child_webview',
   'set_child_webview_visible',
   'close_child_webview',
+  'emulate_media_theme',
 ];
 
 const ALLOWED_ON_CHANNELS = [

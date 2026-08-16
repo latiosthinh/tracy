@@ -103,6 +103,10 @@ describe('tracyApi fallbacks (non-Electron)', () => {
     await expect(tracyApi.closeChildWebview('proj-1')).resolves.toBeUndefined();
   });
 
+  it('emulateMediaTheme returns void', async () => {
+    await expect(tracyApi.emulateMediaTheme('proj-1', 'dark')).resolves.toBeUndefined();
+  });
+
   it('launchBrowser returns void', async () => {
     await expect(tracyApi.launchBrowser()).resolves.toBeUndefined();
   });
