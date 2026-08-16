@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import { quoteCmdArg } from './cliRunner';
 import { assertSafePath, resolveSafeBase } from './fileSystem';
+import { isAllowedNavigationUrl } from './webviewManager';
 
 describe('Security Hardening: Command Injection & Path Traversal', () => {
   describe('cliRunner quoteCmdArg', () => {
@@ -67,6 +68,31 @@ describe('Security Hardening: Command Injection & Path Traversal', () => {
       // Should return a resolved string when valid
       const resolved = resolveSafeBase('/tmp/test-project');
       expect(resolved).toBe(path.resolve('/tmp/test-project'));
+    });
+  });
+
+  describe('Navigation jail URL allowlist isAllowedNavigationUrl', () => {
+    it('allows http, https, and about:blank URLs', () => {
+      expect(isAllowedNavigationUrl('http://example.com')).toBe(true);
+      expect(isAllowedNavigationUrl('https://example.com/login?param=1')).toBe(true);
+      expect(isAllowedNavigationUrl('about:blank')).toBe(true);
+      expect(isAllowedNavigationUrl('http://localhost:3000')).toBe(true);
+    });
+
+    it('blocks dangerous schemes like javascript:, file:, data:, blob:, ws:', () => {
+      expect(isAllowedNavigationUrl('javascript:alert(1)')).toBe(false);
+      expect(isAllowedNavigationUrl('file:///etc/passwd')).toBe(false);
+      expect(isAllowedNavigationUrl('data:text/html,<script>alert(1)</script>')).toBe(false);
+      expect(isAllowedNavigationUrl('blob:http://example.com/uuid')).toBe(false);
+      expect(isAllowedNavigationUrl('ws://evil.com')).toBe(false);
+    });
+
+    it('rejects non-string or malformed inputs', () => {
+      expect(isAllowedNavigationUrl('')).toBe(false);
+      expect(isAllowedNavigationUrl(null)).toBe(false);
+      expect(isAllowedNavigationUrl(undefined)).toBe(false);
+      expect(isAllowedNavigationUrl(12345 as any)).toBe(false);
+      expect(isAllowedNavigationUrl('not-a-url')).toBe(false);
     });
   });
 });

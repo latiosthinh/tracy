@@ -14,6 +14,25 @@ function isValidProjectId(projectId: unknown): projectId is string {
   return typeof projectId === 'string' && projectId.length > 0 && projectId.length <= 128;
 }
 
+export function isAllowedNavigationUrl(url: unknown): url is string {
+  if (typeof url !== 'string' || !url.trim()) return false;
+  const trimmed = url.trim();
+  if (trimmed === 'about:blank') return true;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidBounds(x: unknown, y: unknown, width: unknown, height: unknown): boolean {
+  return typeof x === 'number' && Number.isFinite(x) &&
+    typeof y === 'number' && Number.isFinite(y) &&
+    typeof width === 'number' && Number.isFinite(width) && width >= 0 &&
+    typeof height === 'number' && Number.isFinite(height) && height >= 0;
+}
+
 function evictIfNeeded(parentWin: BrowserWindow): void {
   while (webviews.size > MAX_LIVE_WEBVIEWS) {
     let oldestId: string | null = null;
@@ -36,6 +55,16 @@ function evictIfNeeded(parentWin: BrowserWindow): void {
   }
 }
 
+function attachSecurityHandlers(view: WebContentsView): void {
+  view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  view.webContents.on('will-navigate', (event, navigationUrl) => {
+    if (!isAllowedNavigationUrl(navigationUrl)) {
+      event.preventDefault();
+      console.warn(`Blocked invalid child webview navigation: ${navigationUrl}`);
+    }
+  });
+}
+
 export function registerWebviewHandlers() {
   ipcMain.handle('open_child_webview', async (event, { projectId, url, x, y, width, height }) => {
     if (!isValidProjectId(projectId)) {
@@ -43,8 +72,13 @@ export function registerWebviewHandlers() {
       return;
     }
 
-    if (url && !url.startsWith('http://') && !url.startsWith('https://') && url !== 'about:blank') {
+    if (url && !isAllowedNavigationUrl(url)) {
       console.warn(`Blocked invalid webview URL navigation attempt: ${url}`);
+      return;
+    }
+
+    if (!isValidBounds(x, y, width, height)) {
+      console.warn(`Blocked invalid webview bounds: x=${x}, y=${y}, w=${width}, h=${height}`);
       return;
     }
 
@@ -77,6 +111,8 @@ export function registerWebviewHandlers() {
       },
     });
 
+    attachSecurityHandlers(view);
+
     const initialBounds = { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) };
     parentWin.contentView.addChildView(view);
     view.setBounds(initialBounds);
@@ -90,6 +126,7 @@ export function registerWebviewHandlers() {
 
   ipcMain.handle('resize_child_webview', async (event, { projectId, x, y, width, height }) => {
     if (!isValidProjectId(projectId)) return;
+    if (!isValidBounds(x, y, width, height)) return;
     const entry = webviews.get(projectId);
     if (!entry) return;
 

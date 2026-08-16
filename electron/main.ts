@@ -36,6 +36,20 @@ function createWindow() {
 
   win.setMenuBarVisibility(false);
 
+  // Security: deny new window creation from renderer
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+  // Security: navigation jail - block unauthorized top-level navigations
+  win.webContents.on('will-navigate', (event, navigationUrl) => {
+    if (VITE_DEV_SERVER_URL) {
+      if (navigationUrl.startsWith(VITE_DEV_SERVER_URL)) return;
+    }
+    if (navigationUrl.startsWith('file://')) return;
+
+    event.preventDefault();
+    console.warn(`Blocked main window unauthorized navigation: ${navigationUrl}`);
+  });
+
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {

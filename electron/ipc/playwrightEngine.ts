@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { chromium, Browser, Page, BrowserContext } from 'playwright-core';
 import { runCompactObserve, formatCompactTree, discoverSiteUrls, authenticate } from 'dom-miner';
+import { isAllowedNavigationUrl } from './webviewManager.js';
 
 let browser: Browser | null = null;
 let context: BrowserContext | null = null;
@@ -27,6 +28,10 @@ export function registerPlaywrightHandlers() {
   };
 
   ipcMain.handle('navigate_browser', async (event, { url }) => {
+    if (!isAllowedNavigationUrl(url)) {
+      throw new Error(`Navigation blocked: URL scheme not permitted "${url}"`);
+    }
+
     page = await getActivePage();
     if (!page) throw new Error('Browser not launched or page not found');
     
@@ -76,9 +81,17 @@ export function registerPlaywrightHandlers() {
     let currentPage = await getActivePage();
     if (!currentPage) throw new Error('Browser not launched');
 
+    if (returnToUrl && !isAllowedNavigationUrl(returnToUrl)) {
+      throw new Error(`Mining blocked: invalid return URL "${returnToUrl}"`);
+    }
+
     const results = [];
     for (let i = 0; i < targets.length; i++) {
       const target = targets[i];
+      if (!target?.url || !isAllowedNavigationUrl(target.url)) {
+        console.warn(`Skipping invalid target URL in mine_batch_urls: ${target?.url}`);
+        continue;
+      }
       event.sender.send('mine_progress', `Mining page ${i + 1}/${targets.length}: ${target.url}`);
       
       try {
@@ -351,7 +364,14 @@ export function registerPlaywrightHandlers() {
         switch (cmd) {
           case 'navigate': {
             const url = step.value || step.target || '/';
-            const fullUrl = url.startsWith('http') ? url : `${targetBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+            const fullUrl = url.startsWith('http://') || url.startsWith('https://') || url === 'about:blank'
+              ? url
+              : `${targetBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+            
+            if (!isAllowedNavigationUrl(fullUrl)) {
+              throw new Error(`Flow step navigate blocked: URL "${fullUrl}" is not allowed`);
+            }
+
             await currentPage.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout });
             break;
           }
