@@ -102,7 +102,9 @@ export function registerFileSystemHandlers() {
           model: finalModel,
           env,
           onChunk: (d: string) => {
-            event.sender.send('ai-stream-chunk', { agentId, delta: d });
+            if (!event.sender.isDestroyed()) {
+              event.sender.send('ai-stream-chunk', { agentId, delta: d });
+            }
           },
         });
       } catch (err: unknown) {
@@ -128,7 +130,9 @@ export function registerFileSystemHandlers() {
           prompt,
           systemInstruction,
           (chunk: string) => {
-            event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
+            if (!event.sender.isDestroyed()) {
+              event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
+            }
             result += chunk;
           },
         );

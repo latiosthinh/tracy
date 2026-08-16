@@ -108,6 +108,7 @@ export const tracyApi = {
   },
 
   onAgentStreamChunk: async (callback: (payload: StreamChunkPayload) => void): Promise<UnlistenFn> => {
+    if (!isElectronEnv()) return () => {};
     return listen<StreamChunkPayload>('ai-stream-chunk', callback);
   },
 
@@ -150,10 +151,12 @@ export const tracyApi = {
   },
 
   onStepUpdate: async (callback: (payload: StepUpdatePayload) => void): Promise<UnlistenFn> => {
+    if (!isElectronEnv()) return () => {};
     return listen<StepUpdatePayload>('step-update', callback);
   },
 
   onExecutionLog: async (callback: (payload: ExecutionLogEntry) => void): Promise<UnlistenFn> => {
+    if (!isElectronEnv()) return () => {};
     return listen<ExecutionLogEntry>('execution-log', callback);
   },
 

@@ -27,6 +27,7 @@ export const AppShell: React.FC = () => {
 
   const scanAgents = useAgentStore((s) => s.scanAgents);
   const setupEventListeners = useExecutionStore((s) => s.setupEventListeners);
+  const cleanupEventListeners = useExecutionStore((s) => s.cleanupEventListeners);
   const loadProjectsFromIndexedDb = useProjectStore((s) => s.loadProjectsFromIndexedDb);
 
   // Auto-save hook
@@ -34,20 +35,30 @@ export const AppShell: React.FC = () => {
 
   // Initial load sequence using real async tasks in background
   useEffect(() => {
+    let isMounted = true;
     const loadApp = async () => {
       try {
         await loadProjectsFromIndexedDb();
         await scanAgents();
-        await setupEventListeners();
+        if (isMounted) {
+          await setupEventListeners();
+        }
       } catch (err) {
         console.error('Error during initial app boot:', err);
       } finally {
-        setDataReady(true);
+        if (isMounted) {
+          setDataReady(true);
+        }
       }
     };
 
     loadApp();
-  }, [scanAgents, setupEventListeners, loadProjectsFromIndexedDb]);
+
+    return () => {
+      isMounted = false;
+      cleanupEventListeners();
+    };
+  }, [scanAgents, setupEventListeners, cleanupEventListeners, loadProjectsFromIndexedDb]);
 
   const isLoading = !dataReady || !splashFinished;
 

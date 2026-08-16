@@ -92,13 +92,17 @@ export function registerPlaywrightHandlers() {
         console.warn(`Skipping invalid target URL in mine_batch_urls: ${target?.url}`);
         continue;
       }
-      event.sender.send('mine_progress', `Mining page ${i + 1}/${targets.length}: ${target.url}`);
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('mine_progress', `Mining page ${i + 1}/${targets.length}: ${target.url}`);
+      }
       
       try {
         await currentPage.goto(target.url, { waitUntil: 'load', timeout: 20000 });
         
         if (target.credential?.username || target.credential?.password) {
-          event.sender.send('mine_progress', `Authenticating on ${target.url}...`);
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('mine_progress', `Authenticating on ${target.url}...`);
+          }
           try {
             await authenticate(currentPage, target.credential);
             await new Promise(r => setTimeout(r, 3000));
@@ -129,7 +133,9 @@ export function registerPlaywrightHandlers() {
     }
 
     if (returnToUrl) {
-      event.sender.send('mine_progress', `Restoring original page...`);
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('mine_progress', `Restoring original page...`);
+      }
       try {
         await currentPage.goto(returnToUrl, { waitUntil: 'load', timeout: 15000 });
       } catch(e) {}
@@ -207,11 +213,18 @@ export function registerPlaywrightHandlers() {
     } catch (e) {}
 
     if (mode === 'inspect' || mode === 'record') {
+      const win = BrowserWindow.fromWebContents(event.sender);
       try {
         // Expose binding if not already exposed
         await page.exposeFunction('__tracyEmitEvent', (type: string, data: any) => {
-          const wins = require('electron').BrowserWindow.getAllWindows();
-          if (wins[0]) wins[0].webContents.send('browser-event', { type, data });
+          if (win && !win.isDestroyed()) {
+            win.webContents.send('browser-event', { type, data });
+          } else {
+            const wins = BrowserWindow.getAllWindows();
+            if (wins[0] && !wins[0].isDestroyed()) {
+              wins[0].webContents.send('browser-event', { type, data });
+            }
+          }
         });
       } catch (e) {
         // ignore if already exposed
@@ -298,17 +311,21 @@ export function registerPlaywrightHandlers() {
     const sender = event.sender;
 
     const sendLog = (level: string, stepIndex: number, message: string) => {
-      sender.send('execution-log', {
-        id: `log-${Date.now()}-${stepIndex}`,
-        timestamp: new Date().toLocaleTimeString(),
-        level,
-        stepIndex,
-        message,
-      });
+      if (!sender.isDestroyed()) {
+        sender.send('execution-log', {
+          id: `log-${Date.now()}-${stepIndex}`,
+          timestamp: new Date().toLocaleTimeString(),
+          level,
+          stepIndex,
+          message,
+        });
+      }
     };
 
     const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string) => {
-      sender.send('step-update', { stepIndex, status, durationMs, errorMessage });
+      if (!sender.isDestroyed()) {
+        sender.send('step-update', { stepIndex, status, durationMs, errorMessage });
+      }
     };
 
     /**

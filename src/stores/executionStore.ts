@@ -9,6 +9,7 @@ interface ExecutionState {
   executionLogs: ExecutionLog[];
   lastResult: TestRunResult | null;
   eventListenersSet: boolean;
+  eventListenersSetting: boolean;
   unlistenFns: UnlistenFn[];
 
   setExecutionSpeed: (speed: number) => void;
@@ -28,6 +29,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
   executionLogs: [],
   lastResult: null,
   eventListenersSet: false,
+  eventListenersSetting: false,
   unlistenFns: [],
 
   setExecutionSpeed: (speed: number) => set({ executionSpeed: speed }),
@@ -56,21 +58,30 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
   },
 
   setupEventListeners: async () => {
-    if (get().eventListenersSet) return;
+    if (get().eventListenersSet || get().eventListenersSetting) return;
+    set({ eventListenersSetting: true });
+
     if (isElectronEnv()) {
-      const unlisten1 = await tracyApi.onStepUpdate((payload) => {
-        get().updateStepStatus(payload.stepIndex, payload.status, payload.durationMs, payload.errorMessage);
-      });
-      const unlisten2 = await tracyApi.onExecutionLog((payload) => {
-        get().addLogEntry({
-          id: payload.id,
-          timestamp: payload.timestamp,
-          level: payload.level,
-          stepIndex: payload.stepIndex,
-          message: payload.message,
+      try {
+        get().cleanupEventListeners();
+        const unlisten1 = await tracyApi.onStepUpdate((payload) => {
+          get().updateStepStatus(payload.stepIndex, payload.status, payload.durationMs, payload.errorMessage);
         });
-      });
-      set({ eventListenersSet: true, unlistenFns: [unlisten1, unlisten2] });
+        const unlisten2 = await tracyApi.onExecutionLog((payload) => {
+          get().addLogEntry({
+            id: payload.id,
+            timestamp: payload.timestamp,
+            level: payload.level,
+            stepIndex: payload.stepIndex,
+            message: payload.message,
+          });
+        });
+        set({ eventListenersSet: true, unlistenFns: [unlisten1, unlisten2] });
+      } finally {
+        set({ eventListenersSetting: false });
+      }
+    } else {
+      set({ eventListenersSetting: false });
     }
   },
 
