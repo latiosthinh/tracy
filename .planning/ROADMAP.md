@@ -44,9 +44,9 @@ Plans:
 **Requirements:** LAYOUT-01, LAYOUT-02, LAYOUT-03
 
 Plans:
-- [ ] 05-01-PLAN.md — Horizontal vs. vertical studio layout split orientation with persistent divider state and keyboard resizing
-- [ ] 05-02-PLAN.md — Realistic device bezel frames with portrait/landscape orientation flip and scale-to-fit mode
-- [ ] 05-03-PLAN.md — Dark/Light color scheme emulation toggle for the embedded webview browser
+- [x] 05-01-PLAN.md — Horizontal vs. vertical studio layout split orientation with persistent divider state and keyboard resizing
+- [x] 05-02-PLAN.md — Realistic device bezel frames with portrait/landscape orientation flip and scale-to-fit mode
+- [x] 05-03-PLAN.md — Dark/Light color scheme emulation toggle for the embedded webview browser
 
 ---
 

@@ -31,21 +31,21 @@ Acceptance:
 
 ### LAYOUT — Studio Layout Versatility & Device Viewports
 
-**LAYOUT-01: Horizontal vs. Vertical Studio Split**
+**LAYOUT-01: Horizontal vs. Vertical Studio Split** [x]
 Users can switch between side-by-side (vertical divider) and top-and-bottom (horizontal divider) layouts.
 Acceptance:
 - Toggle button in studio toolbar and shortcut to swap split orientation
 - Draggable divider adjusts widths or heights smoothly with `role="slider"` keyboard support
 - Layout preference persists in `uiStore`
 
-**LAYOUT-02: Realistic Device Bezel Frames**
+**LAYOUT-02: Realistic Device Bezel Frames** [x]
 Device presets can be previewed inside realistic device frames.
 Acceptance:
 - Device frames for Desktop, Laptop, iPad/Tablet, and iPhone/Mobile with realistic dimensions and rounded bezels
 - Orientation flip toggle (Portrait vs. Landscape) for mobile/tablet viewports
 - Scale-to-fit toggle ensuring device frame fits within the studio pane
 
-**LAYOUT-03: Page Dark/Light Emulation Toggle**
+**LAYOUT-03: Page Dark/Light Emulation Toggle** [x]
 Studio toolbar allows emulating `prefers-color-scheme: dark` or `light` on the embedded page.
 Acceptance:
 - One-click toggle in toolbar injecting color-scheme emulation into the webview
