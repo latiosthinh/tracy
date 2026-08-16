@@ -98,13 +98,13 @@ Acceptance:
 
 ### REPORT — Interactive HTML Reports & Latency Flamechart
 
-**REPORT-01: Standalone Single-File HTML Report Export**
+**REPORT-01: Standalone Single-File HTML Report Export** [x]
 Generate a zero-dependency HTML test report bundle for sharing.
 Acceptance:
 - Standalone HTML file with embedded CSS, base64 failure screenshots, and step timeline
 - Openable in any web browser without needing ProQA running
 
-**REPORT-02: Execution Latency Flamechart & Bottleneck Inspector**
+**REPORT-02: Execution Latency Flamechart & Bottleneck Inspector** [x]
 Visual timing breakdown for each step in a test flow.
 Acceptance:
 - Horizontal waterfall / flamechart displaying step durations

@@ -76,7 +76,7 @@ Plans:
 
 ---
 
-### Phase 08: Interactive HTML Reports & Latency Flamechart
+### Phase 08: Interactive HTML Reports & Latency Flamechart (Completed)
 
 **Goal:** Enable sharing standalone single-file HTML execution reports with embedded screenshots and an interactive step execution latency flamechart.
 
@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Standalone zero-dependency HTML test report exporter with embedded CSS, base64 failure screenshots, and step timeline
-- [ ] 08-02-PLAN.md — Execution latency waterfall flamechart inspector highlighting step bottlenecks and slow selector warnings
+- [x] 08-02-PLAN.md — Execution latency waterfall flamechart inspector highlighting step bottlenecks and slow selector warnings
 
 
 
