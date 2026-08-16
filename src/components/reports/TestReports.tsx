@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { TestRunResult } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { generateStandaloneHtmlReport } from '@/src/utils/htmlReportExporter';
 
 interface TestReportsProps {
   lastResult?: TestRunResult | null;
@@ -45,7 +46,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
       content = JSON.stringify(lastResult, null, 2);
       mimeType = 'application/json';
     } else if (format === 'html') {
-      content = `<!DOCTYPE html><html><head><title>Tracy E2E Test Report</title></head><body><h1>Tracy Test Report: ${lastResult.flowName}</h1><p>Status: ${lastResult.status}</p><p>Passed: ${lastResult.passedCount}/${lastResult.totalCount}</p></body></html>`;
+      content = generateStandaloneHtmlReport(lastResult, lastResult.flowName);
       mimeType = 'text/html';
     } else {
       content = `<testsuites><testsuite name="${lastResult.flowName}" tests="${lastResult.totalCount}" failures="${lastResult.failedCount}"></testsuite></testsuites>`;
@@ -82,10 +83,12 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => handleExportReport('html')}
+            title={t('reports.htmlExport.ariaLabel')}
+            aria-label={t('reports.htmlExport.ariaLabel')}
             className="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-amber-50 font-bold text-xs rounded-[6px] border border-amber-600 flex items-center space-x-1 shadow-xs transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{t('reports.exportHtml')}</span>
+            <span>{t('reports.htmlExport.downloadButton')}</span>
           </button>
           <button
             onClick={() => handleExportReport('junit')}

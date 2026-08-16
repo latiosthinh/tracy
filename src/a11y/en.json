@@ -535,6 +535,11 @@
     "noReportsDesc": "Run your E2E test suite from the runner toolbar to generate interactive HTML/JUnit reports, screenshots, and trace logs.",
     "executedAt": "Executed at {time}",
     "exportHtml": "Export HTML",
+    "htmlExport": {
+      "downloadButton": "Download HTML Report",
+      "exportedSuccess": "HTML Report generated and downloaded successfully.",
+      "ariaLabel": "Download standalone HTML test report"
+    },
     "exportJunit": "JUnit XML",
     "passedSteps": "Passed Steps",
     "failedSteps": "Failed Steps",
