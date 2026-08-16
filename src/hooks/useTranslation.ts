@@ -2,8 +2,22 @@ import enTranslations from '@/src/a11y/en.json';
 
 export type Translations = typeof enTranslations;
 
+type DotPrefix<T extends string> = T extends '' ? '' : `.${T}`;
+
+export type DotNestedKeys<T> = (
+  T extends object
+    ? {
+        [K in Exclude<keyof T, symbol>]: `${K}${DotPrefix<DotNestedKeys<T[K]>>}`;
+      }[Exclude<keyof T, symbol>]
+    : ''
+) extends infer D
+  ? Extract<D, string>
+  : never;
+
+export type TranslationKey = DotNestedKeys<Translations>;
+
 export function useTranslation() {
-  const t = (key: string, params?: Record<string, string | number>): string => {
+  const t = (key: TranslationKey | (string & {}), params?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let current: any = enTranslations;
     
@@ -30,4 +44,5 @@ export function useTranslation() {
 
   return { t };
 }
+
 

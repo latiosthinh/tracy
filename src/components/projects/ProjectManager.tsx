@@ -519,7 +519,7 @@ export const ProjectManager: React.FC<ProjectManagerProps> = ({
                   required
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
-                  placeholder="e.g., Customer Billing Portal"
+                  placeholder={t('projects.namePlaceholder')}
                   className="w-full p-2.5 bg-stone-950 border border-stone-800 rounded-[6px] text-stone-100 text-xs focus:outline-hidden focus:border-amber-600"
                 />
               </div>

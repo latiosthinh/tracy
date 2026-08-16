@@ -426,7 +426,7 @@ export const StudioView: React.FC = () => {
       <div
         role="slider"
         tabIndex={0}
-        aria-label="Resize panel divider"
+        aria-label={t('studio.resizeDividerAria')}
         aria-valuenow={sidePanelWidth}
         aria-valuemin={280}
         aria-valuemax={800}

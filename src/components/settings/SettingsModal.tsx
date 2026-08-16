@@ -497,7 +497,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="p-3 bg-stone-950 border border-stone-800 rounded-[6px] flex items-center gap-2">
                   <input
                     type="text"
-                    aria-label="Environment variable key"
+                    aria-label={t('settings.envKeyAria')}
                     placeholder={t('settings.envKeyPlaceholder')}
                     value={newEnvKey}
                     onChange={(e) => setNewEnvKey(e.target.value.toUpperCase())}
@@ -505,7 +505,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   />
                   <input
                     type="text"
-                    aria-label="Environment variable value"
+                    aria-label={t('settings.envValAria')}
                     placeholder={t('settings.envValPlaceholder')}
                     value={newEnvVal}
                     onChange={(e) => setNewEnvVal(e.target.value)}

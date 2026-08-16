@@ -567,7 +567,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
               <ul
                 ref={autocompleteListRef}
                 role="listbox"
-                aria-label="YAML Autocomplete Suggestions"
+                aria-label={t('editor.autocompleteAria')}
                 className="absolute z-50 bg-stone-900 border border-stone-700 rounded-lg shadow-2xl py-1.5 text-[11px] font-mono w-64 max-h-56 overflow-y-auto"
                 style={{ top: autocomplete.y, left: autocomplete.x }}
               >
