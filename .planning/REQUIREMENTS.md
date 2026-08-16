@@ -54,20 +54,20 @@ Acceptance:
 
 ### EDIT — Editor Polish, YAML Diffing & Playwright TS Exporter
 
-**EDIT-01: Side-by-Side YAML Diff View**
+**EDIT-01: Side-by-Side YAML Diff View** [x]
 Users can compare active flow YAML against last-run snapshot or saved baseline.
 Acceptance:
 - Side-by-side split visual diff highlighting added, modified, and removed steps
 - One-click revert or accept individual changes
 
-**EDIT-02: Visual Step Editor Productivity**
+**EDIT-02: Visual Step Editor Productivity** [x]
 Advanced multi-step manipulation in the visual builder.
 Acceptance:
 - Step duplication (`Alt+Drag` or duplicate button)
 - Multi-step selection for bulk delete or category re-tagging
 - Step reorder drag handles with smooth insertion indicator
 
-**EDIT-03: One-Click Playwright TypeScript Exporter**
+**EDIT-03: One-Click Playwright TypeScript Exporter** [x]
 Generate executable Playwright test code from any YAML flow.
 Acceptance:
 - Export button producing idiomatic `@playwright/test` TypeScript code

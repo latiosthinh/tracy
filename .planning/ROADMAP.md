@@ -50,16 +50,16 @@ Plans:
 
 ---
 
-### Phase 06: Editor Polish, YAML Diffing & Playwright TS Exporter
+### Phase 06: Editor Polish, YAML Diffing & Playwright TS Exporter (Completed)
 
 **Goal:** Elevate authoring productivity with side-by-side YAML diffing against baseline/last-run, multi-step selection/duplication in the visual builder, and one-click Playwright TypeScript code export.
 
 **Requirements:** EDIT-01, EDIT-02, EDIT-03
 
 Plans:
-- [ ] 06-01-PLAN.md — Visual side-by-side YAML diff viewer comparing active flow against previous snapshot or saved baseline
-- [ ] 06-02-PLAN.md — Visual step editor enhancements: multi-step selection, step duplication (`Alt+Drag` / `Ctrl+D`), and smooth drag handles
-- [ ] 06-03-PLAN.md — One-click "Export as Playwright TypeScript" code generator (`.spec.ts`) with clipboard copy and file download
+- [x] 06-01-PLAN.md — Visual side-by-side YAML diff viewer comparing active flow against previous snapshot or saved baseline
+- [x] 06-02-PLAN.md — Visual step editor enhancements: multi-step selection, step duplication (`Alt+Drag` / `Ctrl+D`), and smooth drag handles
+- [x] 06-03-PLAN.md — One-click "Export as Playwright TypeScript" code generator (`.spec.ts`) with clipboard copy and file download
 
 ---
 

@@ -3,21 +3,21 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Atomic UI/UX Perfection & Power Studio Workflows
 status: ready
-last_updated: "2026-08-16T11:07:00.000Z"
+last_updated: "2026-08-16T11:20:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 5
-  percent: 42
+  completed_plans: 6
+  percent: 50
 ---
 
 # Project State
 
 **Status:** Executing Milestone v2.0
 **Milestone:** v2.0 — Atomic UI/UX Perfection & Power Studio Workflows
-**Phase:** 05-studio-layout-and-viewports
-**Current Plan:** 05-03-PLAN.md (Completed)
+**Phase:** 06-editor-polish-and-exporter
+**Current Plan:** 06-03-PLAN.md (Completed)
 
 ## Milestone v2.0 Scope
 
@@ -37,9 +37,11 @@ progress:
 - Command Palette uses native `<button role="option">` elements for strict A11y and focus compliance
 - Global shortcuts hook safely ignores single-key shortcuts (`?`) inside input/textarea elements
 - Dark/Light color scheme emulation uses `webContents.emulateMedia({ colorScheme })` and persists state in `uiStore`
+- Playwright code generator exports clean standalone TypeScript test specs from YAML steps
 
 ## Recent Activity
 
+- 2026-08-16 — Completed 06-03-PLAN.md: Playwright TypeScript exporter, unit tests, and code preview/download modal
 - 2026-08-16 — Completed 05-03-PLAN.md: Color scheme emulation IPC handler (`emulate_media_theme`), preload whitelist, client `tracyApi.emulateMediaTheme`, and StudioToolbar toggle button
 - 2026-08-16 — Completed 05-02-PLAN.md: Realistic device bezel frames, portrait/landscape orientation toggle, scale-to-fit mode
 - 2026-08-16 — Completed 05-01-PLAN.md: Horizontal vs. vertical studio layout split orientation with persistent divider state
