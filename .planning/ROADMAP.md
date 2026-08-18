@@ -1,90 +1,42 @@
 # Roadmap: ProQA
 
-## Milestone 1.0 — Project-Isolated Studio & Hardening (Completed)
+## Milestones
 
-### Phase 01: Per-Project Embedded Browser (Completed)
-Plans:
-- [x] 01-01-PLAN.md — Main-process per-project webview registry + IPC contract
-- [x] 01-02-PLAN.md — Renderer wiring: RealBrowserView/StudioView project scoping
-- [x] 01-03-PLAN.md — Verification: two-project isolation checkpoint in dev app
+- ✅ **v1.0 Project-Isolated Studio & Hardening** — Phases 1-3 (shipped 2026-08-15)
+- ✅ **v2.0 Atomic UI/UX Perfection & Power Studio Workflows** — Phases 4-8 (shipped 2026-08-19)
+- 📋 **v3.0 AI Flow Gen V2 & Dynamic Agent Skills** — (planned)
 
-### Phase 02: Accessibility & Zero-Hardcoded-Text Refactor (Completed)
-Plans:
-- [x] 02-01-PLAN.md — A11y & i18n infrastructure, en.json domain hierarchy, Modal hardening
-- [x] 02-02-PLAN.md — Layout & Studio text extraction
-- [x] 02-03-PLAN.md — Settings, Setup, Projects & Modals text extraction
-- [x] 02-04-PLAN.md — AI, Editor, Reports & Guard tests
+## Phases
 
-### Phase 03: Post-Audit Hardening (Completed)
-Plans:
-- [x] 03-01-PLAN.md — Security wave: Windows command injection mitigation, path.sep traversal fix, navigation jail
-- [x] 03-02-PLAN.md — Core correctness wave: auto-save wiring, IPC listener dedupe, modal focus trap, run tokens
-- [x] 03-03-PLAN.md — CI & A11y integrity wave: strict ESLint with --max-warnings 0, rebuilt guard test, typed translations
+<details>
+<summary>✅ v1.0 Project-Isolated Studio & Hardening (Phases 1-3) — SHIPPED 2026-08-15</summary>
 
----
+- [x] Phase 01: Per-Project Embedded Browser (3/3 plans) — completed 2026-08-15
+- [x] Phase 02: Accessibility & Zero-Hardcoded-Text Refactor (4/4 plans) — completed 2026-08-15
+- [x] Phase 03: Post-Audit Hardening (3/3 plans) — completed 2026-08-15
 
-## Milestone 2.0 — Atomic UI/UX Perfection & Power Studio Workflows
+</details>
 
-### Phase 04: Command Palette & Global Keyboard Shortcuts
+<details>
+<summary>✅ v2.0 Atomic UI/UX Perfection & Power Studio Workflows (Phases 4-8) — SHIPPED 2026-08-19</summary>
 
-**Goal:** Build a spotlight-style command palette (`Ctrl+K` / `Ctrl+P`) and comprehensive global keyboard shortcuts for fast flow navigation and execution without touching the mouse.
+- [x] Phase 04: Command Palette & Global Keyboard Shortcuts (2/2 plans) — completed 2026-08-16
+- [x] Phase 05: Studio Layout Versatility & Device Viewports (3/3 plans) — completed 2026-08-16
+- [x] Phase 06: Editor Polish, YAML Diffing & Playwright TS Exporter (3/3 plans) — completed 2026-08-16
+- [x] Phase 07: AI Copilot QA Recipes & Diff Preview (3/3 plans) — completed 2026-08-16
+- [x] Phase 08: Interactive HTML Reports & Latency Flamechart (2/2 plans) — completed 2026-08-16
 
-**Requirements:** PALETTE-01, PALETTE-02, PALETTE-03
+</details>
 
-Plans:
-- [x] 04-01-PLAN.md — Command Palette modal (`Ctrl+K` / `Ctrl+P`), action registry, search filtering, and keyboard navigation (`Up`/`Down`/`Enter`)
-- [x] 04-02-PLAN.md — Global shortcuts manager (`Ctrl+Enter` run, `Ctrl+Shift+P` pause, `Ctrl+1..9` project tabs, `Ctrl+Tab` flow tabs, `Ctrl+S` save) and Shortcuts Cheatsheet modal
+## Progress
 
----
-
-### Phase 05: Studio Layout Versatility & Device Viewports
-
-**Goal:** Give users flexible workspace layouts (horizontal/vertical split toggle) and realistic device bezel mockup frames (iPhone, iPad, Desktop) with color-scheme emulation.
-
-**Requirements:** LAYOUT-01, LAYOUT-02, LAYOUT-03
-
-Plans:
-- [x] 05-01-PLAN.md — Horizontal vs. vertical studio layout split orientation with persistent divider state and keyboard resizing
-- [x] 05-02-PLAN.md — Realistic device bezel frames with portrait/landscape orientation flip and scale-to-fit mode
-- [x] 05-03-PLAN.md — Dark/Light color scheme emulation toggle for the embedded webview browser
-
----
-
-### Phase 06: Editor Polish, YAML Diffing & Playwright TS Exporter (Completed)
-
-**Goal:** Elevate authoring productivity with side-by-side YAML diffing against baseline/last-run, multi-step selection/duplication in the visual builder, and one-click Playwright TypeScript code export.
-
-**Requirements:** EDIT-01, EDIT-02, EDIT-03
-
-Plans:
-- [x] 06-01-PLAN.md — Visual side-by-side YAML diff viewer comparing active flow against previous snapshot or saved baseline
-- [x] 06-02-PLAN.md — Visual step editor enhancements: multi-step selection, step duplication (`Alt+Drag` / `Ctrl+D`), and smooth drag handles
-- [x] 06-03-PLAN.md — One-click "Export as Playwright TypeScript" code generator (`.spec.ts`) with clipboard copy and file download
-
----
-
-### Phase 07: AI Copilot QA Recipes & Diff Preview
-
-**Goal:** Provide one-click QA recipe prompt presets, side-by-side visual diff preview before applying AI-generated flows, and real-time generation speed telemetry.
-
-**Requirements:** AI-01, AI-02, AI-03
-
-Plans:
-- [x] 07-01-PLAN.md — QA Recipe prompt preset library (form validation, responsive nav, accessibility audit, edge-case auth, checkout flows)
-- [x] 07-02-PLAN.md — Side-by-side visual diff preview modal before applying AI-generated YAML steps (Replace vs. Append vs. Discard)
-- [x] 07-03-PLAN.md — Live generation speed metrics (tokens/sec, total tokens, provider latency indicator)
-
----
-
-### Phase 08: Interactive HTML Reports & Latency Flamechart (Completed)
-
-**Goal:** Enable sharing standalone single-file HTML execution reports with embedded screenshots and an interactive step execution latency flamechart.
-
-**Requirements:** REPORT-01, REPORT-02
-
-Plans:
-- [x] 08-01-PLAN.md — Standalone zero-dependency HTML test report exporter with embedded CSS, base64 failure screenshots, and step timeline
-- [x] 08-02-PLAN.md — Execution latency waterfall flamechart inspector highlighting step bottlenecks and slow selector warnings
-
-
-
+| Phase | Milestone | Plans Complete | Status | Completed |
+|---|---|---|---|---|
+| 01. Per-Project Browser | v1.0 | 3/3 | Complete | 2026-08-15 |
+| 02. A11y & i18n Extraction | v1.0 | 4/4 | Complete | 2026-08-15 |
+| 03. Hardening | v1.0 | 3/3 | Complete | 2026-08-15 |
+| 04. Command Palette | v2.0 | 2/2 | Complete | 2026-08-16 |
+| 05. Studio Layout & Bezels | v2.0 | 3/3 | Complete | 2026-08-16 |
+| 06. YAML Diff & TS Exporter | v2.0 | 3/3 | Complete | 2026-08-16 |
+| 07. AI Recipes & Diff Preview | v2.0 | 3/3 | Complete | 2026-08-16 |
+| 08. HTML Reports & Flamechart | v2.0 | 2/2 | Complete | 2026-08-16 |

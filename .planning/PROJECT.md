@@ -18,16 +18,21 @@ React 19 studio UI).
 - Vitest + Testing Library (jsdom env, colocated `*.test.ts(x)`)
 - pnpm; path alias `@/*` → repo root
 
-## Current Milestone: v2.0 — Atomic UI/UX Perfection & Power Studio Workflows
+## Current State
 
-**Goal:** Transform ProQA into an ultra-fast, keyboard-driven, versatile E2E automation studio with command palettes, responsive device framing, visual diffing, AI recipe presets, and interactive HTML report exports.
+Shipped **Milestone v2.0** — Atomic UI/UX Perfection & Power Studio Workflows (2026-08-19).
+- Total Phases: 8 (Phases 01-08 complete)
+- Total Plans: 25 completed, 347 unit/integration tests passing green
+- Full suite of Command Palette, Device Bezels, Side-by-side YAML Diffs, Playwright TS Exporter, AI Diff Preview, HTML Test Reports, and Latency Flamechart.
 
-**Target features:**
-- Command Palette (`Ctrl+K` / `Ctrl+P`) and global keyboard shortcut maps
-- Studio split orientation toggles (horizontal/vertical) & realistic device bezel frames
-- YAML side-by-side diffing, step duplication, and one-click Playwright TypeScript export
-- AI Copilot QA Recipe prompt library & diff preview before applying generated steps
-- Self-contained interactive single-file HTML reports & execution latency flamechart
+## Next Milestone Goals
+
+- **Milestone v3.0: AI Flow Gen V2 & Dynamic Agent Skills**
+- Specialized skill system for AI agents (form validation, resilient selectors, auth edge cases)
+- Live interactive DOM self-correction and evaluation harness
+
+---
+*Last updated: 2026-08-19 after v2.0 milestone*
 
 ## Key Constraints
 
