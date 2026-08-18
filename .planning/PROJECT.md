@@ -25,14 +25,24 @@ Shipped **Milestone v2.0** — Atomic UI/UX Perfection & Power Studio Workflows 
 - Total Plans: 25 completed, 347 unit/integration tests passing green
 - Full suite of Command Palette, Device Bezels, Side-by-side YAML Diffs, Playwright TS Exporter, AI Diff Preview, HTML Test Reports, and Latency Flamechart.
 
-## Next Milestone Goals
+## Current Milestone: v3.0 — AI Flow Gen V2 & Dynamic Agent Skills
 
-- **Milestone v3.0: AI Flow Gen V2 & Dynamic Agent Skills**
-- Specialized skill system for AI agents (form validation, resilient selectors, auth edge cases)
-- Live interactive DOM self-correction and evaluation harness
+**Goal:** Build an extensible agent skills framework and DOM verification loop to maximize accuracy and stability when auto-generating test flows from natural language and live webviews.
+
+**Target features:**
+- Agent Skills Runtime & Declarative Registry (custom skill schemas, instructions, tool interfaces)
+- Interactive DOM Miner Verification Loop (pre-validates generated selectors against live DOM snapshots)
+- Domain QA Skills Library (Auth flows, Form validation, Data tables, Shadow DOM/Modals)
+- Flow Accuracy Benchmark Suite (automated accuracy evaluation harness against sample scenarios)
+- AI Copilot Skill Selector & Execution Trace Inspector (UI for toggling skills and observing agent reasoning)
+
+## Validated Milestones
+
+- ✓ **v1.0 Project-Isolated Studio & Hardening** (Phases 01-03) — Shipped 2026-08-15
+- ✓ **v2.0 Atomic UI/UX Perfection & Power Studio Workflows** (Phases 04-08) — Shipped 2026-08-19
 
 ---
-*Last updated: 2026-08-19 after v2.0 milestone*
+*Last updated: 2026-08-19 after starting v3.0 milestone*
 
 ## Key Constraints
 
