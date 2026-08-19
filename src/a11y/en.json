@@ -256,6 +256,16 @@
       "noChanges": "No differences detected between active flow and AI output.",
       "additions": "+{count} lines",
       "deletions": "-{count} lines"
+    },
+    "skills": {
+      "title": "Agent Skills & Domain Packs",
+      "presets": "Skill Presets",
+      "activeSkillsCount": "{active} of {total} skills active",
+      "customSkillsBadge": "Custom",
+      "builtinsBadge": "Built-in",
+      "toggleSkillAria": "Toggle skill {name}",
+      "selectPresetAria": "Apply preset {name}",
+      "noSkillsAvailable": "No agent skills registered"
     }
   },
   "settings": {
@@ -428,7 +438,10 @@
     "endpointDesc": "OpenAI-compatible gateway URL (e.g., Ollama, LM Studio).",
     "model": "Model",
     "modelName": "Model Name",
-    "invalidModelFormat": "Invalid model name format"
+    "invalidModelFormat": "Invalid model name format",
+    "refreshModels": "Fetch live available models from provider",
+    "refreshingModels": "Fetching models…",
+    "liveModelsSynced": "Live models synced ({count})"
   },
   "projects": {
     "title": "Projects",
