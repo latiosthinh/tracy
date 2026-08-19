@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AiPromptInput, AttachedFile } from '@/src/components/ai/AiPromptInput';
 import { QaRecipeSelector } from '@/src/components/ai/QaRecipeSelector';
+import { SkillSelector } from '@/src/components/ai/SkillSelector';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
 import { AiDiffPreviewModal } from '@/src/components/ai/AiDiffPreviewModal';
 import { appendStepsToYaml } from '@/src/utils/diffUtils';
@@ -150,13 +151,14 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     }
 
     const model = agentModels[selectedAgentId];
+    const compiledSkillsPrompt = useAgentStore.getState().getCompiledPrompt();
 
     try {
       if (isElectronEnv()) {
         const streamYaml = await tracyApi.runAgentStream(
           selectedAgentId,
           finalPrompt,
-          undefined,
+          compiledSkillsPrompt || undefined,
           model,
         );
         generatingFlag.current = false;
@@ -217,37 +219,109 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     setBatchImported(false);
     generatingFlag.current = true;
 
+    const autoSuitePrompt = `Generate a comprehensive suite of E2E test flows covering common user journeys for page "${activeProject.name}" (Target URL: ${targetUrl || activeProject.targetUrl || 'https://example.com'}).
+
+Detected Elements:
+- Button: "Add to Cart" (testId="add-cart-headphones")
+- Search: "Search products..." (testId="search-input")
+- Textbox: "Full Name"
+- Textbox: "Email Address"
+- Button: "Have a coupon?"
+- Button: "Place Order"
+
+For each flow, output in this exact JSON array format with YAML content:
+[
+  {
+    "name": "<flow-name.yaml>",
+    "yaml": "<full-tracy-yaml-content>",
+    "description": "<what this flow tests>"
+  }
+]
+
+Generate at least 3-5 flows covering:
+1. Landing page load / homepage navigation
+2. Core user journey (e.g. search, browse, add to cart)
+3. Form submission / checkout flow
+4. Error handling / edge cases
+5. Success confirmation / post-action state
+
+Each YAML must use these commands only: navigate, leftClick, rightClick, hover, scroll, tap, twoFingersTap, press, fill, waitFor.
+Include proper selector attributes for all interactive elements. Return ONLY valid JSON.`;
+
     try {
       const model = agentModels[selectedAgentId];
-      const cred = agentCredentials[selectedAgentId] || {};
-      const res = await fetch('/api/gemini/auto-suite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pageName: activeProject.name,
-          url: targetUrl || activeProject.targetUrl,
-          projectName: activeProject.name,
-          agentProvider: selectedAgentId,
-          apiKey: cred.apiKey,
-          customEndpoint: cred.customEndpoint,
-          selectedModel: model,
-          pageElements: [
-            { testId: 'add-cart-headphones', text: 'Add to Cart', role: 'button' },
-            { testId: 'search-input', placeholder: 'Search products...', role: 'searchbox' },
-            { label: 'Full Name', role: 'textbox' },
-            { label: 'Email Address', role: 'textbox' },
-            { text: 'Have a coupon?', role: 'button' },
-            { text: 'Place Order', role: 'button' },
-          ],
-        }),
-      });
 
-      const data = await res.json();
-      generatingFlag.current = false;
-      if (res.ok && data.flows) {
-        setAutoSuiteResult(data);
+      if (isElectronEnv()) {
+        const rawResponse = await tracyApi.runAgentStream(
+          selectedAgentId,
+          autoSuitePrompt,
+          'You are a test automation assistant. Always output a valid JSON array of test flows.',
+          model,
+        );
+        generatingFlag.current = false;
+        if (!rawResponse) {
+          setErrorMessage(t('copilot.emptyAgentResponse'));
+          return;
+        }
+
+        let flows: any[] = [];
+        try {
+          const cleaned = rawResponse.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+          const parsed = JSON.parse(cleaned);
+          if (Array.isArray(parsed)) {
+            flows = parsed.filter((f) => f.name && f.yaml);
+          }
+        } catch {
+          flows = [{
+            name: `${activeProject.name.toLowerCase().replace(/\s+/g, '-')}-suite.yaml`,
+            yaml: rawResponse,
+            description: `Auto-generated suite for ${activeProject.name}`,
+          }];
+        }
+
+        if (flows.length > 0) {
+          setAutoSuiteResult({ flows });
+        } else {
+          setErrorMessage(t('copilot.failedGenerateSuite'));
+        }
       } else {
-        setErrorMessage(data.error || t('copilot.failedGenerateSuite'));
+        const cred = agentCredentials[selectedAgentId] || {};
+        const res = await fetch('/api/gemini/auto-suite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pageName: activeProject.name,
+            url: targetUrl || activeProject.targetUrl,
+            projectName: activeProject.name,
+            agentProvider: selectedAgentId,
+            apiKey: cred.apiKey,
+            customEndpoint: cred.customEndpoint,
+            selectedModel: model,
+            pageElements: [
+              { testId: 'add-cart-headphones', text: 'Add to Cart', role: 'button' },
+              { testId: 'search-input', placeholder: 'Search products...', role: 'searchbox' },
+              { label: 'Full Name', role: 'textbox' },
+              { label: 'Email Address', role: 'textbox' },
+              { text: 'Have a coupon?', role: 'button' },
+              { text: 'Place Order', role: 'button' },
+            ],
+          }),
+        });
+
+        const text = await res.text();
+        generatingFlag.current = false;
+        let data: any;
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { error: text || 'Server returned invalid response' };
+        }
+
+        if (res.ok && data.flows) {
+          setAutoSuiteResult(data);
+        } else {
+          setErrorMessage(data.error || t('copilot.failedGenerateSuite'));
+        }
       }
     } catch (err: any) {
       generatingFlag.current = false;
@@ -267,6 +341,13 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   useEffect(() => {
     loadFromDisk();
   }, [loadFromDisk]);
+
+  // Load custom project skills when saveLocation changes
+  useEffect(() => {
+    if (activeProject?.saveLocation) {
+      useAgentStore.getState().loadCustomSkills(activeProject.saveLocation);
+    }
+  }, [activeProject?.saveLocation]);
 
   return (
     <div className="flex flex-col h-full bg-stone-950 text-stone-100 font-sans text-xs overflow-hidden relative">
@@ -298,6 +379,9 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
             <span>{t('copilot.singleFlow')}</span>
           </button>
         </div>
+
+        {/* Skill Selector & Presets */}
+        <SkillSelector disabled={isGenerating} />
 
         {/* QA Recipe Presets Selector */}
         <QaRecipeSelector

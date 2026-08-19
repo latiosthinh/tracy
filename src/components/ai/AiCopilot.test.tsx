@@ -42,6 +42,7 @@ describe('AiCopilot', () => {
 
     expect(screen.getByText('Full flow')).toBeInTheDocument();
     expect(screen.getByText('Single flow')).toBeInTheDocument();
+    expect(screen.getByText('Agent Skills & Domain Packs')).toBeInTheDocument();
     expect(screen.getByText('QA Test Recipes')).toBeInTheDocument();
   });
 
