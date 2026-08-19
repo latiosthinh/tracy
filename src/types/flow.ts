@@ -62,6 +62,19 @@ export interface FlowMetadata {
 
 export type StepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
 
+export interface HealMetadata {
+  healed: boolean;
+  strategy?: 'heuristic' | 'ai';
+  originalSelector: string;
+  healedSelector: string;
+  confidence: number;
+  reason?: string;
+  artifacts?: {
+    screenshotPath?: string;
+    domSnapshotPath?: string;
+  };
+}
+
 export interface FlowStep {
   id: string;
   command: CommandType;
@@ -77,6 +90,7 @@ export interface FlowStep {
   retriesLeft?: number;
   lineNumber?: number;
   rawYaml?: string;
+  healResult?: HealMetadata;
 }
 
 export type FlowCategory = 'E2E' | 'API' | 'Smoke' | 'Visual' | 'Component';

@@ -19,6 +19,7 @@ export interface TestRunResult {
   passedCount: number;
   failedCount: number;
   skippedCount: number;
+  healedCount?: number;
   totalCount: number;
   steps: FlowStep[];
   logs: ExecutionLog[];
@@ -27,5 +28,6 @@ export interface TestRunResult {
     videoUrl?: string;
     traceZipUrl?: string;
     harNetworkUrl?: string;
+    healArtifacts?: { stepIndex: number; screenshotPath?: string; domSnapshotPath?: string }[];
   };
 }

@@ -1,7 +1,7 @@
 // Mock types for compatibility
 export type UnlistenFn = () => void;
 
-import { Project, FlowFile } from '@/src/types/autoflow';
+import { Project, FlowFile, HealMetadata } from '@/src/types/autoflow';
 import type { SkillDefinition, SelectorValidationPayload, SelectorValidationResult, AgentToolTraceEvent } from '@/src/types/skills';
 
 export interface DetectedAgent {
@@ -43,6 +43,7 @@ export interface StepUpdatePayload {
   status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
   durationMs?: number;
   errorMessage?: string;
+  healResult?: HealMetadata;
 }
 
 export interface ExecutionLogEntry {

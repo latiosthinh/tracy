@@ -18,7 +18,7 @@ interface ExecutionState {
   pauseExecution: () => void;
   resetExecution: () => void;
   addLogEntry: (log: ExecutionLog) => void;
-  updateStepStatus: (stepIndex: number, status: FlowStep['status'], durationMs?: number, errorMessage?: string) => void;
+  updateStepStatus: (stepIndex: number, status: FlowStep['status'], durationMs?: number, errorMessage?: string, healResult?: FlowStep['healResult']) => void;
   setupEventListeners: () => Promise<void>;
   cleanupEventListeners: () => void;
 }
@@ -40,7 +40,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
     set((state) => ({ executionLogs: [log, ...state.executionLogs] }));
   },
 
-  updateStepStatus: (stepIndex, status, durationMs, errorMessage) => {
+  updateStepStatus: (stepIndex, status, durationMs, errorMessage, healResult) => {
     set((state) => {
       const updatedLogs = [...state.executionLogs];
       if (status === 'passed' || status === 'failed') {
@@ -50,7 +50,9 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
           level: status === 'failed' ? 'error' : 'assertion',
           stepIndex,
           message: status === 'passed'
-            ? `✅ Step ${stepIndex + 1} PASSED (${durationMs || 0}ms)`
+            ? healResult?.healed
+              ? `⚡ Step ${stepIndex + 1} HEALED & PASSED (${durationMs || 0}ms)`
+              : `✅ Step ${stepIndex + 1} PASSED (${durationMs || 0}ms)`
             : `❌ Step ${stepIndex + 1} FAILED: ${errorMessage || 'Unknown error'}`,
         };
         updatedLogs.unshift(logEntry);
@@ -67,7 +69,7 @@ export const useExecutionStore = create<ExecutionState>((set, get) => ({
       try {
         get().cleanupEventListeners();
         const unlisten1 = await tracyApi.onStepUpdate((payload) => {
-          get().updateStepStatus(payload.stepIndex, payload.status, payload.durationMs, payload.errorMessage);
+          get().updateStepStatus(payload.stepIndex, payload.status, payload.durationMs, payload.errorMessage, payload.healResult);
         });
         const unlisten2 = await tracyApi.onExecutionLog((payload) => {
           get().addLogEntry({

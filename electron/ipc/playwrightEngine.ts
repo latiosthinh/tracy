@@ -2,6 +2,10 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { chromium, Browser, Page, BrowserContext } from 'playwright-core';
 import { runCompactObserve, formatCompactTree, authenticate } from 'dom-miner';
 import { isAllowedNavigationUrl } from './webviewManager.js';
+import { executeStepWithHealing } from '../core/healing/selfHealingRunner.js';
+import { patchYamlFile } from '../core/healing/yamlPatcher.js';
+import { saveHealArtifacts, saveFailureArtifacts } from '../core/healing/artifactManager.js';
+import * as path from 'node:path';
 
 let browser: Browser | null = null;
 let context: BrowserContext | null = null;
@@ -322,9 +326,9 @@ export function registerPlaywrightHandlers() {
       }
     };
 
-    const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string) => {
+    const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string, healResult?: any) => {
       if (!sender.isDestroyed()) {
-        sender.send('step-update', { stepIndex, status, durationMs, errorMessage });
+        sender.send('step-update', { stepIndex, status, durationMs, errorMessage, healResult });
       }
     };
 
@@ -367,6 +371,11 @@ export function registerPlaywrightHandlers() {
       return null;
     };
 
+    const flowFilePath = flow.filePath || flow.path;
+    const flowName = flow.name || 'unnamed-flow';
+    const outputDir = path.join(process.cwd(), 'test-results');
+    const autoHealEnabled = flow.autoHeal !== false;
+
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       const stepStart = Date.now();
@@ -394,47 +403,76 @@ export function registerPlaywrightHandlers() {
           }
 
           case 'leftClick':
-          case 'tap': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.click({ timeout });
-            else if (step.value) await currentPage.getByText(step.value).click({ timeout });
-            break;
-          }
-
-          case 'doubleClick': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.dblclick({ timeout });
-            break;
-          }
-
-          case 'rightClick': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.click({ button: 'right', timeout });
-            break;
-          }
-
-          case 'hover': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.hover({ timeout });
-            break;
-          }
-
-          case 'fill': {
-            const loc = resolveLocator(step.target);
-            const text = step.value || '';
-            if (loc) await loc.fill(text, { timeout });
-            break;
-          }
-
-          case 'eraseText': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.fill('', { timeout });
-            break;
-          }
-
+          case 'tap':
+          case 'doubleClick':
+          case 'rightClick':
+          case 'hover':
+          case 'fill':
+          case 'eraseText':
           case 'press': {
-            const key = step.value || step.target || 'Enter';
-            await currentPage.keyboard.press(key);
+            const healableStep = {
+              action: cmd,
+              selector: typeof step.target === 'string' ? step.target : step.target?.value || (typeof step.target === 'object' ? JSON.stringify(step.target) : undefined),
+              target: step.target,
+              value: step.value,
+              text: step.value || (typeof step.target === 'string' ? step.target : undefined),
+              key: step.value || step.target || 'Enter',
+              timeout,
+            };
+
+            const result = await executeStepWithHealing(currentPage, healableStep, {
+              autoHeal: autoHealEnabled,
+              timeoutMs: timeout,
+              onLog: (level, msg) => sendLog(level, i, msg),
+            });
+
+            if (!result.success) {
+              throw new Error(result.error || 'Step execution failed');
+            }
+
+            if (result.healed && result.healingDetails) {
+              const artifacts = await saveHealArtifacts({
+                outputDir,
+                flowName,
+                stepIndex: i,
+                page: currentPage,
+                healingResult: result.healingDetails,
+              });
+
+              if (flowFilePath && autoHealEnabled) {
+                try {
+                  await patchYamlFile(flowFilePath, i, result.healingDetails.healedSelector, {
+                    confidence: result.healingDetails.confidence,
+                    healedAt: new Date().toISOString(),
+                  });
+                  sendLog('info', i, `💾 Auto-patched YAML file: "${flowFilePath}"`);
+                } catch (patchErr: any) {
+                  sendLog('warn', i, `Failed to patch YAML file: ${patchErr.message || patchErr}`);
+                }
+              }
+
+              const healResult = {
+                healed: true,
+                strategy: result.healingDetails.strategy,
+                originalSelector: result.healingDetails.originalSelector,
+                healedSelector: result.healingDetails.healedSelector,
+                confidence: result.healingDetails.confidence,
+                reason: result.healingDetails.reason,
+                artifacts: {
+                  screenshotPath: artifacts.screenshotPath,
+                  domSnapshotPath: artifacts.domSnapshotPath,
+                },
+              };
+
+              const durationMs = Date.now() - stepStart;
+              sendStepUpdate(i, 'passed', durationMs, undefined, healResult);
+              sendLog(
+                'assertion',
+                i,
+                `⚡ Self-healed step ${i + 1}: "${result.healingDetails.originalSelector}" -> "${result.healingDetails.healedSelector}" (confidence: ${Math.round(result.healingDetails.confidence * 100)}%)`
+              );
+              continue;
+            }
             break;
           }
 
@@ -575,7 +613,22 @@ export function registerPlaywrightHandlers() {
       } catch (err: any) {
         const durationMs = Date.now() - stepStart;
         const errorMessage = err.message || 'Unknown error';
-        sendStepUpdate(i, 'failed', durationMs, errorMessage);
+
+        const failArtifacts = await saveFailureArtifacts({
+          outputDir,
+          flowName,
+          stepIndex: i,
+          page: currentPage,
+          error: errorMessage,
+        });
+
+        sendStepUpdate(i, 'failed', durationMs, errorMessage, {
+          healed: false,
+          artifacts: {
+            screenshotPath: failArtifacts.screenshotPath,
+            domSnapshotPath: failArtifacts.domSnapshotPath,
+          },
+        });
         sendLog('error', i, `❌ Step ${i + 1} FAILED: ${errorMessage}`);
 
         // Stop on failure unless continueOnFailure is set
