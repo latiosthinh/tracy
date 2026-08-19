@@ -46,7 +46,7 @@
 
 - [x] Phase 15: Heuristic & AI Self-Healing Execution Core (2/2 plans) — completed 2026-08-19
 - [ ] Phase 16: Comment-Preserving YAML AST Auto-Patcher & Artifacts (2 plans)
-- [ ] Phase 17: Headless CI CLI Binary & Reporting Pipeline
+- [x] Phase 17: Headless CI CLI Binary & Reporting Pipeline (2/2 plans) — completed 2026-08-19
 - [ ] Phase 18: Autonomous Route & Interaction Crawler
 - [ ] Phase 19: Route Topology & Coverage Visualizer Studio
 
@@ -72,6 +72,6 @@
 | 14. Flow Accuracy Benchmarks | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 15. Self-Healing Execution Core | v4.0 | 2/2 | Complete | 2026-08-19 |
 | 16. YAML AST Auto-Patcher | v4.0 | 2/2 | Complete | 2026-08-19 |
-| 17. Headless CI CLI Binary | v4.0 | 1/2 | In Progress | — |
+| 17. Headless CI CLI Binary | v4.0 | 2/2 | Complete | 2026-08-19 |
 | 18. Autonomous Route Crawler | v4.0 | 0/0 | Pending | — |
 | 19. Route & Coverage Visualizer | v4.0 | 0/0 | Pending | — |
