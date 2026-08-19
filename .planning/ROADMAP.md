@@ -84,7 +84,8 @@
   2. Form skill emits proper blur/tab events, custom select handling, and error state validation checks (`aria-invalid`)
   3. Data table skill scopes row/column selectors and generates stable cell action locators across pagination
   4. Shadow DOM/Modal skill penetrates open shadow roots, iframe boundaries, and handles backdrop dismissals with animation waits
-**Plans**: TBD
+**Plans**: 1 plan
+- [x] 12-01-PLAN.md — Built-in QA Domain Skills Modules, Builtins Index & Test Suite
 
 ### Phase 13: Copilot Skill Selector & Trace Inspector UI
 **Goal**: Allow QA engineers to toggle active domain skills and inspect real-time agent thoughts and tool calls in AI Copilot
@@ -122,6 +123,6 @@
 | 09. Skills Runtime & Registry | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 10. DOM Selector Pre-Validation | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 11. Tool Calling & Self-Healing | v3.0 | 0/TBD | Not started | - |
-| 12. QA Domain Skills Catalog | v3.0 | 0/TBD | Not started | - |
+| 12. QA Domain Skills Catalog | v3.0 | 1/1 | Complete | 2026-08-19 |
 | 13. Copilot Skill & Trace UI | v3.0 | 0/TBD | Not started | - |
 | 14. Flow Accuracy Benchmarks | v3.0 | 0/TBD | Not started | - |

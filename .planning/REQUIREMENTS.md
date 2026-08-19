@@ -123,10 +123,10 @@ Acceptance:
 | VERIFY-02 | Phase 10 | Complete |
 | TOOL-01 | Phase 11 | Pending |
 | TOOL-02 | Phase 11 | Pending |
-| DOMAIN-01 | Phase 12 | Pending |
-| DOMAIN-02 | Phase 12 | Pending |
-| DOMAIN-03 | Phase 12 | Pending |
-| DOMAIN-04 | Phase 12 | Pending |
+| DOMAIN-01 | Phase 12 | Complete |
+| DOMAIN-02 | Phase 12 | Complete |
+| DOMAIN-03 | Phase 12 | Complete |
+| DOMAIN-04 | Phase 12 | Complete |
 | UI-01 | Phase 13 | Pending |
 | UI-02 | Phase 13 | Pending |
 | EVAL-01 | Phase 14 | Pending |
