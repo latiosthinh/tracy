@@ -7,6 +7,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'ai_config_load',
   'ai_config_save',
   'ai_connection_test',
+  'ai_fetch_models',
   // Playwright engine
   'launch_browser',
   'navigate_browser',
@@ -29,6 +30,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'save_dom_snapshot',
   'load_dom_snapshots',
   'save_playwright_code',
+  'load_project_skills',
   // Webview management
   'open_child_webview',
   'resize_child_webview',

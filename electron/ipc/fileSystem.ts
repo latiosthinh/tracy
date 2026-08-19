@@ -4,6 +4,8 @@ import path from 'path';
 import * as yaml from 'js-yaml';
 // NOTE: relative import — the electron main build does not resolve the '@/' alias.
 import { agentsByCategory, resolveAgentId, getAgentDef } from '../../src/lib/aiRegistry';
+import { parseSkill } from '../../src/lib/skills/serializer.js';
+import type { SkillDefinition } from '../../src/types/skills.js';
 import { detectCliAgents, runCliAgent, buildChildEnv } from './cliRunner.js';
 import { getResolvedCredentials } from './aiConfig.js';
 
@@ -243,5 +245,52 @@ export function registerFileSystemHandlers() {
     await fs.mkdir(testsDir, { recursive: true });
     await fs.writeFile(targetFile, code, 'utf-8');
     return targetFile;
+  });
+
+  ipcMain.handle('load_project_skills', async (event, { saveLocation }: { saveLocation: string }) => {
+    const skills: SkillDefinition[] = [];
+    const warnings: string[] = [];
+
+    if (!saveLocation || typeof saveLocation !== 'string' || !saveLocation.trim()) {
+      return { skills, warnings: ['Invalid saveLocation provided for loading project skills'] };
+    }
+
+    try {
+      const base = resolveSafeBase(saveLocation);
+      const skillsDir = assertSafePath(base, '.proqa', 'skills');
+
+      try {
+        await fs.access(skillsDir);
+      } catch {
+        // Directory does not exist yet; return empty without error
+        return { skills, warnings };
+      }
+
+      const files = await fs.readdir(skillsDir);
+      for (const file of files) {
+        if (!file.endsWith('.skill.json') && !file.endsWith('.skill.yaml') && !file.endsWith('.skill.yml')) {
+          continue;
+        }
+
+        try {
+          const filePath = assertSafePath(skillsDir, file);
+          const content = await fs.readFile(filePath, 'utf-8');
+          const result = parseSkill(content);
+          if (result.skill) {
+            skills.push(result.skill);
+          } else {
+            warnings.push(`Failed to parse skill file "${file}": ${result.errors?.join(', ') || 'Unknown error'}`);
+          }
+        } catch (fileErr: unknown) {
+          const msg = fileErr instanceof Error ? fileErr.message : String(fileErr);
+          warnings.push(`Error reading skill file "${file}": ${msg}`);
+        }
+      }
+    } catch (dirErr: unknown) {
+      const msg = dirErr instanceof Error ? dirErr.message : String(dirErr);
+      warnings.push(`Failed to access skills directory: ${msg}`);
+    }
+
+    return { skills, warnings };
   });
 }

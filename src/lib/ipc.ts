@@ -2,6 +2,7 @@
 export type UnlistenFn = () => void;
 
 import { Project, FlowFile } from '@/src/types/autoflow';
+import type { SkillDefinition } from '@/src/types/skills';
 
 export interface DetectedAgent {
   id: string;
@@ -128,6 +129,11 @@ export const tracyApi = {
     return invoke<AiConnectionTestResult>('ai_connection_test', payload);
   },
 
+  fetchAiModels: async (payload: { agentId: string; apiKey?: string; customEndpoint?: string }): Promise<string[]> => {
+    if (!isElectronEnv()) return [];
+    return invoke<string[]>('ai_fetch_models', payload);
+  },
+
   // Project Store
   listProjects: async (): Promise<Project[]> => {
     if (!isElectronEnv()) return [];
@@ -189,6 +195,11 @@ export const tracyApi = {
   savePlaywrightCode: async (projectId: string, saveLocation: string, fileName: string, code: string): Promise<string> => {
     if (!isElectronEnv()) return '';
     return invoke<string>('save_playwright_code', { projectId, saveLocation, fileName, code });
+  },
+
+  loadProjectSkills: async (saveLocation: string): Promise<{ skills: SkillDefinition[]; warnings: string[] }> => {
+    if (!isElectronEnv()) return { skills: [], warnings: [] };
+    return invoke<{ skills: SkillDefinition[]; warnings: string[] }>('load_project_skills', { saveLocation });
   },
 
   // Real Browser Control

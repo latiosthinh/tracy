@@ -4,6 +4,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'ai_config_load',
   'ai_config_save',
   'ai_connection_test',
+  'ai_fetch_models',
   'launch_browser',
   'navigate_browser',
   'get_browser_screenshot',
@@ -24,6 +25,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'save_dom_snapshot',
   'load_dom_snapshots',
   'save_playwright_code',
+  'load_project_skills',
   'open_child_webview',
   'resize_child_webview',
   'set_child_webview_visible',
@@ -41,7 +43,7 @@ const ALLOWED_ON_CHANNELS = [
 
 describe('IPC channel whitelists', () => {
   it('invoke whitelist has expected count', () => {
-    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(28);
+    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(30);
   });
 
   it('on whitelist has expected count', () => {
@@ -78,7 +80,7 @@ describe('IPC channel whitelists', () => {
   it('contains all required file system channels', () => {
     const required = [
       'list_projects', 'save_project', 'save_project_to_disk',
-      'load_project_from_disk', 'save_flow_to_disk',
+      'load_project_from_disk', 'save_flow_to_disk', 'load_project_skills',
     ];
     for (const ch of required) {
       expect(ALLOWED_INVOKE_CHANNELS).toContain(ch);
