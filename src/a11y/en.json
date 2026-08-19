@@ -266,6 +266,15 @@
       "toggleSkillAria": "Toggle skill {name}",
       "selectPresetAria": "Apply preset {name}",
       "noSkillsAvailable": "No agent skills registered"
+    },
+    "trace": {
+      "title": "Agent Reasoning & Tool Traces",
+      "listening": "Monitoring agent execution trace...",
+      "active": "Active",
+      "args": "Args:",
+      "result": "Result:",
+      "ariaLabel": "Agent Reasoning Trace",
+      "redactedTitle": "Sensitive data redacted"
     }
   },
   "settings": {

@@ -95,7 +95,9 @@
   1. User can toggle skills via pills and one-click presets in `AiCopilot.tsx` with project-persistent state
   2. Live reasoning trace panel displays step-by-step agent thinking, tool invocations, inputs, match results, and duration
   3. Sensitive credentials (passwords, tokens) are automatically redacted in trace logs, and all text uses accessible a11y labels
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 13-01-PLAN.md — Skill Selector Component, Preset Bar & AiCopilot Integration
+- [ ] 13-02-PLAN.md — Trace Sanitizer Utility, Trace Inspector Component & Live IPC Stream Integration
 **UI hint**: yes
 
 ### Phase 14: Flow Accuracy Benchmark & Evaluation Suite
@@ -106,7 +108,9 @@
   1. Fixture suite provides static HTML scenarios and canonical ground-truth YAML flows for auth, tables, forms, and modals
   2. Vitest benchmark harness scores Locator Precision (% valid unique selectors), Step Recall (% required actions captured), and Flow Pass Rate
   3. Benchmark runner outputs structured comparison matrix across configured AI models/providers
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 14-01-PLAN.md — Deterministic HTML Test Fixtures, Ground-Truth YAML Flows & Integrity Tests
+- [ ] 14-02-PLAN.md — Automated Accuracy & Stability Benchmark Runner, Scoring Engine & Vitest Suite
 
 ## Progress
 

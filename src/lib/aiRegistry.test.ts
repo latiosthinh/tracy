@@ -169,7 +169,7 @@ describe('getAgentDef', () => {
     expect(gemini?.id).toBe('byok-gemini');
     expect(gemini?.displayName).toBe('Gemini (BYOK)');
     expect(gemini?.protocol).toBe('google');
-    expect(gemini?.defaultModel).toBe('gemini-2.5-flash');
+    expect(gemini?.defaultModel).toBe('gemini-3.7-flash');
   });
 
   it('returns undefined for unknown id', () => {

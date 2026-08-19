@@ -136,6 +136,7 @@ export interface AgentToolTraceEvent {
   thought?: string;
   toolCall?: AgentToolCall;
   toolResult?: AgentToolResult;
+  durationMs?: number;
   timestamp: string;
 }
 

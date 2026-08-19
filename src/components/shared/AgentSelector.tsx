@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Bot, Terminal, Key, CheckCircle2, Eye, EyeOff, Plug, PlugZap } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Bot, Terminal, Key, CheckCircle2, Eye, EyeOff, Plug, PlugZap, RefreshCw } from 'lucide-react';
 import type { DetectedAgent as RendererDetectedAgent } from '@/src/lib/ipc';
 import { agentsByCategory, getAgentDef, isValidModelId } from '@/src/lib/aiRegistry';
 import { tracyApi } from '@/src/lib/ipc';
@@ -50,6 +50,9 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
   const [showApiKey, setShowApiKey] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; loading: boolean; error?: string }>({ ok: false, loading: false });
   const [endpointOverride, setEndpointOverride] = useState('');
+  const [liveModels, setLiveModels] = useState<Record<string, string[]>>({});
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+  const [fetchNotice, setFetchNotice] = useState<string | null>(null);
 
   // aiConfigStore hooks — all reads/writes go through here
   const selectedAgentId = useAiConfigStore((s) => s.selectedAgentId);
@@ -77,7 +80,37 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
     setShowApiKey(false);
     setEndpointOverride('');
     setTestResult({ ok: false, loading: false });
+    setFetchNotice(null);
   };
+
+  const fetchModelsForAgent = useCallback(async (agentId: string, apiKey?: string, endpoint?: string) => {
+    if (!agentId) return;
+    setIsFetchingModels(true);
+    setFetchNotice(null);
+    try {
+      const models = await tracyApi.fetchAiModels({
+        agentId,
+        apiKey,
+        customEndpoint: endpoint,
+      });
+      if (models && models.length > 0) {
+        setLiveModels((prev) => ({ ...prev, [agentId]: models }));
+        setFetchNotice(t('settings.liveModelsSynced', { count: models.length }));
+      }
+    } catch (err) {
+      console.warn('Failed to fetch live models:', err);
+    } finally {
+      setIsFetchingModels(false);
+    }
+  }, [t]);
+
+  // Auto-fetch live models when credentials/endpoint are provided
+  useEffect(() => {
+    if (!selectedAgentId || !activeDef) return;
+    if (activeDef.needsApiKey && !currentCred.apiKey) return;
+    const endpoint = endpointOverride !== '' ? endpointOverride : currentCred.customEndpoint;
+    fetchModelsForAgent(selectedAgentId, currentCred.apiKey, endpoint);
+  }, [selectedAgentId, currentCred.apiKey, endpointOverride, currentCred.customEndpoint, activeDef, fetchModelsForAgent]);
 
   const handleTestConnection = async () => {
     if (!selectedAgentId || !currentCred.apiKey) return;
@@ -90,12 +123,18 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
         model: currentModel,
       });
       setTestResult({ ok: result.ok, loading: false, error: result.errorMessage });
+      if (result.ok) {
+        fetchModelsForAgent(selectedAgentId, currentCred.apiKey, endpointOverride || currentCred.customEndpoint);
+      }
     } catch {
       setTestResult({ ok: false, loading: false, error: t('settings.testConnectionFailed') });
     }
   };
 
   const canTestConnection = !!currentCred.apiKey && activeDef && activeDef.protocol !== 'google';
+
+  const currentLive = selectedAgentId ? liveModels[selectedAgentId] || [] : [];
+  const displayModels = Array.from(new Set([...currentLive, ...(activeDef?.models || [])]));
 
   return (
     <div className="space-y-4">
@@ -147,12 +186,18 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
               </div>
             ) : (
               cliMerged.map((def) => (
-                <button
+                <div
                   key={def.id}
-                  type="button"
-                  disabled={!def.installed}
+                  role="button"
+                  tabIndex={def.installed ? 0 : -1}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && def.installed) {
+                      e.preventDefault();
+                      handleSelectAgent(def.id);
+                    }
+                  }}
                   onClick={() => def.installed && handleSelectAgent(def.id)}
-                  className={`text-left rounded-[6px] border transition-all ${isSm ? 'p-3' : 'p-4'} ${
+                  className={`rounded-[6px] border transition-all ${isSm ? 'p-3' : 'p-4'} ${
                     !def.installed
                       ? 'bg-stone-950/50 border-stone-800/50 text-stone-600 opacity-50 cursor-not-allowed'
                       : selectedAgentId === def.id
@@ -177,17 +222,24 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                   {def.version && (
                     <p className={`${isSm ? 'text-[9px]' : 'text-[10px]'} font-mono text-emerald-500 line-clamp-1`}>v{def.version}</p>
                   )}
-                </button>
+                </div>
               ))
             )}
           </>
         ) : (
           cloudDefs.map((def) => (
-            <button
+            <div
               key={def.id}
-              type="button"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectAgent(def.id);
+                }
+              }}
               onClick={() => handleSelectAgent(def.id)}
-              className={`text-left rounded-[6px] border transition-all cursor-pointer ${isSm ? 'p-3' : 'p-4'} ${
+              className={`rounded-[6px] border transition-all cursor-pointer ${isSm ? 'p-3' : 'p-4'} ${
                 selectedAgentId === def.id
                   ? 'bg-amber-950/60 border-amber-500 text-amber-50 ring-1 ring-amber-500/40 shadow-lg transform scale-[1.02]'
                   : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-stone-600 hover:bg-stone-900'
@@ -200,7 +252,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                 )}
               </div>
               <p className={`${isSm ? 'text-[10px]' : 'text-xs'} text-stone-400`}>{def.description}</p>
-            </button>
+            </div>
           ))
         )}
       </div>
@@ -283,7 +335,10 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
                 type="text"
                 value={endpointOverride !== '' ? endpointOverride : (currentCred.customEndpoint || activeDef.defaultEndpoint || '')}
                 onChange={(e) => setEndpointOverride(e.target.value)}
-                onBlur={() => setCredential(selectedAgentId, { customEndpoint: endpointOverride })}
+                onBlur={() => {
+                  setCredential(selectedAgentId, { customEndpoint: endpointOverride });
+                  fetchModelsForAgent(selectedAgentId, currentCred.apiKey, endpointOverride);
+                }}
                 placeholder={activeDef.defaultEndpoint || 'http://localhost:11434'}
                 className={`w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] font-mono focus:outline-hidden focus:border-amber-600 ${
                   isSm ? 'p-2.5 text-xs' : 'px-4 py-3 text-sm'
@@ -295,27 +350,50 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({ detectedAgents, si
             </div>
           )}
 
-          {/* Model selector */}
-          {activeDef.models.length > 0 && (
+          {/* Model selector with Dynamic Live Fetching */}
+          {(displayModels.length > 0 || activeDef.allowsCustomModel) && (
             <div className="space-y-2">
-              <label htmlFor="agent-model-select" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
-                {t('settings.model')}
-              </label>
-              <select
-                id="agent-model-select"
-                value={currentModel || activeDef.defaultModel}
-                onChange={(e) => setModel(selectedAgentId, e.target.value)}
-                className={`w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] focus:outline-hidden cursor-pointer ${
-                  isSm ? 'p-2.5 text-xs' : 'px-4 py-3 text-sm'
-                }`}
-              >
-                {activeDef.models.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between">
+                <label htmlFor="agent-model-select" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>
+                  {t('settings.model')}
+                </label>
+                <div className="flex items-center space-x-2">
+                  {fetchNotice && (
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800">
+                      {fetchNotice}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fetchModelsForAgent(selectedAgentId, currentCred.apiKey, endpointOverride || currentCred.customEndpoint)}
+                    disabled={isFetchingModels}
+                    title={t('settings.refreshModels')}
+                    aria-label={t('settings.refreshModels')}
+                    className="p-1 text-stone-400 hover:text-amber-300 rounded hover:bg-stone-800 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isFetchingModels ? 'animate-spin text-amber-400' : ''}`} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+
+              {displayModels.length > 0 && (
+                <select
+                  id="agent-model-select"
+                  value={currentModel || activeDef.defaultModel}
+                  onChange={(e) => setModel(selectedAgentId, e.target.value)}
+                  className={`w-full bg-stone-950 border border-stone-800 text-stone-100 rounded-[6px] focus:outline-hidden cursor-pointer font-mono ${
+                    isSm ? 'p-2.5 text-xs' : 'px-4 py-3 text-sm'
+                  }`}
+                >
+                  {displayModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
 
+          {/* Custom Model Text Input for unlisted models */}
           {activeDef.allowsCustomModel && (
             <div className="space-y-2">
               <label htmlFor="agent-custom-model-input" className={`block font-bold text-stone-300 ${isSm ? 'text-xs' : 'text-sm'}`}>

@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AiPromptInput, AttachedFile } from '@/src/components/ai/AiPromptInput';
 import { QaRecipeSelector } from '@/src/components/ai/QaRecipeSelector';
 import { SkillSelector } from '@/src/components/ai/SkillSelector';
+import { TraceInspector } from '@/src/components/ai/TraceInspector';
 import { AgentSelector } from '@/src/components/shared/AgentSelector';
 import { AiDiffPreviewModal } from '@/src/components/ai/AiDiffPreviewModal';
 import { appendStepsToYaml } from '@/src/utils/diffUtils';
+import { sanitizeTraceEvent } from '@/src/utils/traceSanitizer';
+import type { AgentToolTraceEvent } from '@/src/types/skills';
 import { QaRecipe } from '@/src/data/qaRecipes';
 import {
   Send,
@@ -91,6 +94,18 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
   const [generationDuration, setGenerationDuration] = useState<number>(0);
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [tokenSpeed, setTokenSpeed] = useState<number>(0);
+  const [agentTraces, setAgentTraces] = useState<AgentToolTraceEvent[]>([]);
+
+  // Subscribe to agent tool trace events
+  useEffect(() => {
+    const unlisten = tracyApi.onAgentToolTrace((event) => {
+      const sanitized = sanitizeTraceEvent(event);
+      setAgentTraces((prev) => [...prev, sanitized]);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   // Subscribe to stream chunks during generation
   useEffect(() => {
@@ -129,6 +144,7 @@ export const AiCopilot: React.FC<AiCopilotProps> = ({
     setGenerationDuration(0);
     setTokenCount(0);
     setTokenSpeed(0);
+    setAgentTraces([]);
 
     setIsGenerating(true);
     setErrorMessage(null);
@@ -440,6 +456,9 @@ Include proper selector attributes for all interactive elements. Return ONLY val
             <span>{errorMessage}</span>
           </div>
         )}
+
+        {/* Live Reasoning & Tool Trace Inspector */}
+        <TraceInspector traces={agentTraces} isExecuting={isGenerating} />
 
         {/* Streaming / Generated YAML Result */}
         {(generatedYaml || streamingText) && (
