@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { generateJUnitXML, writeJUnitReport, escapeXml } from './junitReporter.js';
-import type { CliSuiteResult } from '../types.js';
+import { generateJUnitXML, generateMatrixJUnitXML, writeJUnitReport, escapeXml } from './junitReporter.js';
+import type { CliSuiteResult, CliMatrixResult } from '../types.js';
 
 describe('escapeXml', () => {
   it('escapes special characters', () => {
@@ -160,5 +160,77 @@ describe('writeJUnitReport', () => {
     await writeJUnitReport(reportPath, sampleXml);
     const content = await fs.readFile(reportPath, 'utf-8');
     expect(content).toBe(sampleXml);
+  });
+});
+
+describe('generateMatrixJUnitXML', () => {
+  it('formats matrix XML partitioned by browser testsuites with skipped and failed steps', () => {
+    const matrixResult: CliMatrixResult = {
+      totalExecutions: 2,
+      passedExecutions: 1,
+      failedExecutions: 1,
+      skippedExecutions: 0,
+      totalDurationMs: 3500,
+      browsers: ['chromium', 'firefox'],
+      flowResults: new Map(),
+      startTime: '2026-08-19T10:00:00.000Z',
+      endTime: '2026-08-19T10:00:03.500Z',
+      results: [
+        {
+          flowPath: 'flows/login.yaml',
+          flowName: 'Login Flow',
+          browser: 'chromium',
+          status: 'passed',
+          durationMs: 1500,
+          healedCount: 0,
+          steps: [
+            {
+              index: 0,
+              command: 'navigate to /login',
+              status: 'passed',
+              durationMs: 700,
+            },
+            {
+              index: 1,
+              command: 'click #web-only',
+              status: 'skipped',
+              durationMs: 0,
+              skippedReason: "Skipped: when.browser does not match 'chromium'",
+            },
+          ],
+        },
+        {
+          flowPath: 'flows/login.yaml',
+          flowName: 'Login Flow',
+          browser: 'firefox',
+          status: 'failed',
+          durationMs: 2000,
+          healedCount: 0,
+          error: 'Timeout waiting for #firefox-btn',
+          steps: [
+            {
+              index: 0,
+              command: 'navigate to /login',
+              status: 'passed',
+              durationMs: 800,
+            },
+            {
+              index: 1,
+              command: 'click #firefox-btn',
+              status: 'failed',
+              durationMs: 1200,
+              error: 'Timeout waiting for #firefox-btn',
+            },
+          ],
+        },
+      ],
+    };
+
+    const xml = generateMatrixJUnitXML(matrixResult);
+    expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(xml).toContain('<testsuite name="[chromium] Login Flow"');
+    expect(xml).toContain('<testsuite name="[firefox] Login Flow"');
+    expect(xml).toContain('<skipped message="Skipped: when.browser does not match &apos;chromium&apos;"/>');
+    expect(xml).toContain('<failure message="Timeout waiting for #firefox-btn">Timeout waiting for #firefox-btn</failure>');
   });
 });

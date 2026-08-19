@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import type { CliOptions } from './types.js';
 
 const VALID_REPORTERS = ['junit', 'console', 'json', 'all'] as const;
+const VALID_BROWSERS = ['chromium', 'firefox', 'webkit'] as const;
 
 export function parseCliArgs(argv: string[]): { options: CliOptions; errors: string[] } {
   const errors: string[] = [];
@@ -19,6 +20,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
         'base-url': { type: 'string', short: 'b' },
         headless: { type: 'boolean', default: true },
         concurrency: { type: 'string', short: 'c', default: '1' },
+        browsers: { type: 'string', short: 'B', default: 'chromium' },
+        workers: { type: 'string', short: 'w' },
         'patch-file': { type: 'string', short: 'p' },
         help: { type: 'boolean', short: 'h', default: false },
         version: { type: 'boolean', short: 'v', default: false }
@@ -37,6 +40,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
         output: 'test-results',
         headless: true,
         concurrency: 1,
+        browsers: ['chromium'],
+        workers: undefined,
         help: false,
         version: false,
         paths: []
@@ -67,6 +72,36 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
     }
   }
 
+  let workers: number | undefined;
+  if (values.workers !== undefined) {
+    const parsedWorkers = Number(values.workers);
+    if (!Number.isInteger(parsedWorkers) || parsedWorkers <= 0) {
+      errors.push(`Invalid workers: "${values.workers}". Must be a positive integer.`);
+    } else {
+      workers = parsedWorkers;
+    }
+  }
+
+  let browsers: Array<'chromium' | 'firefox' | 'webkit'> = ['chromium'];
+  if (values.browsers !== undefined) {
+    const rawBrowsers = String(values.browsers)
+      .split(',')
+      .map((b) => b.trim().toLowerCase())
+      .filter(Boolean);
+
+    const validParsed: Array<'chromium' | 'firefox' | 'webkit'> = [];
+    for (const b of rawBrowsers) {
+      if (VALID_BROWSERS.includes(b as typeof VALID_BROWSERS[number])) {
+        validParsed.push(b as typeof VALID_BROWSERS[number]);
+      } else {
+        errors.push(`Invalid browser: "${b}". Must be one of: ${VALID_BROWSERS.join(', ')}.`);
+      }
+    }
+    if (validParsed.length > 0) {
+      browsers = Array.from(new Set(validParsed));
+    }
+  }
+
   const rawReporter = values.reporter as string;
   let reporter: CliOptions['reporter'] = 'console';
   if (rawReporter) {
@@ -92,6 +127,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
     baseUrl: values['base-url'] as string | undefined,
     headless: values.headless !== undefined ? Boolean(values.headless) : true,
     concurrency,
+    browsers,
+    workers,
     patchFile: values['patch-file'] as string | undefined,
     help: Boolean(values.help),
     version: Boolean(values.version),
@@ -117,6 +154,8 @@ Options:
   -b, --base-url <url>   Override base URL for all flows
       --headless         Run browser in headless mode [default: true]
   -c, --concurrency <n>  Number of parallel flow executions (max 16) [default: 1]
+  -B, --browsers <list>  Comma-separated list of browser targets: chromium, firefox, webkit [default: chromium]
+  -w, --workers <n>      Number of parallel matrix workers (auto from CPU count by default)
   -p, --patch-file <path> File path to write unified diff patch for healed flows
   -h, --help             Show command line help
   -v, --version          Show version number

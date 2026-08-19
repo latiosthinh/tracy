@@ -14,6 +14,8 @@ describe('parseCliArgs', () => {
       baseUrl: undefined,
       headless: true,
       concurrency: 1,
+      browsers: ['chromium'],
+      workers: undefined,
       patchFile: undefined,
       help: false,
       version: false,
@@ -84,5 +86,38 @@ describe('parseCliArgs', () => {
     expect(help).toContain('Usage: tracy run');
     expect(help).toContain('--heal');
     expect(help).toContain('--ci');
+    expect(help).toContain('--browsers');
+    expect(help).toContain('--workers');
+  });
+
+  it('parses --browsers comma-separated list and -B flag', () => {
+    const { options: o1, errors: e1 } = parseCliArgs(['--browsers', 'chromium,firefox,webkit']);
+    expect(e1).toHaveLength(0);
+    expect(o1.browsers).toEqual(['chromium', 'firefox', 'webkit']);
+
+    const { options: o2, errors: e2 } = parseCliArgs(['-B', 'firefox']);
+    expect(e2).toHaveLength(0);
+    expect(o2.browsers).toEqual(['firefox']);
+  });
+
+  it('validates supported browsers and reports error on invalid target', () => {
+    const { options, errors } = parseCliArgs(['--browsers', 'chromium,safari,opera']);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('Invalid browser');
+  });
+
+  it('parses --workers and -w flags', () => {
+    const { options: o1, errors: e1 } = parseCliArgs(['--workers', '4']);
+    expect(e1).toHaveLength(0);
+    expect(o1.workers).toBe(4);
+
+    const { options: o2, errors: e2 } = parseCliArgs(['-w', '8']);
+    expect(e2).toHaveLength(0);
+    expect(o2.workers).toBe(8);
+  });
+
+  it('reports error on invalid workers count', () => {
+    const { errors } = parseCliArgs(['--workers', '0']);
+    expect(errors.some((e) => e.includes('workers'))).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type { CliSuiteResult } from '../types.js';
+import type { CliSuiteResult, CliMatrixResult } from '../types.js';
 
 export function escapeXml(str: unknown): string {
   if (str === null || str === undefined) return '';
@@ -54,6 +54,98 @@ export function generateJUnitXML(
         if (step.status === 'failed') {
           lines.push(
             `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(step.error || 'Step failed')}</failure>`
+          );
+        } else if (step.status === 'skipped') {
+          lines.push(
+            `      <skipped message="${escapeXml(step.skippedReason || 'Step skipped')}"/>`
+          );
+        }
+
+        if (step.healResult) {
+          lines.push(`      <properties>`);
+          lines.push(`        <property name="healed" value="true"/>`);
+          if (step.healResult.healedSelector) {
+            lines.push(
+              `        <property name="healedSelector" value="${escapeXml(step.healResult.healedSelector)}"/>`
+            );
+          }
+          if (step.healResult.confidence !== undefined) {
+            lines.push(
+              `        <property name="confidence" value="${escapeXml(step.healResult.confidence)}"/>`
+            );
+          }
+          lines.push(`      </properties>`);
+        }
+
+        if (test.artifacts && (test.artifacts.screenshotPath || test.artifacts.domSnapshotPath)) {
+          const sysOut: string[] = [];
+          if (test.artifacts.screenshotPath) {
+            sysOut.push(`Screenshot: ${test.artifacts.screenshotPath}`);
+          }
+          if (test.artifacts.domSnapshotPath) {
+            sysOut.push(`DOM Snapshot: ${test.artifacts.domSnapshotPath}`);
+          }
+          lines.push(`      <system-out>${escapeXml(sysOut.join('\n'))}</system-out>`);
+        }
+
+        lines.push(`    </testcase>`);
+      });
+    }
+
+    lines.push(`  </testsuite>`);
+  }
+
+  lines.push('</testsuites>');
+  return lines.join('\n');
+}
+
+export function generateMatrixJUnitXML(
+  matrixResult: CliMatrixResult,
+  suiteName = 'Tracy Multi-Browser Matrix Suite'
+): string {
+  const totalSeconds = (matrixResult.totalDurationMs / 1000).toFixed(3);
+  const lines: string[] = [];
+
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push(
+    `<testsuites name="${escapeXml(suiteName)}" tests="${matrixResult.totalExecutions}" failures="${matrixResult.failedExecutions}" errors="0" time="${totalSeconds}">`
+  );
+
+  for (const test of matrixResult.results) {
+    const testSeconds = (test.durationMs / 1000).toFixed(3);
+    const flowFailures = test.status === 'failed' ? 1 : 0;
+    const testCount = test.steps.length > 0 ? test.steps.length : 1;
+    const suiteDisplayName = test.browser ? `[${test.browser}] ${test.flowName}` : test.flowName;
+
+    lines.push(
+      `  <testsuite name="${escapeXml(suiteDisplayName)}" tests="${testCount}" failures="${flowFailures}" errors="0" time="${testSeconds}" timestamp="${escapeXml(matrixResult.startTime || new Date().toISOString())}">`
+    );
+
+    if (test.steps.length === 0) {
+      lines.push(
+        `    <testcase classname="${escapeXml(suiteDisplayName)}" name="Flow Execution" time="${testSeconds}">`
+      );
+      if (test.status === 'failed') {
+        lines.push(
+          `      <failure message="${escapeXml(test.error || 'Flow execution failed')}">${escapeXml(test.error || 'Flow execution failed')}</failure>`
+        );
+      }
+      lines.push(`    </testcase>`);
+    } else {
+      test.steps.forEach((step, idx) => {
+        const stepSeconds = (step.durationMs / 1000).toFixed(3);
+        const stepName = `Step ${idx + 1}: ${step.command}`;
+        lines.push(
+          `    <testcase classname="${escapeXml(suiteDisplayName)}" name="${escapeXml(stepName)}" time="${stepSeconds}">`
+        );
+
+        if (step.status === 'failed') {
+          lines.push(
+            `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(step.error || 'Step failed')}</failure>`
+          );
+        } else if (step.status === 'skipped') {
+          lines.push(
+            `      <skipped message="${escapeXml(step.skippedReason || 'Step skipped')}"/>`
           );
         }
 
