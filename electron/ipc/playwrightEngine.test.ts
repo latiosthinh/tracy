@@ -38,14 +38,14 @@ describe('playwrightEngine NetworkMockManager integration (TDD RED)', () => {
   let mockContext: any;
   let mockPage: any;
   let mockEvent: any;
-  let handlers: Record<string, Function> = {};
+  let handlers: Record<string, (...args: any[]) => any> = {};
 
   beforeEach(async () => {
     vi.clearAllMocks();
     handlers = {};
 
     const { ipcMain } = await import('electron');
-    (ipcMain.handle as any).mockImplementation((channel: string, fn: Function) => {
+    (ipcMain.handle as any).mockImplementation((channel: string, fn: (...args: any[]) => any) => {
       handlers[channel] = fn;
     });
 
