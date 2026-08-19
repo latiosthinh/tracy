@@ -1,16 +1,24 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { chromium, type Browser } from 'playwright-core';
+import type { Browser } from 'playwright-core';
 import { parseDocument } from 'yaml';
-import type { CliOptions, CliSuiteResult, CliTestResult, CliStepResult } from './types';
+import type { CliOptions, CliSuiteResult, CliTestResult, CliStepResult, CliMatrixResult } from './types';
 import * as deps from './runnerDeps';
 import { generateUnifiedPatch, writePatchFile, type FilePatchInput } from './patchGenerator';
 import { NetworkMockManager } from '../electron/core/network/networkMockManager';
+import { MatrixWorkerPool, shouldExecuteStepForBrowser } from '../electron/core/matrix/workerPool';
+import type { MatrixBrowserTarget, MatrixTask } from '../electron/core/matrix/types';
+import { generateMatrixJUnitXML, writeJUnitReport } from './reporters/junitReporter';
+import { printMatrixSummary } from './reporters/consoleReporter';
 
 export interface ParsedFlow {
   title?: string;
   name?: string;
   url?: string;
+  browsers?: MatrixBrowserTarget[];
+  matrix?: {
+    browsers?: MatrixBrowserTarget[];
+  };
   steps: Array<Record<string, any>>;
 }
 
@@ -108,7 +116,8 @@ export async function executeSingleFlow(
   filePath: string,
   options: CliOptions,
   browser: Browser,
-  patchesCollector?: FilePatchInput[]
+  patchesCollector?: FilePatchInput[],
+  browserName: MatrixBrowserTarget = 'chromium'
 ): Promise<CliTestResult> {
   const start = Date.now();
   const flowRaw = await fs.readFile(filePath, 'utf-8');
@@ -152,7 +161,7 @@ export async function executeSingleFlow(
 
   const page = await context.newPage();
   const safeSlug = deps.sanitizeFlowName(flowName);
-  const tracePath = path.resolve(options.output || 'test-results', safeSlug, 'trace.zip');
+  const tracePath = path.resolve(options.output || 'test-results', safeSlug, `trace-${browserName}.zip`);
 
   try {
     // If flow has a top-level url and no explicit first navigate step, navigate to it
@@ -164,6 +173,19 @@ export async function executeSingleFlow(
       const raw = stepsRaw[i];
       const normalized = normalizeStep(raw);
       const commandStr = normalized.action + (normalized.selector ? ` "${normalized.selector}"` : (normalized.url ? ` "${normalized.url}"` : ''));
+
+      // Check browser conditionals
+      const check = shouldExecuteStepForBrowser(raw, browserName);
+      if (!check.execute) {
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'skipped',
+          durationMs: 0,
+          skippedReason: check.reason,
+        });
+        continue;
+      }
 
       // Intercept network mock / assert steps directly
       if (normalized.action === 'mockRoute') {
@@ -387,6 +409,7 @@ export async function executeSingleFlow(
   return {
     flowPath: filePath,
     flowName,
+    browser: browserName,
     status: flowStatus,
     durationMs: Date.now() - start,
     steps: stepResults,
@@ -397,20 +420,114 @@ export async function executeSingleFlow(
 }
 
 /**
- * Executes a suite of YAML flows headlessly in Playwright Chromium.
+ * Executes a matrix of flows across specified browser engines with worker concurrency.
+ */
+export async function executeMatrixFlows(
+  flowPaths: string[],
+  options: CliOptions
+): Promise<CliMatrixResult> {
+  const startTime = new Date().toISOString();
+  const matrixStart = Date.now();
+
+  const targetBrowsers = options.browsers && options.browsers.length > 0
+    ? options.browsers
+    : (['chromium'] as MatrixBrowserTarget[]);
+
+  const patchesCollector: FilePatchInput[] = [];
+  const pool = new MatrixWorkerPool({
+    maxWorkers: options.workers || options.concurrency,
+    headless: options.headless,
+  });
+
+  const tasks: MatrixTask<{ filePath: string; options: CliOptions }>[] = [];
+  for (const filePath of flowPaths) {
+    let flowBrowsers = targetBrowsers;
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const doc = parseDocument(content);
+      const flowJson = (doc.toJSON() || {}) as ParsedFlow;
+      if (flowJson.matrix?.browsers && Array.isArray(flowJson.matrix.browsers)) {
+        flowBrowsers = flowJson.matrix.browsers;
+      } else if (flowJson.browsers && Array.isArray(flowJson.browsers)) {
+        flowBrowsers = flowJson.browsers;
+      }
+    } catch {
+      // Use fallback browsers
+    }
+
+    for (const b of flowBrowsers) {
+      tasks.push({
+        id: `${path.basename(filePath)}_${b}`,
+        flow: { filePath, options },
+        flowPath: filePath,
+        browser: b,
+      });
+    }
+  }
+
+  const results: CliTestResult[] = [];
+  const flowResults = new Map<string, Record<string, CliTestResult>>();
+
+  try {
+    const taskResults = await pool.runTasks(tasks, async (browser, _context, task) => {
+      return executeSingleFlow(
+        task.flow.filePath,
+        task.flow.options,
+        browser,
+        patchesCollector,
+        task.browser
+      );
+    });
+
+    for (const res of taskResults) {
+      results.push(res);
+      const fp = res.flowPath;
+      if (!flowResults.has(fp)) {
+        flowResults.set(fp, {});
+      }
+      if (res.browser) {
+        flowResults.get(fp)![res.browser] = res;
+      }
+    }
+  } finally {
+    await pool.destroy();
+  }
+
+  // Generate unified .patch file if any files were patched
+  if (options.heal && patchesCollector.length > 0) {
+    const patchContent = generateUnifiedPatch(patchesCollector);
+    const patchOutputPath = options.patchFile || path.join(options.output || 'test-results', 'self-heal.patch');
+    if (patchContent) {
+      await writePatchFile(patchOutputPath, patchContent);
+    }
+  }
+
+  const passedExecutions = results.filter((r) => r.status === 'passed').length;
+  const failedExecutions = results.filter((r) => r.status === 'failed').length;
+  const skippedExecutions = results.filter((r) => (r as any).status === 'skipped').length;
+
+  return {
+    totalExecutions: results.length,
+    passedExecutions,
+    failedExecutions,
+    skippedExecutions,
+    totalDurationMs: Date.now() - matrixStart,
+    browsers: targetBrowsers,
+    flowResults,
+    results,
+    startTime,
+    endTime: new Date().toISOString(),
+  };
+}
+
+/**
+ * Executes a suite of YAML flows headlessly in Playwright (single browser or matrix).
  */
 export async function runFlowsHeadless(options: CliOptions): Promise<CliSuiteResult> {
   const startTime = new Date().toISOString();
   const suiteStart = Date.now();
 
   const flowFiles = await discoverFlowFiles(options.paths);
-
-  const results: CliTestResult[] = [];
-  const patchesCollector: FilePatchInput[] = [];
-
-  let passedTests = 0;
-  let failedTests = 0;
-  let healedTests = 0;
 
   if (flowFiles.length === 0) {
     return {
@@ -425,73 +542,52 @@ export async function runFlowsHeadless(options: CliOptions): Promise<CliSuiteRes
     };
   }
 
-  const browser = await chromium.launch({
-    headless: options.headless,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-  });
+  const matrixResult = await executeMatrixFlows(flowFiles, options);
 
-  try {
-    const concurrency = Math.max(1, options.concurrency || 1);
-
-    if (concurrency === 1 || flowFiles.length === 1) {
-      for (const file of flowFiles) {
-        const testRes = await executeSingleFlow(file, options, browser, patchesCollector);
-        results.push(testRes);
-        if (testRes.status === 'passed') {
-          passedTests++;
-        } else {
-          failedTests++;
-        }
-        if (testRes.healedCount > 0) {
-          healedTests++;
-        }
-      }
-    } else {
-      // Chunk flows by concurrency limit
-      for (let i = 0; i < flowFiles.length; i += concurrency) {
-        const chunk = flowFiles.slice(i, i + concurrency);
-        const chunkResults = await Promise.all(
-          chunk.map((file) => executeSingleFlow(file, options, browser, patchesCollector))
-        );
-
-        for (const testRes of chunkResults) {
-          results.push(testRes);
-          if (testRes.status === 'passed') {
-            passedTests++;
-          } else {
-            failedTests++;
-          }
-          if (testRes.healedCount > 0) {
-            healedTests++;
-          }
-        }
-      }
-    }
-  } finally {
-    try {
-      await browser.close();
-    } catch {
-      // Ignore browser close error
-    }
+  // Write reports based on options.reporter
+  const outputDir = options.output || 'test-results';
+  if (options.reporter === 'junit' || options.reporter === 'all') {
+    const xml = generateMatrixJUnitXML(matrixResult);
+    await writeJUnitReport(path.join(outputDir, 'junit.xml'), xml);
   }
 
-  // Generate unified .patch file if any files were patched
-  if (options.heal && patchesCollector.length > 0) {
-    const patchContent = generateUnifiedPatch(patchesCollector);
-    const patchOutputPath = options.patchFile || path.join(options.output || 'test-results', 'self-heal.patch');
-    if (patchContent) {
-      await writePatchFile(patchOutputPath, patchContent);
-    }
+  if (options.reporter === 'json' || options.reporter === 'all') {
+    await fs.mkdir(outputDir, { recursive: true });
+    await fs.writeFile(
+      path.join(outputDir, 'matrix-report.json'),
+      JSON.stringify(
+        {
+          totalExecutions: matrixResult.totalExecutions,
+          passedExecutions: matrixResult.passedExecutions,
+          failedExecutions: matrixResult.failedExecutions,
+          skippedExecutions: matrixResult.skippedExecutions,
+          totalDurationMs: matrixResult.totalDurationMs,
+          browsers: matrixResult.browsers,
+          results: matrixResult.results,
+          startTime: matrixResult.startTime,
+          endTime: matrixResult.endTime,
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
   }
+
+  if (options.reporter === 'console' || options.reporter === 'all') {
+    printMatrixSummary(matrixResult);
+  }
+
+  const healedTests = matrixResult.results.reduce((acc, r) => acc + (r.healedCount > 0 ? 1 : 0), 0);
 
   return {
-    totalTests: flowFiles.length,
-    passedTests,
-    failedTests,
+    totalTests: matrixResult.totalExecutions,
+    passedTests: matrixResult.passedExecutions,
+    failedTests: matrixResult.failedExecutions,
     healedTests,
-    totalDurationMs: Date.now() - suiteStart,
-    results,
-    startTime,
-    endTime: new Date().toISOString()
+    totalDurationMs: matrixResult.totalDurationMs,
+    results: matrixResult.results,
+    startTime: matrixResult.startTime,
+    endTime: matrixResult.endTime,
   };
 }

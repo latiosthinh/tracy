@@ -2,8 +2,42 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { discoverFlowFiles, executeSingleFlow } from './runner';
+import { discoverFlowFiles, executeSingleFlow, executeMatrixFlows } from './runner';
 import type { CliOptions } from './types';
+
+vi.mock('playwright-core', () => {
+  const createMockBrowser = () => {
+    const mockContext = {
+      newPage: vi.fn().mockResolvedValue({
+        goto: vi.fn().mockResolvedValue(undefined),
+      }),
+      route: vi.fn().mockResolvedValue(undefined),
+      routeFromHAR: vi.fn().mockResolvedValue(undefined),
+      unrouteAll: vi.fn().mockResolvedValue(undefined),
+      tracing: {
+        start: vi.fn().mockResolvedValue(undefined),
+        stop: vi.fn().mockResolvedValue(undefined),
+      },
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    return {
+      newContext: vi.fn().mockResolvedValue(mockContext),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+  };
+
+  return {
+    chromium: {
+      launch: vi.fn().mockImplementation(async () => createMockBrowser()),
+    },
+    firefox: {
+      launch: vi.fn().mockImplementation(async () => createMockBrowser()),
+    },
+    webkit: {
+      launch: vi.fn().mockImplementation(async () => createMockBrowser()),
+    },
+  };
+});
 
 vi.mock('./runnerDeps', () => ({
   executeStepWithHealing: vi.fn().mockImplementation(async (_page, step, options) => {
@@ -200,6 +234,58 @@ describe('cli/runner', () => {
       expect(result.status).toBe('failed');
       expect(result.steps[0].status).toBe('failed');
       expect(result.steps[0].error).toContain("Expected exactly 1 requests matching '**/api/never-called'");
+    });
+
+    it('evaluates shouldExecuteStepForBrowser and skips step on mismatched browser conditional', async () => {
+      const flowPath = path.join(tempDir, 'conditional.yaml');
+      await fs.writeFile(
+        flowPath,
+        `name: ConditionalFlow\nsteps:\n  - click: #common-btn\n  - click: #firefox-only\n    when:\n      browser: firefox\n  - click: #skip-on-chromium\n    skip_if:\n      browser: chromium`
+      );
+
+      const result = await executeSingleFlow(flowPath, defaultOptions, mockBrowser, undefined, 'chromium');
+      expect(result.status).toBe('passed');
+      expect(result.steps).toHaveLength(3);
+      expect(result.steps[0].status).toBe('passed');
+      expect(result.steps[1].status).toBe('skipped');
+      expect(result.steps[1].skippedReason).toContain("when.browser does not match 'chromium'");
+      expect(result.steps[2].status).toBe('skipped');
+      expect(result.steps[2].skippedReason).toContain("skip_if.browser matched 'chromium'");
+    });
+  });
+
+  describe('executeMatrixFlows and runFlowsHeadless with Matrix', () => {
+    it('executes cartesian product of flows × browsers across worker pool', async () => {
+      const flowPath1 = path.join(tempDir, 'flow1.yaml');
+      const flowPath2 = path.join(tempDir, 'flow2.yaml');
+      await fs.writeFile(flowPath1, `name: Flow1\nsteps:\n  - click: #btn`);
+      await fs.writeFile(flowPath2, `name: Flow2\nsteps:\n  - click: #btn`);
+
+      const matrixOptions: CliOptions = {
+        ci: false,
+        heal: false,
+        timeout: 5000,
+        reporter: 'all',
+        output: path.join(tempDir, 'test-results'),
+        headless: true,
+        concurrency: 2,
+        browsers: ['chromium', 'firefox'],
+        workers: 2,
+        help: false,
+        version: false,
+        paths: [flowPath1, flowPath2]
+      };
+
+      const matrixResult = await executeMatrixFlows([flowPath1, flowPath2], matrixOptions);
+
+      expect(matrixResult.totalExecutions).toBe(4);
+      expect(matrixResult.browsers).toEqual(['chromium', 'firefox']);
+      expect(matrixResult.results).toHaveLength(4);
+      expect(matrixResult.passedExecutions).toBe(4);
+
+      // Verify matrix results map
+      expect(matrixResult.flowResults.has(flowPath1)).toBe(true);
+      expect(matrixResult.flowResults.has(flowPath2)).toBe(true);
     });
   });
 });

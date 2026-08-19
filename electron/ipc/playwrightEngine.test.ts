@@ -13,11 +13,54 @@ vi.mock('electron', () => ({
   WebContentsView: vi.fn(),
 }));
 
-vi.mock('playwright-core', () => ({
-  chromium: {
-    connectOverCDP: vi.fn(),
-  },
-}));
+vi.mock('playwright-core', () => {
+  const createMockPage = () => ({
+    url: vi.fn().mockReturnValue('http://localhost:3000/app'),
+    goto: vi.fn().mockResolvedValue(undefined),
+    waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    waitForLoadState: vi.fn().mockResolvedValue(undefined),
+    waitForSelector: vi.fn().mockResolvedValue(undefined),
+    title: vi.fn().mockResolvedValue('Test App'),
+    screenshot: vi.fn().mockResolvedValue(Buffer.from('fake')),
+    mouse: { wheel: vi.fn() },
+    setViewportSize: vi.fn(),
+    evaluate: vi.fn(),
+    locator: vi.fn(),
+    getByText: vi.fn(),
+    getByTestId: vi.fn(),
+    getByRole: vi.fn(),
+    getByLabel: vi.fn(),
+    getByPlaceholder: vi.fn(),
+  });
+
+  const createMockContext = () => ({
+    pages: vi.fn().mockReturnValue([createMockPage()]),
+    newPage: vi.fn().mockResolvedValue(createMockPage()),
+    route: vi.fn().mockResolvedValue(undefined),
+    routeFromHAR: vi.fn().mockResolvedValue(undefined),
+    unrouteAll: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn().mockResolvedValue(undefined),
+  });
+
+  const createMockBrowser = () => ({
+    contexts: vi.fn().mockReturnValue([createMockContext()]),
+    newContext: vi.fn().mockResolvedValue(createMockContext()),
+    close: vi.fn().mockResolvedValue(undefined),
+  });
+
+  return {
+    chromium: {
+      connectOverCDP: vi.fn().mockResolvedValue(createMockBrowser()),
+      launch: vi.fn().mockResolvedValue(createMockBrowser()),
+    },
+    firefox: {
+      launch: vi.fn().mockResolvedValue(createMockBrowser()),
+    },
+    webkit: {
+      launch: vi.fn().mockResolvedValue(createMockBrowser()),
+    },
+  };
+});
 
 vi.mock('dom-miner', () => ({
   runCompactObserve: vi.fn(),
@@ -173,5 +216,32 @@ describe('playwrightEngine NetworkMockManager integration (TDD RED)', () => {
     expect(stepUpdates.some((u: any) => u.stepIndex === 0 && u.status === 'failed')).toBe(true);
     // Step 1 should never run
     expect(stepUpdates.some((u: any) => u.stepIndex === 1 && u.status === 'running')).toBe(false);
+  });
+
+  it('skips steps based on browser conditionals and supports target engine launches', async () => {
+    const { registerPlaywrightHandlers } = await import('./playwrightEngine');
+    registerPlaywrightHandlers();
+
+    const runFlowHandler = handlers['run_flow'];
+
+    const flow = {
+      name: 'Matrix Conditional Flow',
+      steps: [
+        { command: 'navigate', value: 'http://localhost:3000' },
+        { command: 'assertTitle', value: 'WebKit Only', when: { browser: 'webkit' } },
+        { command: 'assertTitle', value: 'Test App', when: { browser: 'chromium' } },
+      ],
+    };
+
+    await runFlowHandler(mockEvent, { flow, targetBaseUrl: 'http://localhost:3000', speedMs: 0, browserType: 'chromium' });
+
+    const stepUpdates = mockEvent.sender.send.mock.calls
+      .filter(([channel]: [string]) => channel === 'step-update')
+      .map(([, payload]: [any, any]) => payload);
+
+    // Step 1 (webkit only) skipped
+    expect(stepUpdates.some((u: any) => u.stepIndex === 1 && u.status === 'skipped')).toBe(true);
+    // Step 2 (chromium only) passed
+    expect(stepUpdates.some((u: any) => u.stepIndex === 2 && u.status === 'passed')).toBe(true);
   });
 });

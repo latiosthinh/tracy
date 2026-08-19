@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
+import * as playwright from 'playwright-core';
 import { chromium, Browser, Page, BrowserContext } from 'playwright-core';
 import { runCompactObserve, formatCompactTree, authenticate } from 'dom-miner';
 import { isAllowedNavigationUrl } from './webviewManager.js';
@@ -6,6 +7,8 @@ import { executeStepWithHealing } from '../core/healing/selfHealingRunner.js';
 import { patchYamlFile } from '../core/healing/yamlPatcher.js';
 import { saveHealArtifacts, saveFailureArtifacts } from '../core/healing/artifactManager.js';
 import { NetworkMockManager } from '../core/network/networkMockManager.js';
+import { shouldExecuteStepForBrowser } from '../core/matrix/workerPool.js';
+import type { MatrixBrowserTarget } from '../core/matrix/types.js';
 import * as path from 'node:path';
 
 let browser: Browser | null = null;
@@ -313,20 +316,38 @@ export function registerPlaywrightHandlers() {
   });
 
   // ── run_flow: Execute a full flow step-by-step ──────────────────────────
-  ipcMain.handle('run_flow', async (event, { flow, targetBaseUrl, speedMs }: { flow: any; targetBaseUrl: string; speedMs: number }) => {
-    let currentPage = await getActivePage();
-    if (!currentPage) {
-      // Auto-launch if not already connected
-      if (!browser) {
-        browser = await chromium.connectOverCDP('http://localhost:9222');
-      }
-      context = browser.contexts()[0];
+  ipcMain.handle('run_flow', async (event, { flow, targetBaseUrl, speedMs, browserType }: { flow: any; targetBaseUrl: string; speedMs: number; browserType?: MatrixBrowserTarget }) => {
+    const currentBrowserTarget: MatrixBrowserTarget = browserType || flow.browser || 'chromium';
+    let localBrowser: Browser | null = null;
+    let localContext: BrowserContext | null = null;
+    let currentPage: Page | null = null;
+
+    if (currentBrowserTarget === 'chromium') {
       currentPage = await getActivePage();
+      if (!currentPage) {
+        // Auto-launch if not already connected
+        if (!browser) {
+          browser = await chromium.connectOverCDP('http://localhost:9222');
+        }
+        context = browser.contexts()[0];
+        currentPage = await getActivePage();
+      }
+    } else {
+      const engine = (playwright as any)[currentBrowserTarget];
+      if (!engine) throw new Error(`Unsupported browser engine: ${currentBrowserTarget}`);
+      localBrowser = await engine.launch({
+        headless: flow.headless ?? true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      localContext = await localBrowser!.newContext();
+      currentPage = await localContext!.newPage();
     }
-    if (!currentPage || !context) throw new Error('Browser not launched — cannot execute flow');
+
+    const activeContext = localContext || context;
+    if (!currentPage || !activeContext) throw new Error('Browser not launched — cannot execute flow');
 
     const mockManager = new NetworkMockManager();
-    await mockManager.attachToContext(context);
+    await mockManager.attachToContext(activeContext);
 
     // Register flow-level declarative mock rules if defined
     if (Array.isArray(flow.metadata?.mocks)) {
@@ -337,7 +358,7 @@ export function registerPlaywrightHandlers() {
 
     // Register flow-level HAR replay if defined
     if (flow.metadata?.har?.path) {
-      await mockManager.attachHarReplay(context, flow.metadata.har.path, flow.metadata.har);
+      await mockManager.attachHarReplay(activeContext, flow.metadata.har.path, flow.metadata.har);
     }
 
     const steps: any[] = flow.steps || [];
@@ -355,9 +376,9 @@ export function registerPlaywrightHandlers() {
       }
     };
 
-    const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string, healResult?: any) => {
+    const sendStepUpdate = (stepIndex: number, status: string, durationMs?: number, errorMessage?: string, healResult?: any, skippedReason?: string) => {
       if (!sender.isDestroyed()) {
-        sender.send('step-update', { stepIndex, status, durationMs, errorMessage, healResult });
+        sender.send('step-update', { stepIndex, status, durationMs, errorMessage, healResult, skippedReason });
       }
     };
 
@@ -410,6 +431,14 @@ export function registerPlaywrightHandlers() {
         const step = steps[i];
         const stepStart = Date.now();
         const cmd = step.command;
+
+        // Check browser conditionals
+        const check = shouldExecuteStepForBrowser(step, currentBrowserTarget);
+        if (!check.execute) {
+          sendLog('info', i, `○ Step ${i + 1} skipped on browser '${currentBrowserTarget}': ${check.reason}`);
+          sendStepUpdate(i, 'skipped', 0, undefined, undefined, check.reason);
+          continue;
+        }
 
         sendStepUpdate(i, 'running');
         sendLog('info', i, `▶ Step ${i + 1}: ${cmd}`);
@@ -714,6 +743,13 @@ export function registerPlaywrightHandlers() {
       }
     } finally {
       await mockManager.cleanup();
+      if (localBrowser) {
+        try {
+          await localBrowser.close();
+        } catch {
+          // Ignore close error
+        }
+      }
     }
   });
 }
