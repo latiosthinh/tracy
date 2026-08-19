@@ -5,7 +5,7 @@
 - ✅ **v1.0 Project-Isolated Studio & Hardening** — Phases 1-3 (shipped 2026-08-15)
 - ✅ **v2.0 Atomic UI/UX Perfection & Power Studio Workflows** — Phases 4-8 (shipped 2026-08-19)
 - ✅ **v3.0 AI Flow Gen V2 & Dynamic Agent Skills** — Phases 9-14 (shipped 2026-08-19)
-- 📋 **v4.0 Autonomous Multi-Flow Agent & Self-Healing CI** — (planned)
+- 📋 **v4.0 Autonomous Multi-Flow Agent & Self-Healing CI** — Phases 15-19 (in progress)
 
 ## Phases
 
@@ -41,6 +41,17 @@
 
 </details>
 
+<details open>
+<summary>📋 v4.0 Autonomous Multi-Flow Agent & Self-Healing CI (Phases 15-19)</summary>
+
+- [x] Phase 15: Heuristic & AI Self-Healing Execution Core (2/2 plans) — completed 2026-08-19
+- [ ] Phase 16: Comment-Preserving YAML AST Auto-Patcher & Artifacts
+- [ ] Phase 17: Headless CI CLI Binary & Reporting Pipeline
+- [ ] Phase 18: Autonomous Route & Interaction Crawler
+- [ ] Phase 19: Route Topology & Coverage Visualizer Studio
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -59,3 +70,8 @@
 | 12. QA Domain Skills Catalog | v3.0 | 1/1 | Complete | 2026-08-19 |
 | 13. Copilot Skill & Trace UI | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 14. Flow Accuracy Benchmarks | v3.0 | 2/2 | Complete | 2026-08-19 |
+| 15. Self-Healing Execution Core | v4.0 | 2/2 | Complete | 2026-08-19 |
+| 16. YAML AST Auto-Patcher | v4.0 | 0/0 | Pending | — |
+| 17. Headless CI CLI Binary | v4.0 | 0/0 | Pending | — |
+| 18. Autonomous Route Crawler | v4.0 | 0/0 | Pending | — |
+| 19. Route & Coverage Visualizer | v4.0 | 0/0 | Pending | — |
