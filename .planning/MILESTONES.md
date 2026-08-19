@@ -1,5 +1,15 @@
 # Milestones
 
+## v3.0 AI Flow Gen V2 & Dynamic Agent Skills (Shipped: 2026-08-19)
+
+**Phases completed:** 6 phases, 11 plans, 0 tasks
+
+**Key accomplishments:**
+
+- 1. [Rule 1 - Bug] Type name collision with existing `SelectorType` in `flow.ts`
+
+---
+
 ## v2.0 Atomic UI/UX Perfection & Power Studio Workflows (Shipped: 2026-08-18)
 
 **Phases completed:** 8 phases, 23 plans, 2 tasks
