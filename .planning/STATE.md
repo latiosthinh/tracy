@@ -1,45 +1,41 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Autonomous Multi-Flow Agent & Self-Healing CI
+milestone: v5.0
+milestone_name: Performance, Mocking & Multi-Browser Grid
 status: in_progress
-last_updated: "2026-08-19T10:15:00.000Z"
+last_updated: "2026-08-19T00:00:00.000Z"
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 9
-  percent: 90
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-08-19)
+See: .planning/PROJECT.md (updated 2026-08-19)
 
-**Status:** In Progress (Phase 18 complete, Phase 19 Plan 01 complete)
-**Milestone:** v4.0 — Autonomous Multi-Flow Agent & Self-Healing CI
-**Current focus:** Phase 19: Route Topology & Coverage Visualizer Studio
+**Status:** In Progress (Defining Requirements & Roadmap)
+**Milestone:** v5.0 — Performance, Mocking & Multi-Browser Grid
+**Current focus:** Defining requirements and building roadmap for Milestone v5.0
 
 ## Current Position
 
-Phase: Phase 19: Route Topology & Coverage Visualizer Studio
-Plan: 19-02
-Status: Ready to execute
-Last activity: 2026-08-19 — Completed 19-01-PLAN.md (crawlerStore & @xyflow/react setup)
+Phase: 20-declarative-network-route-mocking-and-har-replay-engine
+Plan: 20-01
+Status: Plan 20-01 Complete, ready for Plan 20-02
+Last activity: 2026-08-19 — Executed 20-01-PLAN.md (NetworkMockManager core engine)
 
-## Progress Bar
+## Decisions
 
-[█████████░] 90% complete (9/10 plans complete)
+- Normalized glob and regex pattern matching in NetworkMockManager to support matching URL paths independently of query strings.
+- Implemented ring-buffer logging for captured requests capped at 500 entries to prevent memory growth.
+- Guaranteed route fallback and unroute cleanup on context shutdown to avoid hung sockets and test leakage.
 
-## Accumulated Context
 
-### Key Decisions
-- Dual-process decoupling: Core execution loop and self-healing engine shared between headless CLI binary (`tracy run`) and Electron IPC handlers.
-- Minimal dependency footprint: Node stdlib (`node:util.parseArgs`, native XML generator, native TS graph) + `yaml` for CST comment preservation + `@xyflow/react` for React 19 visualizer.
-- Strict anti-regression invariants: Assertion steps (`expect(...)`) and semantic opposites (e.g. Save vs Cancel) are strictly blocked from self-healing.
-- Route Visualizer Architecture: React Flow `@xyflow/react` interactive canvas consuming Zustand `crawlerStore` synced via IPC events `onCrawlerProgress`.
 
 
 
