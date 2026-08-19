@@ -71,7 +71,9 @@
   1. Multi-provider AI abstraction translates native tool definitions (`validate_selector`, `find_elements_by_text`, `inspect_element`) across Gemini, Anthropic, and OpenAI protocols
   2. When a generated selector fails validation, agent receives diagnostic feedback and automatically retries alternative resilient locators
   3. Generator enforces hard iteration cap (max 5 turns), loop guards, and emits streaming reasoning trace chunks over IPC
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 11-01-PLAN.md — Multi-Provider Tool Calling Layer & Protocol Translators in aiProvider.ts
+- [ ] 11-02-PLAN.md — Self-Healing Agent Tool Execution Loop, Bounded Iterations & Trace Streaming IPC
 
 ### Phase 12: Built-in QA Domain Skills Catalog
 **Goal**: Deliver battle-tested prompt engineering and locator heuristics for high-complexity web testing scenarios
