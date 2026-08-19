@@ -110,3 +110,24 @@ Vitest-compatible test harness scoring model generation accuracy.
 Acceptance:
 - Evaluates Locator Precision (% valid unique selectors), Step Recall (% required actions captured), and Flow Pass Rate
 - Reports benchmark metrics table across configured providers/models
+
+---
+
+## Traceability
+
+| Requirement | Phase | Status |
+|---|---|---|
+| SKILL-01 | Phase 09 | Pending |
+| SKILL-02 | Phase 09 | Pending |
+| VERIFY-01 | Phase 10 | Pending |
+| VERIFY-02 | Phase 10 | Pending |
+| TOOL-01 | Phase 11 | Pending |
+| TOOL-02 | Phase 11 | Pending |
+| DOMAIN-01 | Phase 12 | Pending |
+| DOMAIN-02 | Phase 12 | Pending |
+| DOMAIN-03 | Phase 12 | Pending |
+| DOMAIN-04 | Phase 12 | Pending |
+| UI-01 | Phase 13 | Pending |
+| UI-02 | Phase 13 | Pending |
+| EVAL-01 | Phase 14 | Pending |
+| EVAL-02 | Phase 14 | Pending |
