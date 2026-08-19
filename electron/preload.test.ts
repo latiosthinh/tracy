@@ -32,6 +32,9 @@ const ALLOWED_INVOKE_CHANNELS = [
   'close_child_webview',
   'emulate_media_theme',
   'validate_dom_selector',
+  'start_crawl',
+  'stop_crawl',
+  'generate_crawl_flows',
 ];
 
 const ALLOWED_ON_CHANNELS = [
@@ -41,15 +44,16 @@ const ALLOWED_ON_CHANNELS = [
   'execution-log',
   'ai-stream-chunk',
   'agent_tool_trace',
+  'crawler_progress',
 ];
 
 describe('IPC channel whitelists', () => {
   it('invoke whitelist has expected count', () => {
-    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(31);
+    expect(ALLOWED_INVOKE_CHANNELS).toHaveLength(34);
   });
 
   it('on whitelist has expected count', () => {
-    expect(ALLOWED_ON_CHANNELS).toHaveLength(6);
+    expect(ALLOWED_ON_CHANNELS).toHaveLength(7);
   });
 
   it('no overlap between invoke and on channels', () => {

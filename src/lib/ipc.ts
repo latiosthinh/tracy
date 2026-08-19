@@ -3,6 +3,7 @@ export type UnlistenFn = () => void;
 
 import { Project, FlowFile, HealMetadata } from '@/src/types/autoflow';
 import type { SkillDefinition, SelectorValidationPayload, SelectorValidationResult, AgentToolTraceEvent } from '@/src/types/skills';
+import type { CrawlOptions, CrawlProgressEvent, DiscoveredFlow } from '@/electron/core/crawler/types';
 
 export interface DetectedAgent {
   id: string;
@@ -307,5 +308,38 @@ export const tracyApi = {
       };
     }
     return invoke<SelectorValidationResult>('validate_dom_selector', payload);
+  },
+
+  // Autonomous Route & Interaction Crawler (BFS)
+  startCrawl: async (
+    startUrl: string,
+    options?: CrawlOptions
+  ): Promise<{ ok: boolean; graph?: { nodeCount: number; edgeCount: number }; error?: string }> => {
+    if (!isElectronEnv()) {
+      return { ok: false, error: 'Crawler requires Electron desktop environment' };
+    }
+    return invoke('start_crawl', { startUrl, options });
+  },
+
+  stopCrawl: async (): Promise<{ ok: boolean; message?: string }> => {
+    if (!isElectronEnv()) {
+      return { ok: true, message: 'Crawler not running in web mode' };
+    }
+    return invoke('stop_crawl');
+  },
+
+  generateCrawlFlows: async (params?: {
+    baseTitle?: string;
+    maxPaths?: number;
+  }): Promise<{ ok: boolean; flows: DiscoveredFlow[]; error?: string }> => {
+    if (!isElectronEnv()) {
+      return { ok: false, flows: [], error: 'Flow generation requires Electron desktop environment' };
+    }
+    return invoke('generate_crawl_flows', params || {});
+  },
+
+  onCrawlerProgress: async (callback: (payload: CrawlProgressEvent) => void): Promise<UnlistenFn> => {
+    if (!isElectronEnv()) return () => {};
+    return listen<CrawlProgressEvent>('crawler_progress', callback);
   },
 };

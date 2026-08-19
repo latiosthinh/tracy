@@ -11,6 +11,19 @@ let browser: Browser | null = null;
 let context: BrowserContext | null = null;
 let page: Page | null = null;
 
+export async function getPlaywrightSession(): Promise<{ page: Page | null; context: BrowserContext | null; browser: Browser | null }> {
+  if (!browser) {
+    try {
+      browser = await chromium.connectOverCDP('http://localhost:9222');
+      context = browser.contexts()[0];
+    } catch {
+      // Connect fallback or headless launch if needed
+    }
+  }
+  const activePage = context ? (context.pages().find(p => !p.url().includes('localhost:5173') && !p.url().startsWith('file://')) || context.pages()[0]) : null;
+  return { page: activePage || page, context, browser };
+}
+
 export function registerPlaywrightHandlers() {
   ipcMain.handle('launch_browser', async (event, { headless }) => {
     if (!browser) {

@@ -38,6 +38,10 @@ const ALLOWED_INVOKE_CHANNELS = [
   'close_child_webview',
   'emulate_media_theme',
   'validate_dom_selector',
+  // Autonomous route & interaction crawler
+  'start_crawl',
+  'stop_crawl',
+  'generate_crawl_flows',
 ];
 
 const ALLOWED_ON_CHANNELS = [
@@ -47,6 +51,7 @@ const ALLOWED_ON_CHANNELS = [
   'execution-log',
   'ai-stream-chunk',
   'agent_tool_trace',
+  'crawler_progress',
 ];
 
 contextBridge.exposeInMainWorld('tracyAPI', {
