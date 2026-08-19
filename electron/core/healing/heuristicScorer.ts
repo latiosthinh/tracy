@@ -104,6 +104,9 @@ export function calculateCandidateScore(
     } else {
       testIdScore = diceCoefficient(targetTestId, candTestId);
     }
+  } else if (!targetTestId && candidate.testId && targetText && candText) {
+    // If target selector had no testId but candidate has testId and matching text
+    testIdScore = diceCoefficient(targetText, candText);
   }
 
   // 2. Aria-label / Name score (Weight: 0.25)
