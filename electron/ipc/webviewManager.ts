@@ -278,6 +278,42 @@ function attachSecurityHandlers(view: WebContentsView): void {
   });
 }
 
+export async function validateDomSelectorForProject(payload: SelectorValidationPayload): Promise<SelectorValidationResult> {
+  const startTime = Date.now();
+  const projectId = payload?.projectId;
+  const selector = payload?.selector;
+
+  if (!isValidProjectId(projectId)) {
+    return {
+      valid: false,
+      selector: selector || '',
+      selectorType: payload?.selectorType || 'auto',
+      matchCount: 0,
+      visibleCount: 0,
+      matches: [],
+      error: `Invalid or missing projectId: ${projectId}`,
+      durationMs: Date.now() - startTime,
+    };
+  }
+
+  const entry = webviews.get(projectId);
+  if (!entry || !entry.view || entry.view.webContents.isDestroyed()) {
+    return {
+      valid: false,
+      selector: selector || '',
+      selectorType: payload?.selectorType || 'auto',
+      matchCount: 0,
+      visibleCount: 0,
+      matches: [],
+      error: `No active webview found for project: ${projectId}`,
+      durationMs: Date.now() - startTime,
+    };
+  }
+
+  entry.lastUsed = Date.now();
+  return probeSelectorInWebview(entry.view, payload);
+}
+
 export function registerWebviewHandlers() {
   ipcMain.handle('open_child_webview', async (event, { projectId, url, x, y, width, height }) => {
     if (!isValidProjectId(projectId)) {
@@ -391,39 +427,7 @@ export function registerWebviewHandlers() {
   });
 
   ipcMain.handle('validate_dom_selector', async (_event, payload: SelectorValidationPayload): Promise<SelectorValidationResult> => {
-    const startTime = Date.now();
-    const projectId = payload?.projectId;
-    const selector = payload?.selector;
-
-    if (!isValidProjectId(projectId)) {
-      return {
-        valid: false,
-        selector: selector || '',
-        selectorType: payload?.selectorType || 'auto',
-        matchCount: 0,
-        visibleCount: 0,
-        matches: [],
-        error: `Invalid or missing projectId: ${projectId}`,
-        durationMs: Date.now() - startTime,
-      };
-    }
-
-    const entry = webviews.get(projectId);
-    if (!entry || !entry.view || entry.view.webContents.isDestroyed()) {
-      return {
-        valid: false,
-        selector: selector || '',
-        selectorType: payload?.selectorType || 'auto',
-        matchCount: 0,
-        visibleCount: 0,
-        matches: [],
-        error: `No active webview found for project: ${projectId}`,
-        durationMs: Date.now() - startTime,
-      };
-    }
-
-    entry.lastUsed = Date.now();
-    return probeSelectorInWebview(entry.view, payload);
+    return validateDomSelectorForProject(payload);
   });
 }
 

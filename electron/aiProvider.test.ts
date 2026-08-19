@@ -12,6 +12,7 @@ import {
   formatOpenAiToolResult,
   formatAnthropicToolResult,
   sanitizeToolArguments,
+  executeAgentToolLoop,
 } from './ipc/aiProvider';
 
 describe('createProvider', () => {
@@ -421,5 +422,201 @@ describe('QA Tool Definitions and Multi-Provider Translators', () => {
     expect(anthropicResult.type).toBe('tool_result');
     expect(anthropicResult.tool_use_id).toBe('toolu_1');
     expect(anthropicResult.content).toContain('sk-…');
+  });
+});
+
+describe('executeAgentToolLoop', () => {
+  it('executes multi-turn tool calling and returns final YAML flow', async () => {
+    let turnCount = 0;
+    const mockProvider = vi.fn(async (messages: any[]) => {
+      turnCount++;
+      if (turnCount === 1) {
+        return {
+          choices: [
+            {
+              message: {
+                content: 'Checking selector for login button...',
+                tool_calls: [
+                  {
+                    id: 'call_1',
+                    type: 'function',
+                    function: {
+                      name: 'validate_selector',
+                      arguments: JSON.stringify({ selector: '#login-btn' }),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+      }
+      return {
+        text: 'name: Validated Login Flow\nsteps:\n  - click: "#login-btn"',
+      };
+    });
+
+    const mockToolHandler = vi.fn(async (name: string, args: Record<string, unknown>) => {
+      return { valid: true, matchCount: 1, matches: [{ tagName: 'button', isVisible: true }] };
+    });
+
+    const traces: any[] = [];
+    const result = await executeAgentToolLoop({
+      provider: mockProvider,
+      prompt: 'Generate login test flow',
+      toolHandler: mockToolHandler,
+      onTrace: (event) => traces.push(event),
+    });
+
+    expect(result).toBe('name: Validated Login Flow\nsteps:\n  - click: "#login-btn"');
+    expect(mockProvider).toHaveBeenCalledTimes(2);
+    expect(mockToolHandler).toHaveBeenCalledWith('validate_selector', { selector: '#login-btn' });
+    expect(traces).toHaveLength(2); // 1 for toolCall, 1 for toolResult
+    expect(traces[0].turn).toBe(1);
+    expect(traces[0].thought).toBe('Checking selector for login button...');
+    expect(traces[0].toolCall?.name).toBe('validate_selector');
+    expect(traces[1].toolResult?.valid).toBe(true);
+    expect(traces[1].toolResult?.matchCount).toBe(1);
+  });
+
+  it('triggers self-correction diagnostic when selector returns 0 matches or ambiguous count', async () => {
+    let turnCount = 0;
+    const mockProvider = vi.fn(async (messages: any[]) => {
+      turnCount++;
+      if (turnCount === 1) {
+        return {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    functionCall: {
+                      name: 'validate_selector',
+                      args: { selector: '.broken-class' },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+      } else if (turnCount === 2) {
+        // Last tool message should contain failure diagnostic
+        const lastMsg = messages[messages.length - 1];
+        expect(lastMsg.result.valid).toBe(false);
+        expect(lastMsg.result.matchCount).toBe(0);
+
+        return {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    functionCall: {
+                      name: 'validate_selector',
+                      args: { selector: '[data-testid="login-button"]' },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+      }
+      return {
+        text: 'name: Self-Healed Flow\nsteps:\n  - click: "[data-testid=\\"login-button\\"]"',
+      };
+    });
+
+    const mockToolHandler = vi.fn(async (name: string, args: Record<string, unknown>) => {
+      if (args.selector === '.broken-class') {
+        return { valid: false, matchCount: 0, reason: 'Element not found' };
+      }
+      return { valid: true, matchCount: 1, matches: [] };
+    });
+
+    const result = await executeAgentToolLoop({
+      provider: mockProvider,
+      prompt: 'Generate login flow',
+      toolHandler: mockToolHandler,
+    });
+
+    expect(result).toContain('Self-Healed Flow');
+    expect(mockProvider).toHaveBeenCalledTimes(3);
+    expect(mockToolHandler).toHaveBeenCalledTimes(2);
+  });
+
+  it('strictly enforces hard cap of 5 turns', async () => {
+    let turnCount = 0;
+    const mockProvider = vi.fn(async () => {
+      turnCount++;
+      return {
+        choices: [
+          {
+            message: {
+              content: `Turn ${turnCount} loop`,
+              tool_calls: [
+                {
+                  id: `call_${turnCount}`,
+                  type: 'function',
+                  function: {
+                    name: 'validate_selector',
+                    arguments: JSON.stringify({ selector: `#dynamic-sel-${turnCount}` }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    });
+
+    const mockToolHandler = vi.fn(async () => ({ valid: false, matchCount: 0 }));
+
+    const result = await executeAgentToolLoop({
+      provider: mockProvider,
+      prompt: 'Infinite loop test',
+      toolHandler: mockToolHandler,
+      maxTurns: 10, // Requesting 10, but hardCap is 5
+    });
+
+    expect(mockProvider).toHaveBeenCalledTimes(5);
+    expect(result).toBe('Turn 5 loop');
+  });
+
+  it('detects repetitive identical tool calls and stops infinite loops', async () => {
+    let turnCount = 0;
+    const mockProvider = vi.fn(async (messages: any[]) => {
+      turnCount++;
+      if (turnCount === 1 || turnCount === 2) {
+        return {
+          content: [
+            {
+              type: 'tool_use',
+              id: `toolu_${turnCount}`,
+              name: 'validate_selector',
+              input: { selector: '.same-broken-button' },
+            },
+          ],
+        };
+      }
+      // Inspect tool result on turn 3
+      const lastMsg = messages[messages.length - 1];
+      expect(lastMsg.result.error).toContain('Loop detected');
+      return {
+        content: [{ type: 'text', text: 'name: Final Fallback Flow' }],
+      };
+    });
+
+    const mockToolHandler = vi.fn(async () => ({ valid: false, matchCount: 0 }));
+
+    const result = await executeAgentToolLoop({
+      provider: mockProvider,
+      prompt: 'Repeated failing selector',
+      toolHandler: mockToolHandler,
+    });
+
+    expect(result).toBe('name: Final Fallback Flow');
+    expect(mockToolHandler).toHaveBeenCalledTimes(1); // Second repeat bypassed tool handler with loop error
   });
 });

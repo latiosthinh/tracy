@@ -1,6 +1,7 @@
 // NOTE: relative import — the electron main build does not resolve the '@/' alias.
 import { getAgentDef, resolveAgentId } from '../../src/lib/aiRegistry';
-import type { ToolDefinition } from '../../src/types/skills';
+import type { ToolDefinition, AgentToolTraceEvent, SelectorValidationResult } from '../../src/types/skills';
+import { validateDomSelectorForProject } from './webviewManager.js';
 
 export interface AiProviderConfig {
   apiKey?: string;
@@ -863,3 +864,206 @@ async function createGeminiProviderWithStreaming(config: AiProviderConfig): Prom
     },
   };
 }
+
+export interface ExecuteAgentToolLoopOptions {
+  provider: AiProvider | ((messages: any[]) => Promise<any>);
+  prompt: string;
+  systemInstruction?: string;
+  projectId?: string;
+  tools?: ToolDefinition[];
+  protocol?: 'google' | 'openai' | 'anthropic' | 'custom';
+  toolHandler?: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+  onTrace?: (event: AgentToolTraceEvent) => void;
+  onChunk?: (chunk: string) => void;
+  maxTurns?: number;
+}
+
+export async function executeAgentToolLoop(options: ExecuteAgentToolLoopOptions): Promise<string> {
+  const {
+    provider,
+    prompt,
+    systemInstruction,
+    projectId,
+    tools = QA_AGENT_TOOLS,
+    toolHandler,
+    onTrace,
+    onChunk,
+    maxTurns = 5,
+  } = options;
+
+  const hardCap = Math.min(Math.max(1, maxTurns), 5);
+  const toolCallSignatures = new Map<string, number>();
+  let lastAssistantText = '';
+
+  // Generic tool dispatcher
+  const dispatchTool = async (name: string, args: Record<string, unknown>): Promise<unknown> => {
+    if (typeof toolHandler === 'function') {
+      return await toolHandler(name, args);
+    }
+
+    if (name === 'validate_selector' || name === 'inspect_element') {
+      const sel = typeof args.selector === 'string' ? args.selector : '';
+      const selType = (typeof args.selectorType === 'string' ? args.selectorType : 'auto') as any;
+      if (!projectId) {
+        return {
+          valid: false,
+          matchCount: 0,
+          reason: 'No active project webview available for DOM probing. Check selector manually.',
+        };
+      }
+      const probeResult: SelectorValidationResult = await validateDomSelectorForProject({
+        projectId,
+        selector: sel,
+        selectorType: selType,
+      });
+
+      if (!probeResult.valid || probeResult.matchCount === 0) {
+        return {
+          valid: false,
+          matchCount: 0,
+          reason: `Element not found for selector "${sel}". Try finding elements by text or using alternative class/testId.`,
+          error: probeResult.error,
+        };
+      }
+
+      if (probeResult.matchCount > 1) {
+        return {
+          valid: false,
+          matchCount: probeResult.matchCount,
+          reason: `Ambiguous selector matches ${probeResult.matchCount} elements. Provide more specific testId, text, or parent container.`,
+          matches: probeResult.matches,
+        };
+      }
+
+      return {
+        valid: true,
+        matchCount: 1,
+        visibleCount: probeResult.visibleCount,
+        matches: probeResult.matches,
+      };
+    }
+
+    if (name === 'find_elements_by_text') {
+      const text = typeof args.text === 'string' ? args.text : '';
+      if (!projectId) {
+        return {
+          valid: false,
+          matchCount: 0,
+          reason: 'No active project webview available for DOM probing.',
+        };
+      }
+      const probeResult: SelectorValidationResult = await validateDomSelectorForProject({
+        projectId,
+        selector: `text=${text}`,
+        selectorType: 'text',
+      });
+      return {
+        valid: probeResult.valid && probeResult.matchCount > 0,
+        matchCount: probeResult.matchCount,
+        matches: probeResult.matches,
+      };
+    }
+
+    return { error: `Unknown tool: ${name}` };
+  };
+
+  // If custom caller function is supplied, handle multi-turn cycle
+  if (typeof provider === 'function') {
+    const messages: any[] = [
+      { role: 'user', content: prompt },
+    ];
+
+    for (let turn = 1; turn <= hardCap; turn++) {
+      const response = await provider(messages);
+
+      // Extract tool calls from any supported format
+      let toolCalls: ParsedToolCall[] = [];
+      if (Array.isArray(response?.toolCalls)) {
+        toolCalls = response.toolCalls;
+      } else if (response?.candidates || response?.functionCalls) {
+        toolCalls = parseGoogleToolCalls(response);
+      } else if (response?.choices) {
+        toolCalls = parseOpenAiToolCalls(response);
+      } else if (response?.content) {
+        toolCalls = parseAnthropicToolCalls(response);
+      }
+
+      // If text response present
+      const responseText =
+        typeof response === 'string'
+          ? response
+          : response?.text ||
+            response?.choices?.[0]?.message?.content ||
+            (Array.isArray(response?.content) ? response.content.find((c: any) => c.type === 'text')?.text : '') ||
+            '';
+
+      if (responseText) {
+        lastAssistantText = responseText;
+        if (onChunk) onChunk(responseText);
+      }
+
+      if (!toolCalls || toolCalls.length === 0) {
+        return responseText;
+      }
+
+      // Process tool calls
+      for (const call of toolCalls) {
+        const sig = `${call.name}:${JSON.stringify(call.arguments)}`;
+        const count = (toolCallSignatures.get(sig) || 0) + 1;
+        toolCallSignatures.set(sig, count);
+
+        const isLoop = count >= 2;
+
+        if (onTrace) {
+          onTrace({
+            turn,
+            thought: responseText || undefined,
+            toolCall: {
+              id: call.id,
+              name: call.name,
+              arguments: call.arguments,
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        let result: any;
+        if (isLoop) {
+          result = {
+            valid: false,
+            matchCount: 0,
+            error: `Loop detected: Repeated failing call to "${call.name}". You must change strategy or finalize flow.`,
+          };
+        } else {
+          result = await dispatchTool(call.name, call.arguments);
+        }
+
+        if (onTrace) {
+          onTrace({
+            turn,
+            toolResult: {
+              valid: result?.valid ?? !result?.error,
+              matchCount: result?.matchCount ?? 0,
+              details: result,
+              error: result?.error,
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        messages.push({
+          role: 'tool',
+          name: call.name,
+          callId: call.id,
+          result,
+        });
+      }
+    }
+
+    return lastAssistantText;
+  }
+
+  // Fallback to one-shot generateFlow if provider object passed
+  return await provider.generateFlow(prompt, systemInstruction);
+}
+

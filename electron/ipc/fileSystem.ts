@@ -70,17 +70,32 @@ export function registerFileSystemHandlers() {
     return [...detected, ...cloudEntries];
   });
 
-  ipcMain.handle('run_agent_cli_stream', async (event, payload: { agentId: string; prompt: string; systemInstruction?: string; model?: string }) => {
-    const { agentId, prompt, systemInstruction, model } = payload;
+  ipcMain.handle('run_agent_cli_stream', async (event, payload: { agentId: string; prompt: string; systemInstruction?: string; model?: string; projectId?: string }) => {
+    const { agentId, prompt, systemInstruction, model, projectId } = payload;
     const canonicalId = resolveAgentId(agentId);
     const def = getAgentDef(canonicalId);
 
     if (!def) {
       // Fallback: unknown agent → try createProvider (existing behavior)
       try {
-        const { createProvider } = await import('./aiProvider.js');
+        const { createProvider, executeAgentToolLoop } = await import('./aiProvider.js');
         const provider = await createProvider(canonicalId, {});
-        return await provider.generateFlow(prompt, systemInstruction);
+        return await executeAgentToolLoop({
+          provider,
+          prompt,
+          systemInstruction,
+          projectId,
+          onTrace: (tracePayload) => {
+            if (!event.sender.isDestroyed()) {
+              event.sender.send('agent_tool_trace', tracePayload);
+            }
+          },
+          onChunk: (chunk) => {
+            if (!event.sender.isDestroyed()) {
+              event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
+            }
+          },
+        });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error('AI provider error:', err);
@@ -116,31 +131,31 @@ export function registerFileSystemHandlers() {
       }
     }
 
-    // HTTP agents: use createProvider with streaming (step 5 addition)
+    // HTTP agents: use createProvider with streaming
     try {
-      const { createProvider } = await import('./aiProvider.js');
+      const { createProvider, executeAgentToolLoop } = await import('./aiProvider.js');
       const provider = await createProvider(canonicalId, {
         apiKey,
         customEndpoint: finalEndpoint,
         model: finalModel,
       });
-      // Try streaming first, fall back to one-shot
-      const genFn = provider as any;
-      if (typeof genFn.generateFlowStream === 'function') {
-        let result = '';
-        await genFn.generateFlowStream(
-          prompt,
-          systemInstruction,
-          (chunk: string) => {
-            if (!event.sender.isDestroyed()) {
-              event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
-            }
-            result += chunk;
-          },
-        );
-        return result;
-      }
-      return await provider.generateFlow(prompt, systemInstruction);
+
+      return await executeAgentToolLoop({
+        provider,
+        prompt,
+        systemInstruction,
+        projectId,
+        onTrace: (tracePayload) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('agent_tool_trace', tracePayload);
+          }
+        },
+        onChunk: (chunk) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('ai-stream-chunk', { agentId, delta: chunk });
+          }
+        },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('AI provider error:', err);
