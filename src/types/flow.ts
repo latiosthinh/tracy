@@ -32,6 +32,22 @@ export type CommandType =
   | 'wait'
   | 'takeScreenshot';
 
+export interface YamlStep {
+  action?: string;
+  command?: CommandType | string;
+  selector?: string;
+  text?: string;
+  key?: string;
+  value?: string;
+  timeout?: number;
+  navigate?: string;
+  fill?: string;
+  leftClick?: boolean | string;
+  rightClick?: boolean | string;
+  waitFor?: string | number;
+  [key: string]: any;
+}
+
 export type SelectorType = 'testId' | 'role' | 'text' | 'id' | 'css' | 'label' | 'placeholder' | 'altText' | 'xpath';
 
 export interface SelectorRule {
