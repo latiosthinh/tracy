@@ -119,8 +119,8 @@ Acceptance:
 |---|---|---|
 | SKILL-01 | Phase 09 | Complete |
 | SKILL-02 | Phase 09 | Complete |
-| VERIFY-01 | Phase 10 | Pending |
-| VERIFY-02 | Phase 10 | Pending |
+| VERIFY-01 | Phase 10 | Complete |
+| VERIFY-02 | Phase 10 | Complete |
 | TOOL-01 | Phase 11 | Pending |
 | TOOL-02 | Phase 11 | Pending |
 | DOMAIN-01 | Phase 12 | Pending |

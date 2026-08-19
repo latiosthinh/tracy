@@ -59,7 +59,9 @@
   1. Main IPC handler `validate_dom_selector` executes probes in webview isolated world without polluting target page scripts
   2. Probe returns match count, visibility state, bounding box, tag name, text content, and shadow DOM penetration within strict timeout
   3. Locators are categorized into `UniquePresent`, `AmbiguousMultiple`, `NotPresent`, or `DeferredDynamic` with fallback resilience scoring
-**Plans**: TBD
+**Plans**: 2 plans
+- [x] 10-01-PLAN.md — Isolated-World Webview Selector Prober IPC & Preload Channel
+- [x] 10-02-PLAN.md — Selector Stability Scoring Engine & Ambiguity Classifier
 
 ### Phase 11: Multi-Provider Tool Calling & Self-Healing Loop
 **Goal**: Connect LLM providers (Google GenAI, OpenAI-compat, Anthropic, CLI) to live DOM verification tools with automatic selector self-correction
@@ -116,7 +118,7 @@
 | 07. AI Recipes & Diff Preview | v2.0 | 3/3 | Complete | 2026-08-16 |
 | 08. HTML Reports & Flamechart | v2.0 | 2/2 | Complete | 2026-08-16 |
 | 09. Skills Runtime & Registry | v3.0 | 2/2 | Complete | 2026-08-19 |
-| 10. DOM Selector Pre-Validation | v3.0 | 0/TBD | Not started | - |
+| 10. DOM Selector Pre-Validation | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 11. Tool Calling & Self-Healing | v3.0 | 0/TBD | Not started | - |
 | 12. QA Domain Skills Catalog | v3.0 | 0/TBD | Not started | - |
 | 13. Copilot Skill & Trace UI | v3.0 | 0/TBD | Not started | - |
