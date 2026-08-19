@@ -93,7 +93,7 @@ export const MatrixResultsGrid: React.FC<MatrixResultsGridProps> = ({ summary })
             className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded font-semibold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer border border-stone-700"
           >
             <Download className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Export JSON</span>
+            <span>{t('matrix.exportJson')}</span>
           </button>
           <button
             type="button"
@@ -101,7 +101,7 @@ export const MatrixResultsGrid: React.FC<MatrixResultsGridProps> = ({ summary })
             className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded font-semibold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer border border-stone-700"
           >
             <FileCode className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>JUnit XML</span>
+            <span>{t('matrix.junitXml')}</span>
           </button>
         </div>
       </div>
@@ -111,11 +111,11 @@ export const MatrixResultsGrid: React.FC<MatrixResultsGridProps> = ({ summary })
         <table className="w-full text-left border-collapse font-mono">
           <thead className="bg-stone-900/90 text-[10px] text-stone-400 uppercase sticky top-0 z-10 border-b border-stone-800">
             <tr>
-              <th className="p-3 w-1/3">Browser Engine</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-center">Passed</th>
-              <th className="p-3 text-center">Failed</th>
-              <th className="p-3 text-right">Duration</th>
+              <th className="p-3 w-1/3">{t('matrix.browserEngine')}</th>
+              <th className="p-3">{t('matrix.status')}</th>
+              <th className="p-3 text-center">{t('matrix.passed')}</th>
+              <th className="p-3 text-center">{t('matrix.failed')}</th>
+              <th className="p-3 text-right">{t('matrix.duration')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-800/80 text-[11px]">
@@ -163,7 +163,7 @@ export const MatrixResultsGrid: React.FC<MatrixResultsGridProps> = ({ summary })
                     </div>
                   </td>
                   <td className="p-3 text-right text-stone-300">
-                    {(worker.durationMs / 1000).toFixed(2)}s
+                    {((worker.durationMs || 0) / 1000).toFixed(2)}s
                   </td>
                 </tr>
               );

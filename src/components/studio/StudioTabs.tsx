@@ -8,6 +8,9 @@ import {
   Terminal,
   Sliders,
   Network,
+  Globe,
+  Layers,
+  Gauge,
 } from 'lucide-react';
 import type { ActiveTab } from '@/src/types/ui';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -25,6 +28,9 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({ activeTab, onTabChange }
     { id: 'editor', labelKey: 'studio.tabYaml', icon: Code },
     { id: 'steps', labelKey: 'studio.tabSteps', icon: ListOrdered },
     { id: 'timeline', labelKey: 'studio.tabTimeline', icon: Activity },
+    { id: 'network', labelKey: 'studio.tabNetwork', icon: Globe },
+    { id: 'matrix', labelKey: 'studio.tabMatrix', icon: Layers },
+    { id: 'perf', labelKey: 'studio.tabPerf', icon: Gauge },
     { id: 'ai', labelKey: 'studio.tabAi', icon: Bot },
     { id: 'reports', labelKey: 'studio.tabReports', icon: BarChart3 },
     { id: 'cli', labelKey: 'studio.tabCli', icon: Terminal },

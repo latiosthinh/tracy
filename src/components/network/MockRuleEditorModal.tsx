@@ -33,15 +33,15 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
 
   useEffect(() => {
     if (initialRule) {
-      setName(initialRule.name);
-      setUrl(initialRule.url);
+      setName(initialRule.name || '');
+      setUrl(initialRule.url || '');
       setPatternType(initialRule.patternType || 'glob');
-      setMethod(initialRule.method || 'ALL');
+      setMethod((initialRule.method as any) || 'ALL');
       setActionType(initialRule.abort ? 'abort' : 'fulfill');
       setStatus(initialRule.status || 200);
-      setDelayMs(initialRule.delay || 0);
-      setAbortReason(initialRule.abortReason || 'failed');
-      setBody(typeof initialRule.body === 'object' ? JSON.stringify(initialRule.body, null, 2) : initialRule.body || '');
+      setDelayMs(initialRule.delayMs || 0);
+      setAbortReason((initialRule.abortReason as any) || 'failed');
+      setBody(typeof initialRule.body === 'object' ? JSON.stringify(initialRule.body, null, 2) : String(initialRule.body || ''));
 
       if (initialRule.headers) {
         const headerList = Object.entries(initialRule.headers).map(([k, v]) => ({ key: k, value: v }));
@@ -137,7 +137,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
       status: actionType === 'fulfill' ? Number(status) : undefined,
       headers: actionType === 'fulfill' ? headerRecord : undefined,
       body: actionType === 'fulfill' ? body : undefined,
-      delay: actionType === 'fulfill' && delayMs > 0 ? Number(delayMs) : undefined,
+      delayMs: actionType === 'fulfill' && delayMs > 0 ? Number(delayMs) : undefined,
     };
 
     onSave(ruleData);
@@ -183,7 +183,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Mock Get User Details"
+                placeholder={t('network.ruleNamePlaceholder')}
                 className="w-full bg-stone-950 border border-stone-800 rounded px-2.5 py-1.5 text-stone-100 placeholder-stone-500 focus:border-amber-500 focus:outline-hidden"
               />
             </div>
@@ -211,7 +211,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder={patternType === 'regex' ? '^https://api\\.example\\.com/v1/.*' : '**/api/v1/users/*'}
+                placeholder="**/api/v1/*"
                 className="w-full bg-stone-950 border border-stone-800 rounded px-2.5 py-1.5 text-stone-100 placeholder-stone-500 focus:border-amber-500 focus:outline-hidden font-mono text-xs"
               />
             </div>
@@ -246,7 +246,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                   onChange={() => setActionType('fulfill')}
                   className="accent-amber-500"
                 />
-                <span className="font-semibold text-stone-200">{t('network.fulfillResponse') || 'Fulfill Mock Response'}</span>
+                <span className="font-semibold text-stone-200">{t('network.fulfillResponse')}</span>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -265,18 +265,18 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
           {actionType === 'abort' ? (
             /* Abort configuration */
             <div className="p-3 bg-stone-950 border border-stone-800 rounded space-y-2">
-              <label htmlFor="abort-reason" className="block text-stone-300 font-semibold">{t('network.abortReason') || 'Abort Error Reason'}</label>
+              <label htmlFor="abort-reason" className="block text-stone-300 font-semibold">{t('network.abortReason')}</label>
               <select
                 id="abort-reason"
                 value={abortReason}
                 onChange={(e) => setAbortReason(e.target.value as any)}
                 className="w-full bg-stone-900 border border-stone-700 rounded px-2.5 py-1.5 text-stone-100 font-mono"
               >
-                <option value="failed">failed (Standard network failure)</option>
-                <option value="timedout">timedout (Simulate socket timeout)</option>
-                <option value="connectionreset">connectionreset (Simulate TCP reset)</option>
-                <option value="accessdenied">accessdenied (Simulate CORS/Permission deny)</option>
-                <option value="blockedbyclient">blockedbyclient (AdBlock simulation)</option>
+                <option value="failed">{t('network.abortReasonFailed')}</option>
+                <option value="timedout">{t('network.abortReasonTimedout')}</option>
+                <option value="connectionreset">{t('network.abortReasonConnectionreset')}</option>
+                <option value="accessdenied">{t('network.abortReasonAccessdenied')}</option>
+                <option value="blockedbyclient">{t('network.abortReasonBlockedbyclient')}</option>
               </select>
             </div>
           ) : (
@@ -296,13 +296,13 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="content-type" className="block text-stone-300 font-semibold">Content-Type</label>
+                  <label htmlFor="content-type" className="block text-stone-300 font-semibold">{t('network.contentType')}</label>
                   <input
                     id="content-type"
                     type="text"
                     value={contentType}
                     onChange={(e) => setContentType(e.target.value)}
-                    placeholder="application/json"
+                    placeholder={t('network.contentTypePlaceholder')}
                     className="w-full bg-stone-950 border border-stone-800 rounded px-2.5 py-1.5 text-stone-100 font-mono text-xs"
                   />
                 </div>
@@ -331,7 +331,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                     className="text-amber-400 hover:text-amber-300 text-xs font-semibold flex items-center space-x-1"
                   >
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{t('network.addHeader') || 'Add Header'}</span>
+                    <span>{t('network.addHeader')}</span>
                   </button>
                 </div>
 
@@ -339,14 +339,14 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                   <div key={i} className="flex items-center space-x-2">
                     <input
                       type="text"
-                      placeholder="Header Name"
+                      placeholder={t('network.headerNamePlaceholder')}
                       value={h.key}
                       onChange={(e) => handleUpdateHeader(i, e.target.value, h.value)}
                       className="flex-1 bg-stone-950 border border-stone-800 rounded px-2 py-1 text-stone-100 font-mono text-xs"
                     />
                     <input
                       type="text"
-                      placeholder="Header Value"
+                      placeholder={t('network.headerValuePlaceholder')}
                       value={h.value}
                       onChange={(e) => handleUpdateHeader(i, h.key, e.target.value)}
                       className="flex-1 bg-stone-950 border border-stone-800 rounded px-2 py-1 text-stone-100 font-mono text-xs"
@@ -379,7 +379,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                     }}
                     className="text-stone-400 hover:text-stone-200 text-[11px] font-mono"
                   >
-                    {t('network.formatJson') || 'Format JSON'}
+                    {t('network.formatJson')}
                   </button>
                 </div>
                 <textarea
@@ -387,7 +387,7 @@ export const MockRuleEditorModal: React.FC<MockRuleEditorModalProps> = ({
                   rows={6}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder={`{\n  "success": true,\n  "data": []\n}`}
+                  placeholder="{}"
                   className="w-full bg-stone-950 border border-stone-800 rounded p-2.5 text-stone-100 font-mono text-xs focus:border-amber-500 focus:outline-hidden"
                 />
               </div>

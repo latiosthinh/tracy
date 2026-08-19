@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import React from 'react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { NetworkMockInspector } from './NetworkMockInspector';
 import { MockRuleEditorModal } from './MockRuleEditorModal';
@@ -33,7 +32,7 @@ describe('Network Mock Inspector & Request Waterfall Components', () => {
     const handleSave = vi.fn();
     const handleClose = vi.fn();
 
-    const { rerender } = render(
+    render(
       <MockRuleEditorModal
         isOpen={true}
         onClose={handleClose}
@@ -76,7 +75,7 @@ describe('Network Mock Inspector & Request Waterfall Components', () => {
           status: 200,
           durationMs: 45,
           timestamp: Date.now(),
-          fromMock: false,
+          mocked: false,
         },
         {
           id: 'req-2',
@@ -85,7 +84,7 @@ describe('Network Mock Inspector & Request Waterfall Components', () => {
           status: 500,
           durationMs: 120,
           timestamp: Date.now(),
-          fromMock: true,
+          mocked: true,
         },
       ],
     });

@@ -3,8 +3,6 @@ import {
   Play,
   Square,
   Sliders,
-  CheckSquare,
-  Square as SquareEmpty,
   History,
   Trash2,
   Layers,
@@ -57,8 +55,8 @@ export const MatrixRunnerPanel: React.FC = () => {
     startMatrixRun(activeFlow.id, activeFlow.name, activeFlow.steps?.length || 0);
 
     try {
-      if (tracyApi.runMatrixFlow) {
-        await tracyApi.runMatrixFlow({
+      if ((tracyApi as any).runMatrixFlow) {
+        await (tracyApi as any).runMatrixFlow({
           flowId: activeFlow.id,
           flowName: activeFlow.name,
           browsers: selectedBrowsers,
@@ -74,8 +72,8 @@ export const MatrixRunnerPanel: React.FC = () => {
   const handleCancelMatrix = async () => {
     cancelMatrixRun();
     try {
-      if (tracyApi.cancelMatrixFlow) {
-        await tracyApi.cancelMatrixFlow();
+      if ((tracyApi as any).cancelMatrixFlow) {
+        await (tracyApi as any).cancelMatrixFlow();
       }
     } catch (err) {
       console.error('Matrix cancel invocation failed:', err);

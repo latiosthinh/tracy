@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import React from 'react';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MatrixRunnerPanel } from './MatrixRunnerPanel';
 import { BrowserWorkerCard } from './BrowserWorkerCard';
@@ -25,6 +24,10 @@ describe('Multi-Browser Matrix Runner Components', () => {
           id: 'proj-1',
           name: 'Demo App',
           targetUrl: 'https://example.com',
+          environment: 'development',
+          tags: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           flows: [
             {
               id: 'flow-checkout',
@@ -118,6 +121,15 @@ describe('Multi-Browser Matrix Runner Components', () => {
           passedCount: 2,
           failedCount: 0,
           durationMs: 1800,
+        },
+        webkit: {
+          browser: 'webkit',
+          status: 'passed',
+          currentStepIndex: 2,
+          totalSteps: 2,
+          passedCount: 2,
+          failedCount: 0,
+          durationMs: 1400,
         },
       },
     };

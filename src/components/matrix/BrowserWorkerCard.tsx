@@ -117,7 +117,15 @@ export const BrowserWorkerCard: React.FC<BrowserWorkerCardProps> = ({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onSelect) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={`rounded-lg border p-4 flex flex-col font-sans transition-all cursor-pointer ${
         isActiveSelection
           ? 'bg-stone-900 border-amber-500 shadow-md ring-1 ring-amber-500/50'
@@ -171,7 +179,7 @@ export const BrowserWorkerCard: React.FC<BrowserWorkerCardProps> = ({
         <div className="p-2 bg-stone-900/70 rounded border border-stone-800/80 flex items-center space-x-1.5">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <div>
-            <span className="text-[9px] text-stone-400 uppercase block font-sans">Passed</span>
+            <span className="text-[9px] text-stone-400 uppercase block font-sans">{t('matrix.passed')}</span>
             <span className="font-bold text-emerald-400">{passed}</span>
           </div>
         </div>
@@ -179,7 +187,7 @@ export const BrowserWorkerCard: React.FC<BrowserWorkerCardProps> = ({
         <div className="p-2 bg-stone-900/70 rounded border border-stone-800/80 flex items-center space-x-1.5">
           <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
           <div>
-            <span className="text-[9px] text-stone-400 uppercase block font-sans">Failed</span>
+            <span className="text-[9px] text-stone-400 uppercase block font-sans">{t('matrix.failed')}</span>
             <span className="font-bold text-rose-400">{failed}</span>
           </div>
         </div>
@@ -187,7 +195,7 @@ export const BrowserWorkerCard: React.FC<BrowserWorkerCardProps> = ({
         <div className="p-2 bg-stone-900/70 rounded border border-stone-800/80 flex items-center space-x-1.5">
           <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <div>
-            <span className="text-[9px] text-stone-400 uppercase block font-sans">Time</span>
+            <span className="text-[9px] text-stone-400 uppercase block font-sans">{t('matrix.time')}</span>
             <span className="font-bold text-amber-300">
               {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : '0s'}
             </span>

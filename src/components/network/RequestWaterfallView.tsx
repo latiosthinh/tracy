@@ -8,8 +8,6 @@ import {
   Check,
   Globe,
   Clock,
-  Layers,
-  ArrowRight,
 } from 'lucide-react';
 import { useNetworkStore } from '@/src/stores/networkStore';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -163,10 +161,10 @@ export const RequestWaterfallView: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-stone-900/80 text-[10px] text-stone-400 uppercase font-mono sticky top-0 z-10 border-b border-stone-800">
                   <tr>
-                    <th className="p-2 w-16">Status</th>
-                    <th className="p-2 w-16">Method</th>
-                    <th className="p-2">URL</th>
-                    <th className="p-2 w-28 text-right">Timing</th>
+                    <th className="p-2 w-16">{t('network.status')}</th>
+                    <th className="p-2 w-16">{t('network.method')}</th>
+                    <th className="p-2">{t('network.url')}</th>
+                    <th className="p-2 w-28 text-right">{t('matrix.duration')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-900/80 font-mono text-[11px]">
@@ -196,7 +194,7 @@ export const RequestWaterfallView: React.FC = () => {
                         </td>
                         <td className="p-2 max-w-xs truncate" title={req.url}>
                           <div className="flex items-center space-x-1.5 truncate">
-                            {req.fromMock && (
+                            {(req.mocked || req.response?.fromMock) && (
                               <span className="px-1 py-0.2 rounded text-[9px] font-bold uppercase bg-purple-950 text-purple-300 border border-purple-800 shrink-0">
                                 {t('network.fromMock') || 'MOCK'}
                               </span>
@@ -234,11 +232,11 @@ export const RequestWaterfallView: React.FC = () => {
                   {selectedRequest.method}
                 </span>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(selectedRequest.status)}`}>
-                  {selectedRequest.status || 'Pending'}
+                  {selectedRequest.status || '---'}
                 </span>
-                {selectedRequest.fromMock && (
+                {(selectedRequest.mocked || selectedRequest.response?.fromMock) && (
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-950 text-purple-300 border border-purple-800">
-                    Mock
+                    {t('network.mockBadge')}
                   </span>
                 )}
               </div>
@@ -257,7 +255,7 @@ export const RequestWaterfallView: React.FC = () => {
               <div className="space-y-1">
                 <div className="text-[10px] uppercase font-bold text-stone-400 font-sans flex items-center space-x-1">
                   <Globe className="w-3 h-3 text-amber-400" aria-hidden="true" />
-                  <span>General</span>
+                  <span>{t('network.general')}</span>
                 </div>
                 <div className="p-2 bg-stone-900 rounded border border-stone-800 text-[11px] break-all select-all">
                   {selectedRequest.url}
@@ -274,7 +272,7 @@ export const RequestWaterfallView: React.FC = () => {
               {selectedRequest.requestHeaders && Object.keys(selectedRequest.requestHeaders).length > 0 && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between font-sans">
-                    <span className="text-[10px] uppercase font-bold text-stone-400">Request Headers</span>
+                    <span className="text-[10px] uppercase font-bold text-stone-400">{t('network.requestHeaders')}</span>
                     <button
                       type="button"
                       onClick={() => handleCopy(JSON.stringify(selectedRequest.requestHeaders, null, 2), 'req-headers')}
@@ -299,7 +297,7 @@ export const RequestWaterfallView: React.FC = () => {
               {selectedRequest.requestBody && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between font-sans">
-                    <span className="text-[10px] uppercase font-bold text-stone-400">Request Payload</span>
+                    <span className="text-[10px] uppercase font-bold text-stone-400">{t('network.requestPayload')}</span>
                     <button
                       type="button"
                       onClick={() => handleCopy(selectedRequest.requestBody || '', 'req-body')}
@@ -319,7 +317,7 @@ export const RequestWaterfallView: React.FC = () => {
               {selectedRequest.responseHeaders && Object.keys(selectedRequest.responseHeaders).length > 0 && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between font-sans">
-                    <span className="text-[10px] uppercase font-bold text-stone-400">Response Headers</span>
+                    <span className="text-[10px] uppercase font-bold text-stone-400">{t('network.responseHeaders')}</span>
                     <button
                       type="button"
                       onClick={() => handleCopy(JSON.stringify(selectedRequest.responseHeaders, null, 2), 'res-headers')}
@@ -344,7 +342,7 @@ export const RequestWaterfallView: React.FC = () => {
               {selectedRequest.responseBody !== undefined && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between font-sans">
-                    <span className="text-[10px] uppercase font-bold text-stone-400">Response Body</span>
+                    <span className="text-[10px] uppercase font-bold text-stone-400">{t('network.responseBody')}</span>
                     <button
                       type="button"
                       onClick={() => handleCopy(selectedRequest.responseBody || '', 'res-body')}

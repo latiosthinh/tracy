@@ -18,6 +18,7 @@ import { TestRunResult } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { generateStandaloneHtmlReport } from '@/src/utils/htmlReportExporter';
 import { LatencyFlamechart } from '@/src/components/reports/LatencyFlamechart';
+import { WebVitalsScorecard } from '@/src/components/perf/WebVitalsScorecard';
 
 interface TestReportsProps {
   lastResult?: TestRunResult | null;
@@ -25,7 +26,7 @@ interface TestReportsProps {
 
 export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
   const { t } = useTranslation();
-  const [activeArtifactTab, setActiveArtifactTab] = useState<'summary' | 'screenshots' | 'video' | 'network'>('summary');
+  const [activeArtifactTab, setActiveArtifactTab] = useState<'summary' | 'screenshots' | 'video' | 'network' | 'perf'>('summary');
   const [summaryViewMode, setSummaryViewMode] = useState<'list' | 'flamechart'>('list');
 
   if (!lastResult) {
@@ -196,6 +197,15 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
           <Network className="w-3.5 h-3.5" />
           <span>{t('reports.tabHarNetwork')}</span>
         </button>
+        <button
+          onClick={() => setActiveArtifactTab('perf')}
+          className={`px-3 py-1.5 rounded-[6px] transition-all flex items-center space-x-1 cursor-pointer ${
+            activeArtifactTab === 'perf' ? 'bg-amber-700 text-amber-50 font-bold border border-amber-600' : 'text-stone-400 hover:text-stone-100'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" />
+          <span>{t('perf.cwvScorecard') || 'Performance'}</span>
+        </button>
       </div>
 
       {/* Artifact Tab Content */}
@@ -308,7 +318,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
               {t('reports.videoPathNotice', { path: './test-results/video.webm' })}
             </p>
           </div>
-        ) : (
+        ) : activeArtifactTab === 'network' ? (
           <div className="space-y-2 font-mono text-[11px]">
             <div className="p-2 bg-stone-950 rounded-[6px] border border-stone-800 flex justify-between text-stone-300">
               <span className="text-emerald-400 font-bold">GET /products</span>
@@ -318,6 +328,20 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
               <span className="text-emerald-400 font-bold">POST /api/checkout/apply-coupon</span>
               <span>200 OK (42ms)</span>
             </div>
+          </div>
+        ) : (
+          <div className="p-2">
+            <WebVitalsScorecard
+              metrics={(lastResult as any).metrics || {
+                lcp: 1850,
+                cls: 0.02,
+                inp: 95,
+                fcp: 820,
+                ttfb: 140,
+                domContentLoaded: 380,
+                loadTime: 720,
+              }}
+            />
           </div>
         )}
       </div>

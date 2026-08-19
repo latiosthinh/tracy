@@ -42,7 +42,7 @@ export const NetworkMockInspector: React.FC = () => {
   };
 
   const handleSaveRule = (ruleInput: Omit<NetworkMockRule, 'id'>) => {
-    if (editingRule) {
+    if (editingRule && editingRule.id) {
       updateRule(editingRule.id, ruleInput);
     } else {
       addRule(ruleInput);
@@ -153,66 +153,69 @@ export const NetworkMockInspector: React.FC = () => {
                 <th className="p-2">{t('network.ruleName')}</th>
                 <th className="p-2">{t('network.urlPattern')}</th>
                 <th className="p-2 w-16">{t('network.method')}</th>
-                <th className="p-2 w-20">Action</th>
-                <th className="p-2 w-20 text-right">Actions</th>
+                <th className="p-2 w-20">{t('network.action')}</th>
+                <th className="p-2 w-20 text-right">{t('network.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-800/60 font-mono text-[11px]">
-              {rules.map((rule) => (
-                <tr key={rule.id} className="hover:bg-stone-800/40 text-stone-300 transition-colors">
-                  <td className="p-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={rule.enabled}
-                      onChange={() => toggleRule(rule.id)}
-                      className="accent-amber-500 rounded cursor-pointer"
-                      aria-label={`${t('network.enabled')} ${rule.name}`}
-                    />
-                  </td>
-                  <td className="p-2 font-sans font-semibold text-stone-200 truncate max-w-xs">{rule.name}</td>
-                  <td className="p-2 truncate max-w-sm text-stone-400">
-                    <span className="text-amber-400 mr-1">[{rule.patternType || 'glob'}]</span>
-                    <span>{rule.url}</span>
-                  </td>
-                  <td className="p-2">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-stone-800 text-stone-300">
-                      {rule.method || 'ALL'}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    {rule.abort ? (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">
-                        ABORT
+              {rules.map((rule) => {
+                const ruleId = rule.id || '';
+                return (
+                  <tr key={ruleId} className="hover:bg-stone-800/40 text-stone-300 transition-colors">
+                    <td className="p-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={rule.enabled}
+                        onChange={() => toggleRule(ruleId)}
+                        className="accent-amber-500 rounded cursor-pointer"
+                        aria-label={`${t('network.enabled')} ${rule.name}`}
+                      />
+                    </td>
+                    <td className="p-2 font-sans font-semibold text-stone-200 truncate max-w-xs">{rule.name}</td>
+                    <td className="p-2 truncate max-w-sm text-stone-400">
+                      <span className="text-amber-400 mr-1">[{rule.patternType || 'glob'}]</span>
+                      <span>{rule.url}</span>
+                    </td>
+                    <td className="p-2">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-stone-800 text-stone-300">
+                        {rule.method || 'ALL'}
                       </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center space-x-1 w-fit">
-                        <Zap className="w-2.5 h-2.5" />
-                        <span>{rule.status || 200}</span>
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-2 text-right">
-                    <div className="flex items-center justify-end space-x-1 font-sans">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditRule(rule)}
-                        className="p-1 text-stone-400 hover:text-amber-400 rounded transition-colors"
-                        aria-label={t('common.edit')}
-                      >
-                        <Edit className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeRule(rule.id)}
-                        className="p-1 text-stone-400 hover:text-rose-400 rounded transition-colors"
-                        aria-label={t('common.delete')}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="p-2">
+                      {rule.abort ? (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                          {t('network.abortBadge')}
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center space-x-1 w-fit">
+                          <Zap className="w-2.5 h-2.5" />
+                          <span>{rule.status || 200}</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-2 text-right">
+                      <div className="flex items-center justify-end space-x-1 font-sans">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditRule(rule)}
+                          className="p-1 text-stone-400 hover:text-amber-400 rounded transition-colors"
+                          aria-label={t('common.edit')}
+                        >
+                          <Edit className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeRule(ruleId)}
+                          className="p-1 text-stone-400 hover:text-rose-400 rounded transition-colors"
+                          aria-label={t('common.delete')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

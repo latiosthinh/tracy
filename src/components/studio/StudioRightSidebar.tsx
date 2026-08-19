@@ -11,7 +11,9 @@ import {
   Copy,
   Check,
   Pencil,
-  Network
+  Network,
+  Globe,
+  Gauge,
 } from 'lucide-react';
 
 import { YamlEditor } from '@/src/components/editor/YamlEditor';
@@ -22,6 +24,9 @@ import { CliTerminal } from '@/src/components/reports/CliTerminal';
 import { FlowCategorySelector } from '@/src/components/editor/FlowCategorySelector';
 import { StepTimeline } from '@/src/components/studio/StepTimeline';
 import { RouteVisualizerView } from '@/src/components/visualizer/RouteVisualizerView';
+import { NetworkMockInspector } from '@/src/components/network/NetworkMockInspector';
+import { MatrixRunnerPanel } from '@/src/components/matrix/MatrixRunnerPanel';
+import { PerfProfilerPanel } from '@/src/components/perf/PerfProfilerPanel';
 import { getFlowCategory } from '@/src/utils/flowUtils';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -196,6 +201,54 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
           >
             <Network className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
             {activeTab === 'visualizer' && <span>{t('studio.tabVisualizer') || 'Visualizer'}</span>}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'network'}
+            onClick={() => setActiveTab('network')}
+            title={t('studio.tabNetwork') || 'Network'}
+            aria-label={t('studio.tabNetwork') || 'Network'}
+            className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'network'
+              ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
+              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
+              }`}
+          >
+            <Globe className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'network' && <span>{t('studio.tabNetwork') || 'Network'}</span>}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'matrix'}
+            onClick={() => setActiveTab('matrix')}
+            title={t('studio.tabMatrix') || 'Matrix'}
+            aria-label={t('studio.tabMatrix') || 'Matrix'}
+            className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'matrix'
+              ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
+              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
+              }`}
+          >
+            <Layers className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'matrix' && <span>{t('studio.tabMatrix') || 'Matrix'}</span>}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'perf'}
+            onClick={() => setActiveTab('perf')}
+            title={t('studio.tabPerf') || 'Profiler'}
+            aria-label={t('studio.tabPerf') || 'Profiler'}
+            className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'perf'
+              ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
+              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
+              }`}
+          >
+            <Gauge className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'perf' && <span>{t('studio.tabPerf') || 'Profiler'}</span>}
           </button>
 
           <button
@@ -383,6 +436,18 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
 
       {activeTab === 'visualizer' && (
         <RouteVisualizerView />
+      )}
+
+      {activeTab === 'network' && (
+        <NetworkMockInspector />
+      )}
+
+      {activeTab === 'matrix' && (
+        <MatrixRunnerPanel />
+      )}
+
+      {activeTab === 'perf' && (
+        <PerfProfilerPanel />
       )}
 
       {activeTab === 'cli' && (
