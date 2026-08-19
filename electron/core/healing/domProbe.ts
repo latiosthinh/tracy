@@ -152,10 +152,10 @@ export async function extractLiveDOMCandidates(page: Page): Promise<DOMCandidate
 }
 
 /**
- * Generates a compact indented HTML/DOM string representation for LLM context without
- * scripts, SVGs, or heavy styling.
+ * Generates a token-minimal compact indented HTML/DOM string representation for LLM context.
+ * Filters to elements with identifiers/text/roles, drops unneeded tags and blank values.
  */
-export async function captureCompactSnapshot(page: Page, maxNodes = 120): Promise<string> {
+export async function captureCompactSnapshot(page: Page, maxNodes = 80): Promise<string> {
   if (!page) return '';
 
   try {
@@ -174,10 +174,6 @@ export async function captureCompactSnapshot(page: Page, maxNodes = 120): Promis
         '[role="tab"]',
         '[role="menuitem"]',
         '[data-testid]',
-        'form',
-        'h1',
-        'h2',
-        'h3',
         'label',
       ].join(',');
 
@@ -186,6 +182,9 @@ export async function captureCompactSnapshot(page: Page, maxNodes = 120): Promis
 
       for (const el of nodes) {
         const htmlEl = el as HTMLElement;
+        const style = window.getComputedStyle(htmlEl);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue;
+
         const tag = htmlEl.tagName.toLowerCase();
         const testId = htmlEl.getAttribute('data-testid');
         const role = htmlEl.getAttribute('role');
@@ -194,19 +193,24 @@ export async function captureCompactSnapshot(page: Page, maxNodes = 120): Promis
         const type = htmlEl.getAttribute('type');
         const placeholder = htmlEl.getAttribute('placeholder');
         const ariaLabel = htmlEl.getAttribute('aria-label');
-        const text = (htmlEl.innerText || htmlEl.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+        const text = (htmlEl.innerText || htmlEl.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 50);
+
+        // Zero-token prune: skip completely anonymous elements with no identifying attributes or text
+        if (!testId && !id && !name && !ariaLabel && !placeholder && !text && tag !== 'input') {
+          continue;
+        }
 
         const attrs: string[] = [];
-        if (id) attrs.push(`id="${id}"`);
         if (testId) attrs.push(`data-testid="${testId}"`);
-        if (role) attrs.push(`role="${role}"`);
+        if (id) attrs.push(`id="${id}"`);
         if (name) attrs.push(`name="${name}"`);
-        if (type) attrs.push(`type="${type}"`);
+        if (role && role !== tag) attrs.push(`role="${role}"`);
+        if (type && type !== 'text') attrs.push(`type="${type}"`);
         if (placeholder) attrs.push(`placeholder="${placeholder}"`);
         if (ariaLabel) attrs.push(`aria-label="${ariaLabel}"`);
 
         const attrStr = attrs.length > 0 ? ` ${attrs.join(' ')}` : '';
-        if (['input', 'img', 'br', 'hr'].includes(tag)) {
+        if (['input', 'img'].includes(tag)) {
           lines.push(`<${tag}${attrStr} />`);
         } else {
           lines.push(`<${tag}${attrStr}>${text}</${tag}>`);

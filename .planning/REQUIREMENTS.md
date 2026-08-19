@@ -1,55 +1,58 @@
-# Requirements: Milestone v5.0 (Performance, Mocking & Multi-Browser Grid)
+# Requirements: Milestone v5.0 (Performance Profiling, Route Mocking & Multi-Browser Matrix)
 
 ## Overview
 
-Milestone v5.0 equips Tracy with declarative network and API request mocking, a multi-browser parallel execution matrix (Chromium, Firefox, WebKit), in-flight Core Web Vitals telemetry, and dedicated Studio diagnostic panels.
+Milestone v5.0 expands Tracy's test orchestration and verification capabilities with declarative network route mocking & HAR replay, multi-browser parallel matrix execution (Chromium, Firefox, WebKit), synthetic Core Web Vitals telemetry with performance budget assertions, and dedicated Studio diagnostic panels.
 
 ## Requirements
 
-### Network & API Mocking Engine (MOCK)
+### Declarative Network Route Mocking & HAR Replay (MOCK)
 
-- [x] **MOCK-01**: Flow YAML schema supports declarative `mockRoute` steps with URL patterns (glob/regex), status codes, synthetic JSON bodies, headers, and simulated delay.
-- [x] **MOCK-02**: Flow YAML schema supports network fault injection (e.g. `action: abortRoute`, `action: delayRoute`, `error: "ConnectionReset"`).
-- [x] **MOCK-03**: Playwright execution engine supports HAR recording and deterministic offline HAR replay via `routeFromHAR`.
-- [x] **MOCK-04**: Flow steps can assert network request counts, payload contents, and query parameters via `assertRequest` action.
-- [x] **MOCK-05**: Mock rules automatically scope to active test context and cleanly unregister without memory/handler leaks.
+- [ ] **MOCK-01**: Declarative YAML route mocking supporting exact, glob, and regex URL patterns with HTTP method filtering (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`).
+- [ ] **MOCK-02**: Mock response fulfillment with custom HTTP status codes, headers, and inline JSON/text bodies or external fixture file paths.
+- [ ] **MOCK-03**: Network fault injection and synthetic latency supporting configurable delay (`delayMs`) and route abort errors (`failed`, `timedout`, `connectionrefused`, `accessdenied`).
+- [ ] **MOCK-04**: Declarative HAR recording and replay via `routeFromHAR` with fallback handling and dynamic parameter matching.
+- [ ] **MOCK-05**: Clean mock lifecycle isolation at `BrowserContext` level preventing route handler leakage across test flows and steps.
 
-### Multi-Browser Matrix & Parallel Grid (GRID)
+### Multi-Browser Matrix Execution & Worker Pool (GRID)
 
-- [ ] **GRID-01**: Playwright execution engine supports launching flows against `chromium`, `firefox`, and `webkit` browser types.
-- [ ] **GRID-02**: CLI (`tracy run`) and Studio support `--browsers chromium,firefox,webkit` matrix execution flag with worker concurrency throttling.
-- [ ] **GRID-03**: Steps support browser-specific conditional execution (e.g. `when: { browser: "webkit" }`).
-- [ ] **GRID-04**: Headless and Studio test runners output unified matrix reports displaying pass/fail/duration status per browser engine.
-- [ ] **GRID-05**: Headless runner aggregates multi-browser results into consolidated JUnit XML matrix suites and artifact directories.
+- [ ] **GRID-01**: Cross-browser execution support across Chromium, Firefox, and WebKit Playwright engine binaries in CLI and Studio.
+- [ ] **GRID-02**: Isolated parallel worker pool managing concurrent browser instances with configurable worker count (`--workers=N`) and CPU concurrency throttling.
+- [ ] **GRID-03**: Browser-conditional step execution supporting declarative filters (`when: { browser: "webkit" }` or `skip_if: { browser: "firefox" }`).
+- [ ] **GRID-04**: Aggregated multi-browser test reporter producing unified matrix terminal output, JUnit XML matrix testsuites, and JSON summary logs.
+- [ ] **GRID-05**: Robust engine error handling and lifecycle cleanup preventing worker crashes, zombie browser processes, and port exhaustion.
 
-### Performance & Core Web Vitals Engine (PERF)
+### Core Web Vitals & Performance Assertion Engine (PERF)
 
-- [ ] **PERF-01**: Execution engine injects lightweight `web-vitals` observer to capture LCP, CLS, INP, FCP, and TTFB metrics.
-- [ ] **PERF-02**: Chromium runs support CDP-based CPU throttling (e.g. 4x slowdown) and Network throttling presets (Fast 3G, Slow 3G, Offline).
-- [ ] **PERF-03**: YAML flow schema supports `assertPerformance` step to validate metric thresholds (e.g. `lcp: <= 2500ms`, `cls: <= 0.1`).
-- [ ] **PERF-04**: Test execution reports and artifacts include detailed performance telemetry graphs and metric breakdown tables.
+- [ ] **PERF-01**: Universal Core Web Vitals telemetry collector injected via `page.addInitScript()` capturing LCP, CLS, INP, FCP, and TTFB across all supported browsers.
+- [ ] **PERF-02**: Declarative YAML performance assertion step (`assert_performance`) evaluating latency, layout stability, and interaction metrics against configurable thresholds.
+- [ ] **PERF-03**: Graceful cross-browser metric fallback degrading to W3C Navigation and Resource Timing API when advanced CDP metrics are unavailable (WebKit/Firefox).
+- [ ] **PERF-04**: Synthetic network and CPU throttling condition presets (`slow3g`, `fast3g`, `offline`, CPU slowdown rate) for deterministic load benchmarking.
 
-### Studio Network & Matrix UI (UI)
+### Studio Network, Matrix Grid & Profiler Panels (UI)
 
-- [ ] **UI-01**: Studio UI provides a dedicated Network Inspector tab showing live HTTP requests, status codes, timings, and active mock overrides.
-- [ ] **UI-02**: Studio UI provides a Matrix Runner panel allowing one-click execution across selected browser engines with parallel progress cards.
-- [ ] **UI-03**: Test Report and Studio views display interactive Core Web Vitals scorecards with color-coded good/needs-improvement/poor indicators.
-- [ ] **UI-04**: All user-facing strings, tooltips, and accessibility labels mapped to `src/a11y/en.json`.
+- [ ] **UI-01**: Studio Network Mocking inspector and rule editor for configuring, toggling, and inspecting route interception rules in real-time.
+- [ ] **UI-02**: Interactive Multi-Browser Matrix execution panel displaying live parallel worker status, per-browser step progress, and pass/fail badges.
+- [ ] **UI-03**: Real-time Core Web Vitals scorecard and performance gauge dashboard displaying visual threshold indicators (good/needs improvement/poor).
+- [ ] **UI-04**: Batched IPC state synchronization in React 19 Zustand stores preventing UI thread stutter and frame drops during high-frequency telemetry events.
 
 ## Out of Scope
 
-- **Cloud browser farm streaming**: Browser engines execute locally or on CI runners via Playwright binaries; external SaaS browser clouds are out of scope.
-- **Full Chrome DevTools protocol emulation in Firefox/WebKit**: CDP network/CPU throttling is strictly gated to Chromium; Firefox and WebKit use W3C PerformanceObserver without CDP emulation.
+- **External MITM Proxy Daemons**: No Charles/mitmproxy setups; all interception uses native Playwright route handlers and CDP sessions.
+- **Out-of-Process Mock Servers**: No Express/MSW daemon processes; route mocking is managed entirely in-process per BrowserContext.
+- **Cloud Grid Management / Infrastructure**: No Kubernetes or remote grid provisioning; execution targets local driver binaries with optional CDP endpoint connection.
+- **Full Synthetic 30s Lighthouse Audits**: Lightweight real-time PerformanceObserver extraction is used instead of heavy, flaky multi-second Lighthouse audits.
+- **Cross-Engine Visual Screenshot Pixel Diffing**: Deferred to subsequent visual regression milestone.
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOCK-01 | Phase 20 | Complete |
-| MOCK-02 | Phase 20 | Complete |
-| MOCK-03 | Phase 20 | Complete |
-| MOCK-04 | Phase 20 | Complete |
-| MOCK-05 | Phase 20 | Complete |
+| MOCK-01 | Phase 20 | Pending |
+| MOCK-02 | Phase 20 | Pending |
+| MOCK-03 | Phase 20 | Pending |
+| MOCK-04 | Phase 20 | Pending |
+| MOCK-05 | Phase 20 | Pending |
 | GRID-01 | Phase 21 | Pending |
 | GRID-02 | Phase 21 | Pending |
 | GRID-03 | Phase 21 | Pending |

@@ -20,29 +20,27 @@ React 19 studio UI).
 
 ## Current State
 
-Shipped **Milestone v2.0** — Atomic UI/UX Perfection & Power Studio Workflows (2026-08-19).
-- Total Phases: 8 (Phases 01-08 complete)
-- Total Plans: 25 completed, 347 unit/integration tests passing green
-- Full suite of Command Palette, Device Bezels, Side-by-side YAML Diffs, Playwright TS Exporter, AI Diff Preview, HTML Test Reports, and Latency Flamechart.
+Shipped **Milestone v5.0** — Performance, Mocking & Multi-Browser Grid (2026-08-19).
+- Total Phases: 23 (Phases 01-23 complete)
+- Total Plans: 54 completed, 666 unit/integration tests passing green
+- Full suite of Declarative Route Mocking & HAR Replay, Multi-Browser Matrix Grid (`chromium`, `firefox`, `webkit`), Core Web Vitals Profiler, and Studio Network / Matrix Panels.
 
-## Current Milestone: v4.0 Autonomous Multi-Flow Agent & Self-Healing CI
+## Next Milestone Goals
 
-**Goal:** Autonomous multi-flow crawler discovering user journeys and self-healing broken Playwright test flows in CI/local runs.
-
-**Target features:**
-- Autonomous Sitemap & Journey Crawler: Graph-based route discovery, interactive elements extraction, and automated end-to-end YAML test suite generation.
-- Self-Healing Test Runner & Auto-Repair: On-the-fly step failure diagnosis, live DOM re-probing, alternative selector calculation, and YAML flow auto-patching.
-- Headless CI Runner & Self-Healing Action: CLI executable (`tracy run --ci --heal`) for headless environments, JUnit XML / trace artifact emission, and automated git patch / PR branch outputs.
-- Journey & Coverage Visualizer UI: Interactive route graph in Studio, linking pages, discovered flows, and pass/fail/healed coverage status.
+- **Milestone v6.0: Visual Regression Testing & AI Flakiness Analyzer**
+- Visual diffing with pixel & layout shift regression scoring
+- Historical test run telemetry and automated AI flakiness diagnosis
 
 ## Validated Milestones
 
 - ✓ **v1.0 Project-Isolated Studio & Hardening** (Phases 01-03) — Shipped 2026-08-15
-- ✓ **v2.0 Atomic UI/UX Perfection & Power Studio Workflows** (Phases 04-08) — Shipped 2026-08-19
+- ✓ **v2.0 Atomic UI/UX Perfection & Power Studio Workflows** (Phases 04-08) — Shipped 2026-08-15
 - ✓ **v3.0 AI Flow Gen V2 & Dynamic Agent Skills** (Phases 09-14) — Shipped 2026-08-19
+- ✓ **v4.0 Autonomous Multi-Flow Agent & Self-Healing CI** (Phases 15-19) — Shipped 2026-08-19
+- ✓ **v5.0 Performance, Mocking & Multi-Browser Grid** (Phases 20-23) — Shipped 2026-08-19
 
 ---
-*Last updated: 2026-08-19 starting v4.0 milestone*
+*Last updated: 2026-08-19 starting v5.0 milestone*
 
 ## Key Constraints
 
@@ -53,21 +51,3 @@ Shipped **Milestone v2.0** — Atomic UI/UX Perfection & Power Studio Workflows 
 - `unused-imports/no-unused-imports` is an ESLint error
 - All user-facing strings must flow through `src/a11y/en.json` via `useTranslation()`
 - Finish gates for every change: `pnpm lint` and `pnpm test` green
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-

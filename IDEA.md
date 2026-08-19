@@ -1,0 +1,1 @@
+**Desktop-first AI-powered testing studio** that lets you design, edit, and run E2E browser tests through YAML flows — with no coding required. Try it in your browser or download the full desktop app for Playwright automation

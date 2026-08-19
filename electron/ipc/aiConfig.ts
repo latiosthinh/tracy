@@ -5,7 +5,7 @@ import { ipcMain } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
 // NOTE: relative import — the electron main build does not resolve the '@/' alias.
-import { getAgentDef, resolveAgentId } from '../../src/lib/aiRegistry';
+import { getAgentDef, resolveAgentId, isValidModelId } from '../../src/lib/aiRegistry';
 
 let _userDataPath: string | null = null;
 
@@ -208,6 +208,83 @@ export async function registerAiConfigHandlers(): Promise<void> {
     } catch (err) {
       console.error('Failed to save AI config:', err);
       throw err;
+    }
+  });
+
+  ipcMain.handle('ai_fetch_models', async (_event, payload: { agentId: string; apiKey?: string; customEndpoint?: string }): Promise<string[]> => {
+    try {
+      const canonicalId = resolveAgentId(payload.agentId);
+      const def = getAgentDef(canonicalId);
+      const endpoint = payload.customEndpoint || def?.defaultEndpoint || '';
+      const apiKey = payload.apiKey;
+
+      if (def?.protocol === 'google') {
+        const key = apiKey || process.env.GEMINI_API_KEY || '';
+        if (!key) return def.models;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { models?: Array<{ name?: string }> };
+          const fetched = (data.models || [])
+            .map((m) => m.name?.replace(/^models\//, '') || '')
+            .filter((name) => name && name.startsWith('gemini'));
+          if (fetched.length > 0) return Array.from(new Set(fetched));
+        }
+        return def.models;
+      }
+
+      if (def?.protocol === 'anthropic') {
+        if (!apiKey) return def.models;
+        const base = (endpoint || 'https://api.anthropic.com').replace(/\/+$/, '');
+        const res = await fetch(`${base}/v1/models`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(8000),
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { data?: Array<{ id?: string }> };
+          const fetched = (data.data || []).map((m) => m.id || '').filter(Boolean);
+          if (fetched.length > 0) return Array.from(new Set(fetched));
+        }
+        return def.models;
+      }
+
+      if (def?.protocol === 'openai' || def?.protocol === 'openai-compat' || !def?.protocol) {
+        const baseEndpoint = endpoint || 'http://localhost:11434';
+        const url = baseEndpoint.endsWith('/v1') || baseEndpoint.endsWith('/')
+          ? `${baseEndpoint.replace(/\/+$/, '')}/models`
+          : `${baseEndpoint.replace(/\/+$/, '')}/v1/models`;
+
+        const headers: Record<string, string> = {};
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+        const res = await fetch(url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(8000),
+          headers,
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { data?: Array<{ id?: string; name?: string }> } | Array<{ name?: string; id?: string }>;
+          const list = Array.isArray(data) ? data : data.data || [];
+          const fetched = list
+            .map((m) => m.id || m.name || '')
+            .filter((id) => id && isValidModelId(id));
+          if (fetched.length > 0) return Array.from(new Set(fetched));
+        }
+        return def?.models || [];
+      }
+
+      return def?.models || [];
+    } catch (err) {
+      console.warn('Dynamic model fetch failed, using default models:', err);
+      const def = getAgentDef(resolveAgentId(payload.agentId));
+      return def?.models || [];
     }
   });
 

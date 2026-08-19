@@ -185,8 +185,8 @@ export async function runCliAgent(
   let fullText = '';
   let stderrBuf = '';
   let childError: Error | null = null;
-  const FIRST_OUTPUT_TIMEOUT = 30_000;
-  const INACTIVITY_TIMEOUT = 120_000;
+  const FIRST_OUTPUT_TIMEOUT = 60_000;
+  const INACTIVITY_TIMEOUT = 180_000;
 
   // Handle spawn or runtime errors
   child.on('error', (err) => {

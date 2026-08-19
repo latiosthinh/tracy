@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Performance Profiling, Route Mocking & Multi-Browser Matrix
-status: in_progress
-last_updated: "2026-08-19T11:00:00.000Z"
+status: completed
+last_updated: "2026-08-19T00:00:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 4
+  total_plans: 8
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -18,20 +18,20 @@ progress:
 
 See: `.planning/PROJECT.md` (updated 2026-08-19)
 
-**Status:** In Planning / Ready for Execution
+**Status:** Completed Milestone v5.0 (Archived)
 **Milestone:** v5.0 — Performance Profiling, Route Mocking & Multi-Browser Matrix
-**Current focus:** Phase 20: Declarative Network Route Mocking & HAR Replay Engine
+**Current focus:** Planning next milestone (v6.0)
 
 ## Current Position
 
-Phase: Phase 22: Core Web Vitals & Performance Assertion Engine
-Plan: 22-02 Complete
-Status: Complete
-Last activity: 2026-08-19 — Completed 22-02 CLI Runner, Console/JUnit Reporters & Playwright Engine Performance Integration
+Phase: Complete (23/23)
+Plan: —
+Status: Milestone complete & verified
+Last activity: 2026-08-19 — Milestone v5.0 shipped
 
 ## Progress Bar
 
-[░░░░░░░░░░] 0% complete (0/4 phases complete)
+[██████████] 100% complete (8/8 plans complete)
 
 ## Accumulated Context
 
@@ -41,6 +41,3 @@ Last activity: 2026-08-19 — Completed 22-02 CLI Runner, Console/JUnit Reporter
 - Universal Web Vitals observation: `web-vitals` script injected via `page.addInitScript()` for cross-browser LCP/CLS/INP/TTFB; CDP features strictly guarded to Chromium instances only.
 - High-frequency IPC batching: Telemetry streams batched/debounced in Zustand stores to prevent UI thread lockup.
 
-### Blockers / Risks
-- WebKit/Firefox CDP incompatibility: Non-Chromium engines crash on CDP commands. Mitigated by engine type checks and W3C Navigation Timing fallbacks.
-- Unhandled route promise hangs: Handled by guaranteed try/catch route fulfill/fallback guards and per-test context teardown.

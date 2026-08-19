@@ -41,31 +41,24 @@ export async function synthesizeFallbackLocator(
   const originalTarget = step.selector || step.target || step.text || '';
   const action = step.action || step.command || 'click';
 
-  const systemInstruction = `You are an expert Playwright test automation engineer.
-Your task is to fix a broken locator for an automated test step.
-Analyze the target step and compact DOM structure, and return ONE resilient, unique selector for Playwright.
+  const systemInstruction = `You are a Playwright test engineer.
+Fix the broken locator for the failed test step.
+Analyze step & DOM snapshot, return ONE resilient selector in JSON.
+RULES:
+1. JSON ONLY: {"selector": "...", "confidence": 0.85, "rationale": "..."}.
+2. Prefer: [data-testid], role/aria, text/attribute CSS, unique #id.
+3. NEVER choose opposite action verbs (e.g. Save -> Cancel/Delete).
+4. No markdown, no extra commentary.`;
 
-STRICT RULES:
-1. Return ONLY valid JSON format: {"selector": "...", "confidence": 0.85, "rationale": "..."}.
-2. Choose resilient selectors in order of preference:
-   - [data-testid="..."]
-   - role/aria locator like [role="button"][name="..."] or [aria-label="..."]
-   - scoped text/attribute CSS like button:has-text("...") or input[name="..."]
-   - unique #id or stable CSS path.
-3. NEVER pick an opposite action verb (e.g. if original was "Save", NEVER pick "Cancel" or "Delete").
-4. NEVER invent non-existent DOM elements not present in the compact DOM snippet.
-5. No markdown fences, no explanation outside the JSON object.`;
+  const userPrompt = `Failed step:
+Action: ${action}
+Target: ${JSON.stringify(originalTarget)}
+Value: ${JSON.stringify(step.text || step.value || '')}
 
-  const userPrompt = `Failed step details:
-- Action: ${action}
-- Original Target / Selector: ${JSON.stringify(originalTarget)}
-- Expected Text / Value: ${JSON.stringify(step.text || step.value || '')}
-- Step Metadata: ${JSON.stringify(step)}
-
-Current Compact DOM Snapshot:
+DOM:
 ${compactDOM}
 
-Generate the replacement locator JSON:`;
+JSON:`;
 
   try {
     let rawResponse = '';
