@@ -1,66 +1,33 @@
 import type { SkillDefinition, SkillPreset } from '@/src/types/skills';
+import { authSessionSkill } from './authSessionSkill';
+import { formValidationSkill } from './formValidationSkill';
+import { dataTablesSkill } from './dataTablesSkill';
+import { shadowDomModalsSkill } from './shadowDomModalsSkill';
 
-export const BUILTIN_SKILLS: SkillDefinition[] = [
-  {
-    id: 'generic-qa',
-    name: 'Generic QA & Best Practices',
-    description: 'Fundamental testing patterns, resilient selectors, and deterministic assertions.',
-    version: '1.0.0',
-    domain: 'generic',
-    systemPromptInjection: `[Skill: generic-qa]
+export { authSessionSkill } from './authSessionSkill';
+export { formValidationSkill } from './formValidationSkill';
+export { dataTablesSkill } from './dataTablesSkill';
+export { shadowDomModalsSkill } from './shadowDomModalsSkill';
+
+export const genericQaSkill: SkillDefinition = {
+  id: 'generic-qa',
+  name: 'Generic QA & Best Practices',
+  description: 'Fundamental testing patterns, resilient selectors, and deterministic assertions.',
+  version: '1.0.0',
+  domain: 'generic',
+  systemPromptInjection: `[Skill: generic-qa]
 - Prioritize stable test IDs (data-testid, aria-label, role) over dynamic CSS classes.
 - Ensure test flows are idempotent and self-contained with reasonable waitFor timeouts.
 - Prefer user-visible actions (click, fill, press) over synthetic event triggers.`,
-    tags: ['qa', 'baseline', 'resilience'],
-  },
-  {
-    id: 'auth-resilience',
-    name: 'Auth & Session Resilience',
-    description: 'Specialized handling for login flows, 2FA prompts, session token validation, and redirect timeouts.',
-    version: '1.0.0',
-    domain: 'auth',
-    systemPromptInjection: `[Skill: auth-resilience]
-- When generating authentication test flows, handle potential redirect delays with explicit waitFor steps.
-- Mask sensitive credentials in step descriptions and assertions.
-- Anticipate multi-step login flows (e.g. email then password on subsequent screen).`,
-    tags: ['auth', 'login', 'security', 'session'],
-  },
-  {
-    id: 'form-validation',
-    name: 'Form & Input Validation Specialist',
-    description: 'Deep testing patterns for complex forms, input masks, inline error validation, and multi-step wizards.',
-    version: '1.0.0',
-    domain: 'forms',
-    systemPromptInjection: `[Skill: form-validation]
-- Verify field blur and dirty states when testing client-side validation rules.
-- Test both happy path entries and boundary invalid values (empty required fields, format mismatches).
-- Ensure submission buttons are waited for enabled state before clicking.`,
-    tags: ['forms', 'validation', 'inputs', 'wizards'],
-  },
-  {
-    id: 'table-pagination',
-    name: 'Data Table & Pagination Specialist',
-    description: 'Patterns for testing grid tables, sorting, column filtering, pagination controls, and row selection.',
-    version: '1.0.0',
-    domain: 'tables',
-    systemPromptInjection: `[Skill: table-pagination]
-- Wait for table loading skeletons/spinners to disappear before asserting row counts or cell values.
-- Test sorting by clicking column headers and asserting row text order changes.
-- Handle pagination clicks with waitFor navigation or grid update assertions.`,
-    tags: ['tables', 'grids', 'pagination', 'sorting'],
-  },
-  {
-    id: 'shadow-dom-modal',
-    name: 'Shadow DOM & Modals Specialist',
-    description: 'Handling web components, shadow root penetration, modal dialogs, backdrops, and overlay focus traps.',
-    version: '1.0.0',
-    domain: 'shadow-dom',
-    systemPromptInjection: `[Skill: shadow-dom-modal]
-- Ensure modal open/close animations complete with waitFor before element interactions.
-- Target dialog container roles and aria-modal attributes when scoping modal interactions.
-- Check backdrop dismissal and Escape key press interactions.`,
-    tags: ['shadow-dom', 'modals', 'dialogs', 'web-components'],
-  },
+  tags: ['qa', 'baseline', 'resilience'],
+};
+
+export const BUILTIN_SKILLS: SkillDefinition[] = [
+  genericQaSkill,
+  authSessionSkill,
+  formValidationSkill,
+  dataTablesSkill,
+  shadowDomModalsSkill,
 ];
 
 export const SKILL_PRESETS: SkillPreset[] = [
