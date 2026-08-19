@@ -37,6 +37,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'set_child_webview_visible',
   'close_child_webview',
   'emulate_media_theme',
+  'validate_dom_selector',
 ];
 
 const ALLOWED_ON_CHANNELS = [

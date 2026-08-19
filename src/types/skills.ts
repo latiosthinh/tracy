@@ -43,3 +43,42 @@ export interface SkillValidationResult {
   errors?: string[];
   data?: SkillDefinition;
 }
+
+export type SelectorType = 'css' | 'xpath' | 'text' | 'aria' | 'auto';
+
+export interface SelectorValidationPayload {
+  projectId: string;
+  selector: string;
+  selectorType?: SelectorType;
+  timeoutMs?: number;
+}
+
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface DomElementProbeMatch {
+  tagName: string;
+  textPreview?: string;
+  role?: string;
+  testId?: string;
+  boundingBox?: BoundingBox;
+  isVisible: boolean;
+  isClickable: boolean;
+  isInShadowRoot: boolean;
+}
+
+export interface SelectorValidationResult {
+  valid: boolean;
+  selector: string;
+  selectorType: SelectorType;
+  matchCount: number;
+  visibleCount: number;
+  matches: DomElementProbeMatch[];
+  error?: string;
+  durationMs: number;
+}
+
