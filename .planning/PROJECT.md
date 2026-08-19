@@ -25,18 +25,15 @@ Shipped **Milestone v2.0** — Atomic UI/UX Perfection & Power Studio Workflows 
 - Total Plans: 25 completed, 347 unit/integration tests passing green
 - Full suite of Command Palette, Device Bezels, Side-by-side YAML Diffs, Playwright TS Exporter, AI Diff Preview, HTML Test Reports, and Latency Flamechart.
 
-## Current State
+## Current Milestone: v4.0 Autonomous Multi-Flow Agent & Self-Healing CI
 
-Shipped **Milestone v3.0** — AI Flow Gen V2 & Dynamic Agent Skills (2026-08-19).
-- Total Phases: 14 (Phases 01-14 complete)
-- Total Plans: 36 completed, 452 unit/integration tests passing green
-- Full suite of Declarative Agent Skills, Live Isolated DOM Probing, Multi-Provider Tool Calling with 5-turn Auto-Healing, Domain QA Skills Pack (Auth, Forms, Tables, Shadow DOM), Copilot Skill Selector & Trace Inspector, and Deterministic Flow Accuracy Benchmark Suite.
+**Goal:** Autonomous multi-flow crawler discovering user journeys and self-healing broken Playwright test flows in CI/local runs.
 
-## Next Milestone Goals
-
-- **Milestone v4.0: Autonomous Multi-Flow Agent & Self-Healing CI**
-- Auto-explore full application sitemaps and discover new user journeys
-- Self-healing Playwright test runs in CI with automatic YAML repair
+**Target features:**
+- Autonomous Sitemap & Journey Crawler: Graph-based route discovery, interactive elements extraction, and automated end-to-end YAML test suite generation.
+- Self-Healing Test Runner & Auto-Repair: On-the-fly step failure diagnosis, live DOM re-probing, alternative selector calculation, and YAML flow auto-patching.
+- Headless CI Runner & Self-Healing Action: CLI executable (`tracy run --ci --heal`) for headless environments, JUnit XML / trace artifact emission, and automated git patch / PR branch outputs.
+- Journey & Coverage Visualizer UI: Interactive route graph in Studio, linking pages, discovered flows, and pass/fail/healed coverage status.
 
 ## Validated Milestones
 
@@ -45,7 +42,7 @@ Shipped **Milestone v3.0** — AI Flow Gen V2 & Dynamic Agent Skills (2026-08-19
 - ✓ **v3.0 AI Flow Gen V2 & Dynamic Agent Skills** (Phases 09-14) — Shipped 2026-08-19
 
 ---
-*Last updated: 2026-08-19 after v3.0 milestone*
+*Last updated: 2026-08-19 starting v4.0 milestone*
 
 ## Key Constraints
 
