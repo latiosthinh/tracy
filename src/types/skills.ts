@@ -44,12 +44,12 @@ export interface SkillValidationResult {
   data?: SkillDefinition;
 }
 
-export type SelectorType = 'css' | 'xpath' | 'text' | 'aria' | 'auto';
+export type ProbeSelectorType = 'css' | 'xpath' | 'text' | 'aria' | 'auto';
 
 export interface SelectorValidationPayload {
   projectId: string;
   selector: string;
-  selectorType?: SelectorType;
+  selectorType?: ProbeSelectorType;
   timeoutMs?: number;
 }
 
@@ -74,11 +74,12 @@ export interface DomElementProbeMatch {
 export interface SelectorValidationResult {
   valid: boolean;
   selector: string;
-  selectorType: SelectorType;
+  selectorType: ProbeSelectorType;
   matchCount: number;
   visibleCount: number;
   matches: DomElementProbeMatch[];
   error?: string;
   durationMs: number;
 }
+
 

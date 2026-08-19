@@ -95,4 +95,45 @@ describe('Security Hardening: Command Injection & Path Traversal', () => {
       expect(isAllowedNavigationUrl('not-a-url')).toBe(false);
     });
   });
+
+  describe('DOM Selector Prober Security & Validation', () => {
+    it('probeSelectorInWebview handles empty or blank selector safely', async () => {
+      const { probeSelectorInWebview } = await import('./webviewManager');
+      const fakeWebview = {
+        webContents: {
+          executeJavaScript: async () => ({}),
+        },
+      } as any;
+
+      const result = await probeSelectorInWebview(fakeWebview, {
+        projectId: 'proj-1',
+        selector: '',
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.matchCount).toBe(0);
+      expect(result.error).toContain('Empty selector string');
+    });
+
+    it('probeSelectorInWebview handles executeJavaScript error gracefully without throwing', async () => {
+      const { probeSelectorInWebview } = await import('./webviewManager');
+      const fakeWebview = {
+        webContents: {
+          executeJavaScript: async () => {
+            throw new Error('Script execution failed: SyntaxError');
+          },
+        },
+      } as any;
+
+      const result = await probeSelectorInWebview(fakeWebview, {
+        projectId: 'proj-1',
+        selector: 'button.submit',
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.matchCount).toBe(0);
+      expect(result.error).toContain('Script execution failed');
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+    });
+  });
 });

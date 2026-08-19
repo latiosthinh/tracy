@@ -2,7 +2,7 @@
 export type UnlistenFn = () => void;
 
 import { Project, FlowFile } from '@/src/types/autoflow';
-import type { SkillDefinition } from '@/src/types/skills';
+import type { SkillDefinition, SelectorValidationPayload, SelectorValidationResult } from '@/src/types/skills';
 
 export interface DetectedAgent {
   id: string;
@@ -284,5 +284,22 @@ export const tracyApi = {
   emulateMediaTheme: async (projectId: string, theme: 'dark' | 'light' | 'no-preference'): Promise<void> => {
     if (!isElectronEnv()) return;
     return invoke('emulate_media_theme', { projectId, theme });
+  },
+
+  // DOM Selector Pre-Validation Engine (Isolated-world child webview probing)
+  validateDomSelector: async (payload: SelectorValidationPayload): Promise<SelectorValidationResult> => {
+    if (!isElectronEnv()) {
+      return {
+        valid: false,
+        selector: payload.selector || '',
+        selectorType: payload.selectorType || 'auto',
+        matchCount: 0,
+        visibleCount: 0,
+        matches: [],
+        error: 'DOM selector pre-validation requires Electron desktop environment',
+        durationMs: 0,
+      };
+    }
+    return invoke<SelectorValidationResult>('validate_dom_selector', payload);
   },
 };
