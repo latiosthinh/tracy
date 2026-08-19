@@ -35,7 +35,9 @@ export type CommandType =
   | 'unmockRoute'
   | 'recordHar'
   | 'replayHar'
-  | 'assertRequest';
+  | 'assertRequest'
+  | 'assertPerformance'
+  | 'throttle';
 
 export type SupportedBrowser = 'chromium' | 'firefox' | 'webkit';
 
@@ -80,6 +82,38 @@ export interface AssertRequestStep {
   maxCount?: number;
   queryParams?: Record<string, string>;
   bodyPattern?: string | Record<string, any>;
+}
+
+export type PerformanceMetricKey =
+  | 'lcp'
+  | 'cls'
+  | 'inp'
+  | 'fcp'
+  | 'ttfb'
+  | 'domContentLoaded'
+  | 'loadTime'
+  | 'domNodes'
+  | 'jsHeapSize';
+
+export type PerformanceAssertionThreshold = number | string;
+
+export type PerformanceBudget = Partial<Record<PerformanceMetricKey, PerformanceAssertionThreshold>>;
+
+export type ThrottlingPreset = 'slow3g' | 'fast3g' | 'offline' | 'none';
+
+export interface ThrottlingConfig {
+  preset?: ThrottlingPreset;
+  latencyMs?: number;
+  downloadKbps?: number;
+  uploadKbps?: number;
+  cpuSlowdownRate?: number; // e.g. 4 for 4x slowdown
+  offline?: boolean;
+}
+
+export interface AssertPerformanceStep extends PerformanceBudget {
+  action?: 'assertPerformance';
+  warnOnly?: boolean;
+  message?: string;
 }
 
 export interface YamlStep {
@@ -132,6 +166,8 @@ export interface FlowMetadata {
   trace?: boolean;
   mocks?: NetworkMockRule[];
   har?: HarReplayOptions;
+  throttling?: ThrottlingPreset | ThrottlingConfig;
+  performanceBudget?: PerformanceBudget;
 }
 
 export type StepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';

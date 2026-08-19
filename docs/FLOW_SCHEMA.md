@@ -158,6 +158,53 @@ har:
     sku: "ITEM-101"
 ```
 
+## Core Web Vitals & Performance Assertions
+
+Tracy can automatically gather synthetic Core Web Vitals (`lcp`, `cls`, `inp`, `fcp`, `ttfb`, `domContentLoaded`, `loadTime`, `domNodes`, `jsHeapSize`), enforce performance budgets, and simulate degraded network and CPU throttling conditions.
+
+### Frontmatter Configuration
+
+```yaml
+# Flow configured with throttling and performance budgets
+url: https://example.com
+throttling: slow3g # presets: 'slow3g', 'fast3g', 'offline', 'none' or custom object
+performanceBudget:
+  lcp: "< 2500ms"
+  cls: "<= 0.1"
+  inp: "<= 200ms"
+  ttfb: "< 800ms"
+---
+- navigate: /products
+- waitFor: networkIdle
+```
+
+### Inline Performance & Throttling Commands
+
+| Action | Description | Key Attributes |
+|---|---|---|
+| `assertPerformance` | Evaluates performance budget assertions against harvested metrics. | `lcp`, `cls`, `inp`, `fcp`, `ttfb`, `domContentLoaded`, `loadTime`, `domNodes`, `jsHeapSize`, `warnOnly`, `message` |
+| `throttle` | Dynamically modifies CDP network emulation and CPU slowdown rates. | `preset` (`slow3g`, `fast3g`, `offline`, `none`), `latencyMs`, `downloadKbps`, `uploadKbps`, `cpuSlowdownRate` |
+
+#### Example Inline Performance & Throttling Step
+
+```yaml
+# Apply throttling dynamically
+- throttle: true
+  preset: fast3g
+  cpuSlowdownRate: 4
+
+- navigate: /heavy-dashboard
+- waitFor: networkIdle
+
+# Assert performance metrics under throttled conditions
+- assertPerformance: true
+  lcp: "< 3500ms"
+  cls: "<= 0.1"
+  fcp: "<= 2000ms"
+  ttfb: "< 1000ms"
+  warnOnly: false
+```
+
 ## AI Autocomplete
 
 Tracy's YamlEditor is aware of this schema. When editing a YAML file, press `Ctrl+Space` to trigger the AI-assisted autocomplete menu, which will intelligently suggest Actions or Attributes based on your current cursor indentation!
