@@ -10,13 +10,21 @@
 
 ---
 
-## Screenshots
+## Screenshots & Workflow
 
-| Studio View | YAML Editor | AI Copilot |
-|-------------|-------------|------------|
-| ![Studio View](public/screenshots/studio-view.png) | ![YAML Editor](public/screenshots/yaml-editor.png) | ![AI Copilot](public/screenshots/ai-copilot.png) |
+### 1. Interactive Studio & Flow Editor
 
-> **Tip:** Run `pnpm capture-screenshots` to regenerate all screenshots from a live ProQA instance.
+| Studio View (Dual-Pane) | Step & YAML Editor | AI Copilot & QA Recipes |
+|:-----------------------:|:------------------:|:-----------------------:|
+| ![Studio View](public/screenshots/step3-studio-ide.png) | ![YAML Editor](public/screenshots/step4-yaml-editor.png) | ![AI Copilot](public/screenshots/step5-ai-copilot.png) |
+
+### 2. Onboarding & Configuration
+
+| Step 1: Agent & Model Selection | Step 2: Project & Target URL Setup | Multi-Provider Engine Settings |
+|:-------------------------------:|:----------------------------------:|:------------------------------:|
+| ![Step 1 Agent](public/screenshots/step1-agent-selection.png) | ![Step 2 Project](public/screenshots/step2-project-setup.png) | ![Settings](public/screenshots/step6-settings.png) |
+
+> **Tip:** Run `pnpm capture-screenshots` or `npx tsx scripts/capture-continuous-steps.ts` to regenerate all screenshots directly via Playwright.
 
 ---
 
