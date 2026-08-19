@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.17.1",
+    "@xyflow/react": "^12.11.3",
     "dexie": "^4.4.4",
     "dom-miner": "^0.1.4",
     "express": "^5.2.1",
