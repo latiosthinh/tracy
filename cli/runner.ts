@@ -5,6 +5,7 @@ import { parseDocument } from 'yaml';
 import type { CliOptions, CliSuiteResult, CliTestResult, CliStepResult } from './types';
 import * as deps from './runnerDeps';
 import { generateUnifiedPatch, writePatchFile, type FilePatchInput } from './patchGenerator';
+import { NetworkMockManager } from '../electron/core/network/networkMockManager';
 
 export interface ParsedFlow {
   title?: string;
@@ -62,7 +63,8 @@ function normalizeStep(rawStep: any): Record<string, any> {
   const actionKeys = [
     'navigate', 'click', 'leftClick', 'rightClick', 'hover',
     'doubleClick', 'fill', 'press', 'waitFor', 'assertVisible',
-    'assertNotVisible', 'assertTitle', 'assertUrl', 'tap'
+    'assertNotVisible', 'assertTitle', 'assertUrl', 'tap',
+    'mockRoute', 'unmockRoute', 'replayHar', 'recordHar', 'assertRequest'
   ];
 
   for (const key of actionKeys) {
@@ -79,6 +81,18 @@ function normalizeStep(rawStep: any): Record<string, any> {
       }
       if (key === 'press') {
         return { action: 'press', key: val, ...rest };
+      }
+      if (key === 'mockRoute') {
+        return { action: 'mockRoute', ...(typeof val === 'object' && val !== null ? val : { url: val }), ...rest };
+      }
+      if (key === 'unmockRoute') {
+        return { action: 'unmockRoute', selector: typeof val === 'string' ? val : (val?.url || val?.id), ...rest };
+      }
+      if (key === 'replayHar') {
+        return { action: 'replayHar', path: typeof val === 'string' ? val : val?.path, ...rest };
+      }
+      if (key === 'assertRequest') {
+        return { action: 'assertRequest', ...(typeof val === 'object' && val !== null ? val : { url: val }), ...rest };
       }
       return { action: key, selector: val, ...rest };
     }
@@ -115,6 +129,22 @@ export async function executeSingleFlow(
     baseURL: options.baseUrl || flowJson.url || undefined
   });
 
+  const mockManager = new NetworkMockManager();
+  await mockManager.attachToContext(context);
+
+  // Apply top-level mocks/har if declared in flow
+  const flowMocks = flowJson.mocks || flowJson.metadata?.mocks;
+  if (Array.isArray(flowMocks)) {
+    for (const rule of flowMocks) {
+      mockManager.addRule(rule);
+    }
+  }
+
+  const flowHar = flowJson.har || flowJson.metadata?.har;
+  if (flowHar?.path) {
+    await mockManager.attachHarReplay(context, flowHar.path, flowHar);
+  }
+
   const shouldTrace = options.ci || options.output !== undefined;
   if (shouldTrace) {
     await context.tracing.start({ screenshots: true, snapshots: true });
@@ -134,6 +164,95 @@ export async function executeSingleFlow(
       const raw = stepsRaw[i];
       const normalized = normalizeStep(raw);
       const commandStr = normalized.action + (normalized.selector ? ` "${normalized.selector}"` : (normalized.url ? ` "${normalized.url}"` : ''));
+
+      // Intercept network mock / assert steps directly
+      if (normalized.action === 'mockRoute') {
+        const rule = {
+          url: normalized.url || normalized.selector,
+          method: normalized.method,
+          status: normalized.status,
+          headers: normalized.headers,
+          body: normalized.body,
+          fixture: normalized.fixture,
+          delayMs: normalized.delayMs,
+          abort: normalized.abort,
+          times: normalized.times,
+          ...normalized.args,
+        };
+        mockManager.addRule(rule);
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'passed',
+          durationMs: 1,
+        });
+        continue;
+      }
+
+      if (normalized.action === 'unmockRoute') {
+        mockManager.removeRule(normalized.selector || normalized.url || normalized.id);
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'passed',
+          durationMs: 1,
+        });
+        continue;
+      }
+
+      if (normalized.action === 'replayHar') {
+        await mockManager.attachHarReplay(context, normalized.path || normalized.url || normalized.selector, normalized);
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'passed',
+          durationMs: 1,
+        });
+        continue;
+      }
+
+      if (normalized.action === 'assertRequest') {
+        const criteria = {
+          url: normalized.url || normalized.selector,
+          method: normalized.method,
+          count: normalized.count,
+          minCount: normalized.minCount,
+          maxCount: normalized.maxCount,
+          queryParams: normalized.queryParams,
+          bodyPattern: normalized.bodyPattern,
+          ...normalized.args,
+        };
+        const assertRes = mockManager.assertRequest(criteria);
+        if (!assertRes.matched) {
+          flowStatus = 'failed';
+          flowError = assertRes.error || `assertRequest failed for '${criteria.url}'`;
+          stepResults.push({
+            index: i,
+            command: commandStr,
+            status: 'failed',
+            durationMs: 1,
+            error: flowError,
+          });
+          // Record remaining steps as skipped
+          for (let j = i + 1; j < stepsRaw.length; j++) {
+            const remNorm = normalizeStep(stepsRaw[j]);
+            stepResults.push({
+              index: j,
+              command: remNorm.action + (remNorm.selector ? ` "${remNorm.selector}"` : ''),
+              status: 'skipped',
+              durationMs: 0,
+            });
+          }
+          break;
+        }
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'passed',
+          durationMs: 1,
+        });
+        continue;
+      }
 
       const execResult = await deps.executeStepWithHealing(page, normalized as any, {
         autoHeal: options.heal,
@@ -237,6 +356,12 @@ export async function executeSingleFlow(
     flowStatus = 'failed';
     flowError = err?.message || String(err);
   } finally {
+    try {
+      await mockManager.cleanup();
+    } catch {
+      // Ignore mock cleanup error
+    }
+
     if (shouldTrace && (flowStatus === 'failed' || healedCount > 0)) {
       try {
         await fs.mkdir(path.dirname(tracePath), { recursive: true });

@@ -110,6 +110,9 @@ describe('cli/runner', () => {
 
     const mockContext = {
       newPage: vi.fn().mockResolvedValue(mockPage),
+      route: vi.fn().mockResolvedValue(undefined),
+      routeFromHAR: vi.fn().mockResolvedValue(undefined),
+      unrouteAll: vi.fn().mockResolvedValue(undefined),
       tracing: {
         start: vi.fn().mockResolvedValue(undefined),
         stop: vi.fn().mockResolvedValue(undefined)
