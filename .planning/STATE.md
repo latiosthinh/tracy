@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 ## Current Position
 
-Phase: Phase 15: Heuristic & AI Self-Healing Execution Core
-Plan: 15-02
+Phase: Phase 17: Headless CI CLI Binary & Reporting Pipeline
+Plan: 17-01
 Status: Completed
-Last activity: 2026-08-19 — Completed plan 15-02 (DOM probe, GenAI locator synthesizer, self-healing Playwright execution runner)
+Last activity: 2026-08-19 — Completed plan 17-01 (CLI types, native parseArgs, JUnit XML and console reporters)
 
 
