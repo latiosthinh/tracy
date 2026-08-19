@@ -10,7 +10,10 @@ import {
   Terminal,
   Sparkles,
   AlertOctagon,
-  Activity
+  Activity,
+  Zap,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { FlowStep, ExecutionLog, TestRunResult } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -44,6 +47,11 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<'timeline' | 'logs'>('timeline');
+  const [expandedHeals, setExpandedHeals] = useState<Record<number, boolean>>({});
+
+  const toggleHealExpand = (idx: number) => {
+    setExpandedHeals(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   const passedCount = steps.filter(s => s.status === 'passed').length;
   const failedCount = steps.filter(s => s.status === 'failed').length;
@@ -212,12 +220,63 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
                     </div>
 
                     <div className="flex items-center space-x-2 text-[10px] text-stone-500">
+                      {step.healResult?.healed && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">
+                          <Zap className="w-3 h-3 fill-current" />
+                          <span>{t('studio.healedBadge')}</span>
+                          <span className="text-[9px] bg-amber-600/40 px-1 rounded text-amber-200">
+                            {step.healResult.strategy === 'heuristic'
+                              ? t('studio.healedStrategyHeuristic')
+                              : t('studio.healedStrategyAi')}
+                          </span>
+                          <span className="text-[9px] text-emerald-300">
+                            {t('studio.healedConfidence', {
+                              confidence: Math.round(step.healResult.confidence * 100),
+                            })}
+                          </span>
+                        </span>
+                      )}
                       {step.durationMs && <span>{step.durationMs}ms</span>}
                       <span className="uppercase font-bold">
                         {step.status === 'passed' ? t('reports.passed') : step.status === 'failed' ? t('reports.failed') : step.status}
                       </span>
                     </div>
                   </div>
+
+                  {/* Healed Selector Diff Accordion */}
+                  {step.healResult?.healed && (
+                    <div className="mt-2 p-2 bg-stone-900/90 rounded-[6px] border border-amber-700/50 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => toggleHealExpand(idx)}
+                        className="flex items-center justify-between w-full text-amber-300 font-bold hover:text-amber-200 cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1">
+                          {expandedHeals[idx] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                          {t('studio.healedDiffTitle')}
+                        </span>
+                        <span className="text-[10px] text-stone-400 font-normal">
+                          {step.healResult.reason}
+                        </span>
+                      </button>
+
+                      {expandedHeals[idx] && (
+                        <div className="mt-2 space-y-1 font-mono text-[10px] bg-stone-950 p-2 rounded border border-stone-800">
+                          <div className="text-rose-400 line-through truncate">
+                            - {t('studio.originalSelector')}: {step.healResult.originalSelector}
+                          </div>
+                          <div className="text-emerald-400 font-bold truncate">
+                            + {t('studio.replacementSelector')}: {step.healResult.healedSelector}
+                          </div>
+                          {step.healResult.artifacts?.screenshotPath && (
+                            <div className="text-stone-400 text-[9px] truncate pt-1 border-t border-stone-800">
+                              📷 {step.healResult.artifacts.screenshotPath}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Failure Details & AI Auto-Fix Trigger */}
                   {step.status === 'failed' && step.errorMessage && (

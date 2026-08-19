@@ -170,7 +170,14 @@
     "batchMiningStarting": "Starting batch mining...",
     "batchMiningFailed": "Batch mining failed or returned no results.",
     "batchMiningGeneralFailed": "Batch mining failed.",
-    "minedPagesBatch": "Mined {count} pages from batch!"
+    "minedPagesBatch": "Mined {count} pages from batch!",
+    "healedBadge": "⚡ Healed",
+    "healedConfidence": "{confidence}% Confidence",
+    "healedDiffTitle": "Self-Healed Selector Diff:",
+    "healedStrategyHeuristic": "Heuristic Match",
+    "healedStrategyAi": "AI Synthesized",
+    "originalSelector": "Original",
+    "replacementSelector": "Replacement"
   },
   "copilot": {
     "title": "AI Copilot",
@@ -600,7 +607,10 @@
       "viewFlamechart": "Latency Flamechart",
       "timelineRuler": "Timeline",
       "stepLabel": "Step {index}: {command}"
-    }
+    },
+    "healedSteps": "Healed Steps",
+    "healDetails": "Self-Healing Audit",
+    "viewArtifacts": "View Saved Artifacts"
   },
   "editor": {
     "yamlFlowDef": "YAML Flow Definition",

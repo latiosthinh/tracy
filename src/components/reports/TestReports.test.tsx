@@ -47,6 +47,43 @@ describe('TestReports', () => {
     expect(screen.getByText('leftClick')).toBeInTheDocument();
   });
 
+  it('renders healed KPI count and step heal diff details', () => {
+    const healedMockResult: TestRunResult = {
+      ...mockResult,
+      healedCount: 1,
+      steps: [
+        mockResult.steps[0],
+        {
+          id: 's2',
+          command: 'leftClick',
+          target: '#buy-old',
+          status: 'passed',
+          durationMs: 1200,
+          healResult: {
+            healed: true,
+            strategy: 'heuristic',
+            originalSelector: '#buy-old',
+            healedSelector: '#buy-new',
+            confidence: 0.95,
+            reason: 'Heuristic match',
+            artifacts: {
+              screenshotPath: 'test-results/flow-1/healed-step-1.png',
+            },
+          },
+        },
+      ],
+    };
+
+    render(<TestReports lastResult={healedMockResult} />);
+
+    expect(screen.getByText('Healed Steps')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('⚡ Healed')).toBeInTheDocument();
+    expect(screen.getByText('95%')).toBeInTheDocument();
+    expect(screen.getByText(/- #buy-old/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+ #buy-new/i)).toBeInTheDocument();
+  });
+
   it('toggles to Latency Flamechart view when flamechart button clicked', () => {
     render(<TestReports lastResult={mockResult} />);
 

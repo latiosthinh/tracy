@@ -11,7 +11,8 @@ import {
   Zap,
   Activity,
   List,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ShieldCheck,
 } from 'lucide-react';
 import { TestRunResult } from '@/src/types/autoflow';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -40,6 +41,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
   }
 
   const passRate = Math.round((lastResult.passedCount / (lastResult.totalCount || 1)) * 100);
+  const healedCount = lastResult.healedCount ?? lastResult.steps.filter(s => s.healResult?.healed).length;
 
   const handleExportReport = (format: 'html' | 'json' | 'junit') => {
     let content = '';
@@ -105,7 +107,7 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
           <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-[6px]">
             <CheckCircle2 className="w-5 h-5" />
@@ -129,6 +131,16 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
         <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
           <div className="p-2 bg-amber-500/10 text-amber-400 rounded-[6px]">
             <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.healedSteps')}</span>
+            <span className="text-lg font-bold text-amber-400">{healedCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-stone-900 p-3 rounded-[6px] border border-stone-800 flex items-center space-x-3">
+          <div className="p-2 bg-amber-500/10 text-amber-400 rounded-[6px]">
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <span className="text-[10px] text-stone-400 uppercase font-bold block">{t('reports.passRate')}</span>
@@ -232,15 +244,47 @@ export const TestReports: React.FC<TestReportsProps> = ({ lastResult }) => {
             ) : (
               <div className="space-y-2 font-mono">
                 {lastResult.steps.map((step, idx) => (
-                  <div key={idx} className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800/80 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] text-stone-500 w-4">{idx + 1}.</span>
-                      <span className="font-bold text-amber-400">{step.command}</span>
-                      <span className="text-stone-300 truncate max-w-xs">{typeof step.target === 'string' ? step.target : JSON.stringify(step.target)}</span>
+                  <div key={idx} className="p-2.5 bg-stone-950 rounded-[6px] border border-stone-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] text-stone-500 w-4">{idx + 1}.</span>
+                        <span className="font-bold text-amber-400">{step.command}</span>
+                        <span className="text-stone-300 truncate max-w-xs">{typeof step.target === 'string' ? step.target : JSON.stringify(step.target)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {step.healResult?.healed && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30">
+                            <Zap className="w-3 h-3 fill-current" />
+                            <span>{t('studio.healedBadge')}</span>
+                            <span className="text-emerald-300">
+                              {Math.round(step.healResult.confidence * 100)}%
+                            </span>
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold uppercase ${step.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {step.status}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`text-[10px] font-bold uppercase ${step.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {step.status}
-                    </span>
+
+                    {step.healResult?.healed && (
+                      <div className="p-2 bg-stone-900 rounded border border-amber-800/40 text-[10px] space-y-1">
+                        <div className="text-stone-400 font-sans font-bold flex items-center justify-between">
+                          <span>{t('reports.healDetails')}: {step.healResult.strategy}</span>
+                          {step.healResult.artifacts?.screenshotPath && (
+                            <span className="text-stone-500 text-[9px] truncate max-w-xs">
+                              {step.healResult.artifacts.screenshotPath}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-rose-400 line-through truncate">
+                          - {step.healResult.originalSelector}
+                        </div>
+                        <div className="text-emerald-400 font-bold truncate">
+                          + {step.healResult.healedSelector}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
