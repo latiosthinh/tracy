@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { executeStepWithHealing, resolveHealedLocator } from './selfHealingRunner';
+import { executeStepWithHealing } from './selfHealingRunner';
 import { HealableStep } from './types';
 
 describe('selfHealingRunner', () => {
