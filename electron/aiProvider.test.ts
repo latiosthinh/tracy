@@ -1,5 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createProvider } from './ipc/aiProvider';
+import {
+  createProvider,
+  QA_AGENT_TOOLS,
+  formatToolsForGoogle,
+  formatToolsForOpenAi,
+  formatToolsForAnthropic,
+  parseGoogleToolCalls,
+  parseOpenAiToolCalls,
+  parseAnthropicToolCalls,
+  formatGoogleToolResult,
+  formatOpenAiToolResult,
+  formatAnthropicToolResult,
+  sanitizeToolArguments,
+} from './ipc/aiProvider';
 
 describe('createProvider', () => {
   const originalFetch = globalThis.fetch;
@@ -240,5 +253,173 @@ describe('createProvider', () => {
   it('routes mimo to OpenAI-compatible endpoint', async () => {
     const provider = await createProvider('byok-mimo', { apiKey: 'key' });
     expect(provider).toBeDefined();
+  });
+});
+
+describe('QA Tool Definitions and Multi-Provider Translators', () => {
+  it('defines canonical QA_AGENT_TOOLS with proper names and required parameters', () => {
+    expect(QA_AGENT_TOOLS).toHaveLength(3);
+    const toolNames = QA_AGENT_TOOLS.map((t) => t.name);
+    expect(toolNames).toContain('validate_selector');
+    expect(toolNames).toContain('find_elements_by_text');
+    expect(toolNames).toContain('inspect_element');
+
+    const validateTool = QA_AGENT_TOOLS.find((t) => t.name === 'validate_selector');
+    expect(validateTool?.parameters.required).toEqual(['selector']);
+    expect(validateTool?.parameters.properties.selector.type).toBe('string');
+    expect(validateTool?.parameters.properties.selectorType.enum).toContain('css');
+
+    const textTool = QA_AGENT_TOOLS.find((t) => t.name === 'find_elements_by_text');
+    expect(textTool?.parameters.required).toEqual(['text']);
+
+    const inspectTool = QA_AGENT_TOOLS.find((t) => t.name === 'inspect_element');
+    expect(inspectTool?.parameters.required).toEqual(['selector']);
+  });
+
+  it('translates tools to Google GenAI format (OBJECT type uppercase)', () => {
+    const googleTools = formatToolsForGoogle(QA_AGENT_TOOLS);
+    expect(googleTools).toHaveLength(3);
+    expect(googleTools[0].name).toBe('validate_selector');
+    expect(googleTools[0].parameters.type).toBe('OBJECT');
+    expect(googleTools[0].parameters.properties.selector.type).toBe('STRING');
+    expect(googleTools[0].parameters.properties.selectorType.enum).toContain('css');
+    expect(googleTools[0].parameters.required).toEqual(['selector']);
+  });
+
+  it('translates tools to OpenAI function tools format', () => {
+    const openAiTools = formatToolsForOpenAi(QA_AGENT_TOOLS);
+    expect(openAiTools).toHaveLength(3);
+    expect(openAiTools[0].type).toBe('function');
+    expect(openAiTools[0].function.name).toBe('validate_selector');
+    expect(openAiTools[0].function.parameters.type).toBe('object');
+    expect(openAiTools[0].function.parameters.properties.selector.type).toBe('string');
+    expect(openAiTools[0].function.parameters.required).toEqual(['selector']);
+  });
+
+  it('translates tools to Anthropic input_schema format', () => {
+    const anthropicTools = formatToolsForAnthropic(QA_AGENT_TOOLS);
+    expect(anthropicTools).toHaveLength(3);
+    expect(anthropicTools[0].name).toBe('validate_selector');
+    expect(anthropicTools[0].input_schema.type).toBe('object');
+    expect(anthropicTools[0].input_schema.properties.selector.type).toBe('string');
+    expect(anthropicTools[0].input_schema.required).toEqual(['selector']);
+  });
+
+  it('sanitizes tool arguments against tampering and payload bounding', () => {
+    const rawArgs = {
+      selector: '  div.my-button  ' + 'a'.repeat(2000),
+      expectedTag: 'button<script>alert(1)</script>',
+      targetText: 'Submit form',
+    };
+    const sanitized = sanitizeToolArguments('validate_selector', rawArgs);
+    expect((sanitized.selector as string).length).toBeLessThanOrEqual(1000);
+    expect(sanitized.expectedTag).toBe('buttonscriptalert1script');
+    expect(sanitized.targetText).toBe('Submit form');
+  });
+
+  it('parses Google GenAI tool calls from response structure', () => {
+    const mockResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                functionCall: {
+                  name: 'validate_selector',
+                  args: { selector: '#submit-btn', selectorType: 'css' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const parsed = parseGoogleToolCalls(mockResponse);
+    expect(parsed).toEqual([
+      {
+        id: undefined,
+        name: 'validate_selector',
+        arguments: { selector: '#submit-btn', selectorType: 'css' },
+      },
+    ]);
+  });
+
+  it('parses OpenAI tool calls from response structure', () => {
+    const mockOpenAiResponse = {
+      choices: [
+        {
+          message: {
+            tool_calls: [
+              {
+                id: 'call_123',
+                type: 'function',
+                function: {
+                  name: 'find_elements_by_text',
+                  arguments: JSON.stringify({ text: 'Sign In', exact: true }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const parsed = parseOpenAiToolCalls(mockOpenAiResponse);
+    expect(parsed).toEqual([
+      {
+        id: 'call_123',
+        name: 'find_elements_by_text',
+        arguments: { text: 'Sign In', exact: true },
+      },
+    ]);
+  });
+
+  it('parses Anthropic tool calls from content blocks', () => {
+    const mockAnthropicResponse = {
+      content: [
+        {
+          type: 'tool_use',
+          id: 'toolu_abc',
+          name: 'inspect_element',
+          input: { selector: '.user-card' },
+        },
+      ],
+    };
+
+    const parsed = parseAnthropicToolCalls(mockAnthropicResponse);
+    expect(parsed).toEqual([
+      {
+        id: 'toolu_abc',
+        name: 'inspect_element',
+        arguments: { selector: '.user-card' },
+      },
+    ]);
+  });
+
+  it('formats tool results for Google, OpenAI, and Anthropic while redacting secrets', () => {
+    const resultObj = { valid: true, matchCount: 1, key: 'sk-1234567890abcdef' };
+
+    const googleResult = formatGoogleToolResult('fc_1', 'validate_selector', resultObj);
+    expect(googleResult).toEqual({
+      functionResponse: {
+        name: 'validate_selector',
+        response: {
+          output: { valid: true, matchCount: 1, key: 'sk-1234567890abcdef' },
+        },
+        id: 'fc_1',
+      },
+    });
+
+    const openAiResult = formatOpenAiToolResult('call_1', 'validate_selector', resultObj);
+    expect(openAiResult.role).toBe('tool');
+    expect(openAiResult.tool_call_id).toBe('call_1');
+    expect(openAiResult.content).not.toContain('sk-1234567890abcdef');
+    expect(openAiResult.content).toContain('sk-…');
+
+    const anthropicResult = formatAnthropicToolResult('toolu_1', 'validate_selector', resultObj);
+    expect(anthropicResult.type).toBe('tool_result');
+    expect(anthropicResult.tool_use_id).toBe('toolu_1');
+    expect(anthropicResult.content).toContain('sk-…');
   });
 });

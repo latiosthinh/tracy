@@ -1,5 +1,6 @@
 // NOTE: relative import — the electron main build does not resolve the '@/' alias.
 import { getAgentDef, resolveAgentId } from '../../src/lib/aiRegistry';
+import type { ToolDefinition } from '../../src/types/skills';
 
 export interface AiProviderConfig {
   apiKey?: string;
@@ -7,9 +8,328 @@ export interface AiProviderConfig {
   model?: string;
 }
 
+export const QA_AGENT_TOOLS: ToolDefinition[] = [
+  {
+    name: 'validate_selector',
+    description: 'Validates if a selector exists, is unique, visible, and clickable in the active project webview DOM.',
+    parameters: {
+      type: 'object',
+      properties: {
+        selector: {
+          type: 'string',
+          description: 'The selector to validate (CSS, XPath, text=, role=, or auto-detected). Max 1000 chars.',
+        },
+        selectorType: {
+          type: 'string',
+          description: 'Explicit probe type.',
+          enum: ['css', 'xpath', 'text', 'aria', 'auto'],
+        },
+        expectedTag: {
+          type: 'string',
+          description: 'Optional expected HTML tag name (e.g., button, input, a). Alphanumeric only.',
+        },
+        targetText: {
+          type: 'string',
+          description: 'Optional expected element text or substring.',
+        },
+      },
+      required: ['selector'],
+    },
+  },
+  {
+    name: 'find_elements_by_text',
+    description: 'Searches the active webview DOM for visible elements containing or exactly matching text and returns candidate locators.',
+    parameters: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: 'Text to search for within page elements.',
+        },
+        exact: {
+          type: 'boolean',
+          description: 'Whether to match exact text or substring.',
+        },
+      },
+      required: ['text'],
+    },
+  },
+  {
+    name: 'inspect_element',
+    description: 'Inspects detailed attributes, computed roles, test IDs, and bounding boxes for elements matching a selector.',
+    parameters: {
+      type: 'object',
+      properties: {
+        selector: {
+          type: 'string',
+          description: 'Target selector to inspect in detail.',
+        },
+      },
+      required: ['selector'],
+    },
+  },
+];
+
+export interface GoogleFunctionDeclaration {
+  name: string;
+  description: string;
+  parameters: {
+    type: string;
+    properties: Record<string, {
+      type: string;
+      description?: string;
+      enum?: string[];
+    }>;
+    required?: string[];
+  };
+}
+
+export interface OpenAiToolDeclaration {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties: Record<string, {
+        type: string;
+        description?: string;
+        enum?: string[];
+      }>;
+      required?: string[];
+    };
+  };
+}
+
+export interface AnthropicToolDeclaration {
+  name: string;
+  description: string;
+  input_schema: {
+    type: 'object';
+    properties: Record<string, {
+      type: string;
+      description?: string;
+      enum?: string[];
+    }>;
+    required?: string[];
+  };
+}
+
+export interface ParsedToolCall {
+  id?: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export function formatToolsForGoogle(tools: ToolDefinition[]): GoogleFunctionDeclaration[] {
+  return tools.map((tool) => {
+    const properties: Record<string, { type: string; description?: string; enum?: string[] }> = {};
+    for (const [key, param] of Object.entries(tool.parameters.properties || {})) {
+      properties[key] = {
+        type: param.type.toUpperCase(),
+        ...(param.description ? { description: param.description } : {}),
+        ...(param.enum ? { enum: param.enum } : {}),
+      };
+    }
+    return {
+      name: tool.name,
+      description: tool.description,
+      parameters: {
+        type: 'OBJECT',
+        properties,
+        ...(tool.parameters.required ? { required: tool.parameters.required } : {}),
+      },
+    };
+  });
+}
+
+export function formatToolsForOpenAi(tools: ToolDefinition[]): OpenAiToolDeclaration[] {
+  return tools.map((tool) => {
+    const properties: Record<string, { type: string; description?: string; enum?: string[] }> = {};
+    for (const [key, param] of Object.entries(tool.parameters.properties || {})) {
+      properties[key] = {
+        type: param.type,
+        ...(param.description ? { description: param.description } : {}),
+        ...(param.enum ? { enum: param.enum } : {}),
+      };
+    }
+    return {
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: {
+          type: 'object',
+          properties,
+          ...(tool.parameters.required ? { required: tool.parameters.required } : {}),
+        },
+      },
+    };
+  });
+}
+
+export function formatToolsForAnthropic(tools: ToolDefinition[]): AnthropicToolDeclaration[] {
+  return tools.map((tool) => {
+    const properties: Record<string, { type: string; description?: string; enum?: string[] }> = {};
+    for (const [key, param] of Object.entries(tool.parameters.properties || {})) {
+      properties[key] = {
+        type: param.type,
+        ...(param.description ? { description: param.description } : {}),
+        ...(param.enum ? { enum: param.enum } : {}),
+      };
+    }
+    return {
+      name: tool.name,
+      description: tool.description,
+      input_schema: {
+        type: 'object',
+        properties,
+        ...(tool.parameters.required ? { required: tool.parameters.required } : {}),
+      },
+    };
+  });
+}
+
+export function sanitizeToolArguments(name: string, rawArgs: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = { ...rawArgs };
+  if (typeof sanitized.selector === 'string') {
+    sanitized.selector = sanitized.selector.trim().slice(0, 1000);
+  }
+  if (typeof sanitized.expectedTag === 'string') {
+    sanitized.expectedTag = sanitized.expectedTag.trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
+  }
+  if (typeof sanitized.targetText === 'string') {
+    sanitized.targetText = sanitized.targetText.slice(0, 500);
+  }
+  if (typeof sanitized.text === 'string') {
+    sanitized.text = sanitized.text.slice(0, 500);
+  }
+  return sanitized;
+}
+
+export function parseGoogleToolCalls(response: any): ParsedToolCall[] {
+  const calls: ParsedToolCall[] = [];
+  const candidates = response?.candidates || (response?.response?.candidates);
+  if (Array.isArray(candidates)) {
+    for (const candidate of candidates) {
+      const parts = candidate?.content?.parts;
+      if (Array.isArray(parts)) {
+        for (const part of parts) {
+          if (part?.functionCall) {
+            const fc = part.functionCall;
+            const args = fc.args || {};
+            calls.push({
+              id: fc.id || undefined,
+              name: fc.name,
+              arguments: sanitizeToolArguments(fc.name, typeof args === 'object' && args !== null ? args : {}),
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Also check top-level functionCalls array if present on SDK response
+  if (calls.length === 0 && Array.isArray(response?.functionCalls)) {
+    for (const fc of response.functionCalls) {
+      if (fc?.name) {
+        const args = fc.args || {};
+        calls.push({
+          id: fc.id || undefined,
+          name: fc.name,
+          arguments: sanitizeToolArguments(fc.name, typeof args === 'object' && args !== null ? args : {}),
+        });
+      }
+    }
+  }
+
+  return calls;
+}
+
+export function parseOpenAiToolCalls(responseBody: any): ParsedToolCall[] {
+  const calls: ParsedToolCall[] = [];
+  const choice = responseBody?.choices?.[0];
+  const message = choice?.message || choice?.delta;
+  const toolCalls = message?.tool_calls;
+
+  if (Array.isArray(toolCalls)) {
+    for (const tc of toolCalls) {
+      if (tc.type === 'function' && tc.function?.name) {
+        let args: Record<string, unknown> = {};
+        if (typeof tc.function.arguments === 'string') {
+          try {
+            args = JSON.parse(tc.function.arguments);
+          } catch {
+            args = {};
+          }
+        } else if (typeof tc.function.arguments === 'object' && tc.function.arguments !== null) {
+          args = tc.function.arguments;
+        }
+        calls.push({
+          id: tc.id || undefined,
+          name: tc.function.name,
+          arguments: sanitizeToolArguments(tc.function.name, args),
+        });
+      }
+    }
+  }
+
+  return calls;
+}
+
+export function parseAnthropicToolCalls(responseBody: any): ParsedToolCall[] {
+  const calls: ParsedToolCall[] = [];
+  const content = responseBody?.content;
+
+  if (Array.isArray(content)) {
+    for (const block of content) {
+      if (block?.type === 'tool_use' && block?.name) {
+        const input = block.input || {};
+        calls.push({
+          id: block.id || undefined,
+          name: block.name,
+          arguments: sanitizeToolArguments(block.name, typeof input === 'object' && input !== null ? input : {}),
+        });
+      }
+    }
+  }
+
+  return calls;
+}
+
+export function formatGoogleToolResult(callId: string | undefined, name: string, result: unknown): Record<string, unknown> {
+  return {
+    functionResponse: {
+      name,
+      response: {
+        output: typeof result === 'string' ? redactSecrets(result) : result,
+      },
+      ...(callId ? { id: callId } : {}),
+    },
+  };
+}
+
+export function formatOpenAiToolResult(callId: string | undefined, name: string, result: unknown): Record<string, unknown> {
+  return {
+    role: 'tool',
+    tool_call_id: callId || name,
+    content: typeof result === 'string' ? redactSecrets(result) : redactSecrets(JSON.stringify(result)),
+  };
+}
+
+export function formatAnthropicToolResult(callId: string | undefined, name: string, result: unknown): Record<string, unknown> {
+  return {
+    type: 'tool_result',
+    tool_use_id: callId || name,
+    content: typeof result === 'string' ? redactSecrets(result) : redactSecrets(JSON.stringify(result)),
+  };
+}
+
 export interface AiProvider {
   generateFlow(prompt: string, systemInstruction?: string): Promise<string>;
 }
+
+const HTTP_REQUEST_TIMEOUT = 180_000;
 
 function redactSecrets(text: string): string {
   return text
@@ -60,7 +380,7 @@ async function createOpenAiProvider(config: AiProviderConfig): Promise<AiProvide
           ],
           temperature: 0.3,
         }),
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
       });
 
       if (!res.ok) {
@@ -93,7 +413,7 @@ async function createClaudeProvider(config: AiProviderConfig): Promise<AiProvide
           system: systemInstruction || 'You are a test automation engineer. Generate valid YAML test flows.',
           messages: [{ role: 'user', content: prompt }],
         }),
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
       });
 
       if (!res.ok) {
@@ -126,7 +446,7 @@ async function createCustomGatewayProvider(config: AiProviderConfig): Promise<Ai
           ],
           temperature: 0.3,
         }),
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
       });
 
       if (!res.ok) {
@@ -159,7 +479,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
           model,
           messages: [{ role: 'user', content: userContent }],
         }),
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
       });
 
       if (!createRes.ok) {
@@ -177,7 +497,7 @@ async function createCursorApiProvider(config: AiProviderConfig): Promise<AiProv
       const completeRes = await fetch(`${endpoint}/v1/agents/tasks/${taskId}/complete`, {
         method: 'POST',
         headers,
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
       });
 
       if (!completeRes.ok) {
@@ -295,7 +615,7 @@ async function streamFromSSE(
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
   });
 
   if (!res.ok) {
@@ -357,7 +677,7 @@ async function streamFromAnthropic(
       accept: 'text/event-stream',
     },
     body: JSON.stringify({ ...body, stream: true }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(HTTP_REQUEST_TIMEOUT),
   });
 
   if (!res.ok) {

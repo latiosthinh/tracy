@@ -118,4 +118,25 @@ export interface PrecedingStepContext {
   targetUrl?: string;
 }
 
+export interface AgentToolCall {
+  id?: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface AgentToolResult {
+  valid: boolean;
+  matchCount: number;
+  details?: unknown;
+  error?: string;
+}
+
+export interface AgentToolTraceEvent {
+  turn: number;
+  thought?: string;
+  toolCall?: AgentToolCall;
+  toolResult?: AgentToolResult;
+  timestamp: string;
+}
+
 
