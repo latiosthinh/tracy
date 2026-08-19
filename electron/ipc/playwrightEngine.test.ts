@@ -244,4 +244,38 @@ describe('playwrightEngine NetworkMockManager integration (TDD RED)', () => {
     // Step 2 (chromium only) passed
     expect(stepUpdates.some((u: any) => u.stepIndex === 2 && u.status === 'passed')).toBe(true);
   });
+
+  it('handles throttle and assertPerformance steps, logging performance telemetry', async () => {
+    const { registerPlaywrightHandlers } = await import('./playwrightEngine');
+    registerPlaywrightHandlers();
+
+    const runFlowHandler = handlers['run_flow'];
+
+    const flow = {
+      name: 'Perf Telemetry Flow',
+      metadata: {
+        throttling: 'fast3g',
+      },
+      steps: [
+        { command: 'throttle', value: 'slow3g' },
+        { command: 'assertPerformance', args: { lcp: '<= 3000ms', cls: '<= 0.1' } },
+      ],
+    };
+
+    await runFlowHandler(mockEvent, { flow, targetBaseUrl: 'http://localhost:3000', speedMs: 0 });
+
+    const stepUpdates = mockEvent.sender.send.mock.calls
+      .filter(([channel]: [string]) => channel === 'step-update')
+      .map(([, payload]: [any, any]) => payload);
+
+    expect(stepUpdates.some((u: any) => u.stepIndex === 0 && u.status === 'passed')).toBe(true);
+    expect(stepUpdates.some((u: any) => u.stepIndex === 1 && u.status === 'passed')).toBe(true);
+
+    const logs = mockEvent.sender.send.mock.calls
+      .filter(([channel]: [string]) => channel === 'execution-log')
+      .map(([, payload]: [any, any]) => payload);
+
+    expect(logs.some((l: any) => l.message.includes('Applied throttling'))).toBe(true);
+    expect(logs.some((l: any) => l.message.includes('Performance Assertion'))).toBe(true);
+  });
 });

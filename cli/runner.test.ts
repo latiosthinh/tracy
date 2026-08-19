@@ -252,6 +252,35 @@ describe('cli/runner', () => {
       expect(result.steps[2].status).toBe('skipped');
       expect(result.steps[2].skippedReason).toContain("skip_if.browser matched 'chromium'");
     });
+
+    it('executes assertPerformance steps, evaluating telemetry and reporting failure or pass', async () => {
+      const flowPath = path.join(tempDir, 'perf-pass.yaml');
+      await fs.writeFile(
+        flowPath,
+        `name: PerfPassFlow\nsteps:\n  - throttle: fast3g\n  - assertPerformance:\n      lcp: "<= 3000ms"\n      cls: "<= 0.1"`
+      );
+
+      const result = await executeSingleFlow(flowPath, defaultOptions, mockBrowser);
+      expect(result.status).toBe('passed');
+      expect(result.steps).toHaveLength(2);
+      expect(result.steps[0].command).toContain('throttle');
+      expect(result.steps[1].command).toContain('assertPerformance');
+      expect(result.steps[1].status).toBe('passed');
+      expect(result.metrics).toBeDefined();
+    });
+
+    it('fails flow when assertPerformance threshold is exceeded', async () => {
+      const flowPath = path.join(tempDir, 'perf-fail.yaml');
+      await fs.writeFile(
+        flowPath,
+        `name: PerfFailFlow\nsteps:\n  - assertPerformance:\n      lcp: "< 0ms"`
+      );
+
+      const result = await executeSingleFlow(flowPath, defaultOptions, mockBrowser);
+      expect(result.status).toBe('failed');
+      expect(result.steps[0].status).toBe('failed');
+      expect(result.steps[0].error).toContain('Performance assertions failed');
+    });
   });
 
   describe('executeMatrixFlows and runFlowsHeadless with Matrix', () => {

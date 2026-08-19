@@ -9,6 +9,7 @@ import { saveHealArtifacts, saveFailureArtifacts } from '../core/healing/artifac
 import { NetworkMockManager } from '../core/network/networkMockManager.js';
 import { shouldExecuteStepForBrowser } from '../core/matrix/workerPool.js';
 import type { MatrixBrowserTarget } from '../core/matrix/types.js';
+import { PerfObserverEngine, evaluatePerformanceAssertion } from '../core/perf/perfObserverEngine.js';
 import * as path from 'node:path';
 
 let browser: Browser | null = null;
@@ -349,6 +350,9 @@ export function registerPlaywrightHandlers() {
     const mockManager = new NetworkMockManager();
     await mockManager.attachToContext(activeContext);
 
+    const perfEngine = new PerfObserverEngine();
+    await perfEngine.attachToContext(activeContext as any, currentBrowserTarget);
+
     // Register flow-level declarative mock rules if defined
     if (Array.isArray(flow.metadata?.mocks)) {
       for (const rule of flow.metadata.mocks) {
@@ -359,6 +363,11 @@ export function registerPlaywrightHandlers() {
     // Register flow-level HAR replay if defined
     if (flow.metadata?.har?.path) {
       await mockManager.attachHarReplay(activeContext, flow.metadata.har.path, flow.metadata.har);
+    }
+
+    // Register flow-level throttling if defined
+    if (flow.metadata?.throttling) {
+      await perfEngine.applyThrottling(currentPage as any, flow.metadata.throttling, currentBrowserTarget);
     }
 
     const steps: any[] = flow.steps || [];
@@ -701,6 +710,35 @@ export function registerPlaywrightHandlers() {
               break;
             }
 
+            case 'throttle': {
+              const throttleConfig = typeof step.args === 'object' && step.args !== null
+                ? { preset: step.value || step.args.preset, ...step.args }
+                : (typeof step.value === 'object' && step.value !== null ? step.value : { preset: step.value || step.target });
+              await perfEngine.applyThrottling(currentPage as any, throttleConfig, currentBrowserTarget);
+              sendLog('info', i, `Applied throttling: ${JSON.stringify(throttleConfig)}`);
+              break;
+            }
+
+            case 'assertPerformance': {
+              const metrics = await perfEngine.harvestMetrics(currentPage as any, currentBrowserTarget);
+              const budget = typeof step.args === 'object' && step.args !== null
+                ? step.args
+                : (typeof step.value === 'object' && step.value !== null ? step.value : {});
+              const warnOnly = Boolean(step.warnOnly || budget.warnOnly);
+              const evalRes = evaluatePerformanceAssertion(metrics, budget, warnOnly);
+
+              sendLog(
+                evalRes.passed ? 'assertion' : (warnOnly ? 'warn' : 'error'),
+                i,
+                `Performance Assertion -> ${evalRes.summary}`
+              );
+
+              if (!evalRes.passed && !warnOnly) {
+                throw new Error(evalRes.summary);
+              }
+              break;
+            }
+
             default:
               sendLog('warn', i, `⚠ Step ${i + 1}: Command "${cmd}" not yet implemented — skipping`);
               sendStepUpdate(i, 'skipped', Date.now() - stepStart);
@@ -742,6 +780,13 @@ export function registerPlaywrightHandlers() {
         }
       }
     } finally {
+      if (currentPage) {
+        try {
+          await perfEngine.clearThrottling(currentPage as any, currentBrowserTarget);
+        } catch {
+          // Ignore throttling cleanup error
+        }
+      }
       await mockManager.cleanup();
       if (localBrowser) {
         try {

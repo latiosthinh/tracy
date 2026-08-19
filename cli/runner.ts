@@ -8,6 +8,8 @@ import { generateUnifiedPatch, writePatchFile, type FilePatchInput } from './pat
 import { NetworkMockManager } from '../electron/core/network/networkMockManager';
 import { MatrixWorkerPool, shouldExecuteStepForBrowser } from '../electron/core/matrix/workerPool';
 import type { MatrixBrowserTarget, MatrixTask } from '../electron/core/matrix/types';
+import { PerfObserverEngine, evaluatePerformanceAssertion } from '../electron/core/perf/perfObserverEngine';
+import type { PerformanceAssertionResult, WebVitalsMetrics } from '../electron/core/perf/types';
 import { generateMatrixJUnitXML, writeJUnitReport } from './reporters/junitReporter';
 import { printMatrixSummary } from './reporters/consoleReporter';
 
@@ -72,7 +74,8 @@ function normalizeStep(rawStep: any): Record<string, any> {
     'navigate', 'click', 'leftClick', 'rightClick', 'hover',
     'doubleClick', 'fill', 'press', 'waitFor', 'assertVisible',
     'assertNotVisible', 'assertTitle', 'assertUrl', 'tap',
-    'mockRoute', 'unmockRoute', 'replayHar', 'recordHar', 'assertRequest'
+    'mockRoute', 'unmockRoute', 'replayHar', 'recordHar', 'assertRequest',
+    'assertPerformance', 'assert_performance', 'throttle'
   ];
 
   for (const key of actionKeys) {
@@ -101,6 +104,12 @@ function normalizeStep(rawStep: any): Record<string, any> {
       }
       if (key === 'assertRequest') {
         return { action: 'assertRequest', ...(typeof val === 'object' && val !== null ? val : { url: val }), ...rest };
+      }
+      if (key === 'assertPerformance' || key === 'assert_performance') {
+        return { action: 'assertPerformance', ...(typeof val === 'object' && val !== null ? val : {}), ...rest };
+      }
+      if (key === 'throttle') {
+        return { action: 'throttle', ...(typeof val === 'object' && val !== null ? val : { preset: val }), ...rest };
       }
       return { action: key, selector: val, ...rest };
     }
@@ -141,6 +150,9 @@ export async function executeSingleFlow(
   const mockManager = new NetworkMockManager();
   await mockManager.attachToContext(context);
 
+  const perfEngine = new PerfObserverEngine();
+  await perfEngine.attachToContext(context as any, browserName);
+
   // Apply top-level mocks/har if declared in flow
   const flowMocks = flowJson.mocks || flowJson.metadata?.mocks;
   if (Array.isArray(flowMocks)) {
@@ -163,7 +175,19 @@ export async function executeSingleFlow(
   const safeSlug = deps.sanitizeFlowName(flowName);
   const tracePath = path.resolve(options.output || 'test-results', safeSlug, `trace-${browserName}.zip`);
 
+  const perfAssertions: PerformanceAssertionResult[] = [];
+  let flowMetrics: WebVitalsMetrics | undefined;
+
   try {
+    // Apply flow-level throttling if specified in flow or CLI options
+    const throttleConfig = flowJson.throttling || options.throttle;
+    if (throttleConfig) {
+      await perfEngine.applyThrottling(page as any, throttleConfig, browserName);
+    }
+    if (options.cpuThrottlingRate && browserName === 'chromium') {
+      await perfEngine.applyThrottling(page as any, { cpuSlowdownRate: options.cpuThrottlingRate }, browserName);
+    }
+
     // If flow has a top-level url and no explicit first navigate step, navigate to it
     if (flowJson.url && (!stepsRaw[0] || !('navigate' in stepsRaw[0]))) {
       await page.goto(flowJson.url, { waitUntil: 'domcontentloaded', timeout: options.timeout });
@@ -276,6 +300,67 @@ export async function executeSingleFlow(
         continue;
       }
 
+      if (normalized.action === 'throttle') {
+        const throttleConfig = {
+          preset: normalized.preset,
+          latencyMs: normalized.latencyMs,
+          downloadKbps: normalized.downloadKbps,
+          uploadKbps: normalized.uploadKbps,
+          cpuSlowdownRate: normalized.cpuSlowdownRate || normalized.cpuSlowdown,
+          offline: normalized.offline,
+        };
+        await perfEngine.applyThrottling(page as any, throttleConfig, browserName);
+        stepResults.push({
+          index: i,
+          command: commandStr,
+          status: 'passed',
+          durationMs: 1,
+        });
+        continue;
+      }
+
+      if (normalized.action === 'assertPerformance') {
+        const metrics = await perfEngine.harvestMetrics(page as any, browserName);
+        flowMetrics = metrics;
+        const warnOnly = Boolean(normalized.warnOnly);
+        const evalRes = evaluatePerformanceAssertion(metrics, normalized, warnOnly);
+        perfAssertions.push(evalRes);
+
+        if (!evalRes.passed && !warnOnly) {
+          flowStatus = 'failed';
+          flowError = evalRes.summary;
+          stepResults.push({
+            index: i,
+            command: commandStr,
+            status: 'failed',
+            durationMs: 5,
+            error: evalRes.summary,
+            perfResult: evalRes,
+          });
+
+          // Record remaining steps as skipped
+          for (let j = i + 1; j < stepsRaw.length; j++) {
+            const remNorm = normalizeStep(stepsRaw[j]);
+            stepResults.push({
+              index: j,
+              command: remNorm.action + (remNorm.selector ? ` "${remNorm.selector}"` : ''),
+              status: 'skipped',
+              durationMs: 0,
+            });
+          }
+          break;
+        } else {
+          stepResults.push({
+            index: i,
+            command: commandStr,
+            status: 'passed',
+            durationMs: 5,
+            perfResult: evalRes,
+          });
+          continue;
+        }
+      }
+
       const execResult = await deps.executeStepWithHealing(page, normalized as any, {
         autoHeal: options.heal,
         timeoutMs: options.timeout
@@ -374,10 +459,32 @@ export async function executeSingleFlow(
         });
       }
     }
+
+    // Always harvest final telemetry at the end of flow
+    if (!flowMetrics) {
+      flowMetrics = await perfEngine.harvestMetrics(page as any, browserName);
+    }
+
+    // Evaluate flow-level performance budget if declared
+    const flowBudget = flowJson.performanceBudget || flowJson.metadata?.performanceBudget;
+    if (flowBudget && typeof flowBudget === 'object') {
+      const budgetEval = evaluatePerformanceAssertion(flowMetrics, flowBudget, false);
+      perfAssertions.push(budgetEval);
+      if (!budgetEval.passed && flowStatus === 'passed') {
+        flowStatus = 'failed';
+        flowError = budgetEval.summary;
+      }
+    }
   } catch (err: any) {
     flowStatus = 'failed';
     flowError = err?.message || String(err);
   } finally {
+    try {
+      await perfEngine.clearThrottling(page as any, browserName);
+    } catch {
+      // Ignore throttling reset error
+    }
+
     try {
       await mockManager.cleanup();
     } catch {
@@ -415,6 +522,8 @@ export async function executeSingleFlow(
     steps: stepResults,
     error: flowError,
     healedCount,
+    metrics: flowMetrics,
+    perfAssertions: perfAssertions.length > 0 ? perfAssertions : undefined,
     artifacts: Object.keys(artifacts).length > 0 ? artifacts : undefined
   };
 }
