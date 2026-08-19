@@ -5,6 +5,7 @@ import { isAllowedNavigationUrl } from './webviewManager.js';
 import { executeStepWithHealing } from '../core/healing/selfHealingRunner.js';
 import { patchYamlFile } from '../core/healing/yamlPatcher.js';
 import { saveHealArtifacts, saveFailureArtifacts } from '../core/healing/artifactManager.js';
+import { NetworkMockManager } from '../core/network/networkMockManager.js';
 import * as path from 'node:path';
 
 let browser: Browser | null = null;
@@ -322,7 +323,22 @@ export function registerPlaywrightHandlers() {
       context = browser.contexts()[0];
       currentPage = await getActivePage();
     }
-    if (!currentPage) throw new Error('Browser not launched — cannot execute flow');
+    if (!currentPage || !context) throw new Error('Browser not launched — cannot execute flow');
+
+    const mockManager = new NetworkMockManager();
+    await mockManager.attachToContext(context);
+
+    // Register flow-level declarative mock rules if defined
+    if (Array.isArray(flow.metadata?.mocks)) {
+      for (const rule of flow.metadata.mocks) {
+        mockManager.addRule(rule);
+      }
+    }
+
+    // Register flow-level HAR replay if defined
+    if (flow.metadata?.har?.path) {
+      await mockManager.attachHarReplay(context, flow.metadata.har.path, flow.metadata.har);
+    }
 
     const steps: any[] = flow.steps || [];
     const sender = event.sender;
@@ -389,269 +405,315 @@ export function registerPlaywrightHandlers() {
     const outputDir = path.join(process.cwd(), 'test-results');
     const autoHealEnabled = flow.autoHeal !== false;
 
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const stepStart = Date.now();
-      const cmd = step.command;
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepStart = Date.now();
+        const cmd = step.command;
 
-      sendStepUpdate(i, 'running');
-      sendLog('info', i, `▶ Step ${i + 1}: ${cmd}`);
+        sendStepUpdate(i, 'running');
+        sendLog('info', i, `▶ Step ${i + 1}: ${cmd}`);
 
-      try {
-        const timeout = step.timeout || 10000;
+        try {
+          const timeout = step.timeout || 10000;
 
-        switch (cmd) {
-          case 'navigate': {
-            const url = step.value || step.target || '/';
-            const fullUrl = url.startsWith('http://') || url.startsWith('https://') || url === 'about:blank'
-              ? url
-              : `${targetBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
-            
-            if (!isAllowedNavigationUrl(fullUrl)) {
-              throw new Error(`Flow step navigate blocked: URL "${fullUrl}" is not allowed`);
-            }
-
-            await currentPage.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout });
-            break;
-          }
-
-          case 'leftClick':
-          case 'tap':
-          case 'doubleClick':
-          case 'rightClick':
-          case 'hover':
-          case 'fill':
-          case 'eraseText':
-          case 'press': {
-            const healableStep = {
-              action: cmd,
-              selector: typeof step.target === 'string' ? step.target : step.target?.value || (typeof step.target === 'object' ? JSON.stringify(step.target) : undefined),
-              target: step.target,
-              value: step.value,
-              text: step.value || (typeof step.target === 'string' ? step.target : undefined),
-              key: step.value || step.target || 'Enter',
-              timeout,
-            };
-
-            const result = await executeStepWithHealing(currentPage, healableStep, {
-              autoHeal: autoHealEnabled,
-              timeoutMs: timeout,
-              onLog: (level, msg) => sendLog(level, i, msg),
-            });
-
-            if (!result.success) {
-              throw new Error(result.error || 'Step execution failed');
-            }
-
-            if (result.healed && result.healingDetails) {
-              const artifacts = await saveHealArtifacts({
-                outputDir,
-                flowName,
-                stepIndex: i,
-                page: currentPage,
-                healingResult: result.healingDetails,
-              });
-
-              if (flowFilePath && autoHealEnabled) {
-                try {
-                  await patchYamlFile(flowFilePath, i, result.healingDetails.healedSelector, {
-                    confidence: result.healingDetails.confidence,
-                    healedAt: new Date().toISOString(),
-                  });
-                  sendLog('info', i, `💾 Auto-patched YAML file: "${flowFilePath}"`);
-                } catch (patchErr: any) {
-                  sendLog('warn', i, `Failed to patch YAML file: ${patchErr.message || patchErr}`);
-                }
+          switch (cmd) {
+            case 'navigate': {
+              const url = step.value || step.target || '/';
+              const fullUrl = url.startsWith('http://') || url.startsWith('https://') || url === 'about:blank'
+                ? url
+                : `${targetBaseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+              
+              if (!isAllowedNavigationUrl(fullUrl)) {
+                throw new Error(`Flow step navigate blocked: URL "${fullUrl}" is not allowed`);
               }
 
-              const healResult = {
-                healed: true,
-                strategy: result.healingDetails.strategy,
-                originalSelector: result.healingDetails.originalSelector,
-                healedSelector: result.healingDetails.healedSelector,
-                confidence: result.healingDetails.confidence,
-                reason: result.healingDetails.reason,
-                artifacts: {
-                  screenshotPath: artifacts.screenshotPath,
-                  domSnapshotPath: artifacts.domSnapshotPath,
-                },
+              await currentPage.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout });
+              break;
+            }
+
+            case 'leftClick':
+            case 'tap':
+            case 'doubleClick':
+            case 'rightClick':
+            case 'hover':
+            case 'fill':
+            case 'eraseText':
+            case 'press': {
+              const healableStep = {
+                action: cmd,
+                selector: typeof step.target === 'string' ? step.target : step.target?.value || (typeof step.target === 'object' ? JSON.stringify(step.target) : undefined),
+                target: step.target,
+                value: step.value,
+                text: step.value || (typeof step.target === 'string' ? step.target : undefined),
+                key: step.value || step.target || 'Enter',
+                timeout,
               };
 
-              const durationMs = Date.now() - stepStart;
-              sendStepUpdate(i, 'passed', durationMs, undefined, healResult);
-              sendLog(
-                'assertion',
-                i,
-                `⚡ Self-healed step ${i + 1}: "${result.healingDetails.originalSelector}" -> "${result.healingDetails.healedSelector}" (confidence: ${Math.round(result.healingDetails.confidence * 100)}%)`
-              );
+              const result = await executeStepWithHealing(currentPage, healableStep, {
+                autoHeal: autoHealEnabled,
+                timeoutMs: timeout,
+                onLog: (level, msg) => sendLog(level, i, msg),
+              });
+
+              if (!result.success) {
+                throw new Error(result.error || 'Step execution failed');
+              }
+
+              if (result.healed && result.healingDetails) {
+                const artifacts = await saveHealArtifacts({
+                  outputDir,
+                  flowName,
+                  stepIndex: i,
+                  page: currentPage,
+                  healingResult: result.healingDetails,
+                });
+
+                if (flowFilePath && autoHealEnabled) {
+                  try {
+                    await patchYamlFile(flowFilePath, i, result.healingDetails.healedSelector, {
+                      confidence: result.healingDetails.confidence,
+                      healedAt: new Date().toISOString(),
+                    });
+                    sendLog('info', i, `💾 Auto-patched YAML file: "${flowFilePath}"`);
+                  } catch (patchErr: any) {
+                    sendLog('warn', i, `Failed to patch YAML file: ${patchErr.message || patchErr}`);
+                  }
+                }
+
+                const healResult = {
+                  healed: true,
+                  strategy: result.healingDetails.strategy,
+                  originalSelector: result.healingDetails.originalSelector,
+                  healedSelector: result.healingDetails.healedSelector,
+                  confidence: result.healingDetails.confidence,
+                  reason: result.healingDetails.reason,
+                  artifacts: {
+                    screenshotPath: artifacts.screenshotPath,
+                    domSnapshotPath: artifacts.domSnapshotPath,
+                  },
+                };
+
+                const durationMs = Date.now() - stepStart;
+                sendStepUpdate(i, 'passed', durationMs, undefined, healResult);
+                sendLog(
+                  'assertion',
+                  i,
+                  `⚡ Self-healed step ${i + 1}: "${result.healingDetails.originalSelector}" -> "${result.healingDetails.healedSelector}" (confidence: ${Math.round(result.healingDetails.confidence * 100)}%)`
+                );
+                continue;
+              }
+              break;
+            }
+
+            case 'selectOption': {
+              const loc = resolveLocator(step.target);
+              if (loc && step.value) await loc.selectOption(step.value, { timeout });
+              break;
+            }
+
+            case 'uploadFile': {
+              const loc = resolveLocator(step.target);
+              if (loc && step.value) await loc.setInputFiles(step.value, { timeout });
+              break;
+            }
+
+            case 'waitFor': {
+              const val = step.value || step.target;
+              if (val === 'networkIdle' || val === 'load') {
+                await currentPage.waitForLoadState(val === 'networkIdle' ? 'networkidle' : 'load', { timeout });
+              } else if (typeof val === 'number' || /^\d+$/.test(val)) {
+                await currentPage.waitForTimeout(Number(val));
+              } else {
+                await currentPage.waitForSelector(val, { timeout });
+              }
+              break;
+            }
+
+            case 'wait': {
+              const ms = Number(step.value || step.target || 1000);
+              await currentPage.waitForTimeout(ms);
+              break;
+            }
+
+            case 'waitForNetwork': {
+              await currentPage.waitForLoadState('networkidle', { timeout });
+              break;
+            }
+
+            case 'assertVisible': {
+              const loc = resolveLocator(step.target || step.value);
+              if (loc) await loc.waitFor({ state: 'visible', timeout });
+              break;
+            }
+
+            case 'assertNotVisible': {
+              const loc = resolveLocator(step.target || step.value);
+              if (loc) await loc.waitFor({ state: 'hidden', timeout });
+              break;
+            }
+
+            case 'assertTitle': {
+              const expected = step.value || step.target || '';
+              const title = await currentPage.title();
+              if (!title.includes(expected)) {
+                throw new Error(`Title "${title}" does not contain "${expected}"`);
+              }
+              break;
+            }
+
+            case 'assertUrl': {
+              const expected = step.value || step.target || '';
+              const url = currentPage.url();
+              if (!url.includes(expected)) {
+                throw new Error(`URL "${url}" does not contain "${expected}"`);
+              }
+              break;
+            }
+
+            case 'assertTrue': {
+              const expr = step.value || step.target || 'true';
+              try {
+                const result = await currentPage.evaluate(expr);
+                if (!result) throw new Error(`Assertion failed for expression: ${expr}`);
+              } catch (evalErr: any) {
+                throw new Error(`assertTrue evaluation error: ${evalErr.message || String(evalErr)}`);
+              }
+              break;
+            }
+
+            case 'copyTextFrom': {
+              const loc = resolveLocator(step.target);
+              if (loc) {
+                const content = await loc.innerText({ timeout });
+                sendLog('info', i, `Copied text from element: "${content}"`);
+              }
+              break;
+            }
+
+            case 'scroll': {
+              const distance = Number(step.args?.distance || step.value || 300);
+              const direction = step.args?.direction || 'down';
+              const deltaY = direction === 'up' ? -distance : distance;
+              await currentPage.mouse.wheel(0, deltaY);
+              break;
+            }
+
+            case 'setViewport': {
+              const width = step.args?.width || 1280;
+              const height = step.args?.height || 720;
+              await currentPage.setViewportSize({ width, height });
+              break;
+            }
+
+            case 'takeScreenshot': {
+              await currentPage.screenshot({ type: 'png' });
+              break;
+            }
+
+            case 'clearCookies': {
+              if (context) await context.clearCookies();
+              break;
+            }
+
+            case 'clearStorage': {
+              await currentPage.evaluate(() => {
+                localStorage.clear();
+                sessionStorage.clear();
+              });
+              break;
+            }
+
+            case 'evalScript': {
+              const script = step.value || step.target || '';
+              await currentPage.evaluate(script);
+              break;
+            }
+
+            case 'mockRoute': {
+              const rule = typeof step.value === 'object' && step.value !== null
+                ? step.value
+                : {
+                    url: step.value || step.target || (typeof step.args === 'string' ? step.args : step.args?.url),
+                    ...(typeof step.args === 'object' && step.args !== null ? step.args : {}),
+                  };
+              mockManager.addRule(rule);
+              sendLog('info', i, `Network route mocked for: "${rule.url}"`);
+              break;
+            }
+
+            case 'unmockRoute': {
+              const ruleIdOrPattern = step.value || step.target || (typeof step.args === 'string' ? step.args : step.args?.id || step.args?.url);
+              mockManager.removeRule(ruleIdOrPattern);
+              sendLog('info', i, `Network route unmocked: "${ruleIdOrPattern}"`);
+              break;
+            }
+
+            case 'replayHar': {
+              const harPath = step.value || step.target || (typeof step.args === 'string' ? step.args : step.args?.path);
+              const harOpts = typeof step.args === 'object' && step.args !== null ? step.args : undefined;
+              if (!harPath) throw new Error('replayHar requires a HAR file path');
+              await mockManager.attachHarReplay(context, harPath, harOpts);
+              sendLog('info', i, `Replaying HAR network traffic from: "${harPath}"`);
+              break;
+            }
+
+            case 'assertRequest': {
+              const criteria = typeof step.args === 'object' && step.args !== null
+                ? { url: step.value || step.target || step.args.url, ...step.args }
+                : { url: step.value || step.target };
+              
+              if (!criteria.url) throw new Error('assertRequest requires a target URL or pattern');
+              const res = mockManager.assertRequest(criteria);
+              if (!res.matched) {
+                throw new Error(res.error || `assertRequest failed for '${criteria.url}'`);
+              }
+              sendLog('assertion', i, `assertRequest passed: ${res.count} matching requests for '${criteria.url}'`);
+              break;
+            }
+
+            default:
+              sendLog('warn', i, `⚠ Step ${i + 1}: Command "${cmd}" not yet implemented — skipping`);
+              sendStepUpdate(i, 'skipped', Date.now() - stepStart);
               continue;
-            }
-            break;
           }
 
-          case 'selectOption': {
-            const loc = resolveLocator(step.target);
-            if (loc && step.value) await loc.selectOption(step.value, { timeout });
-            break;
-          }
+          const durationMs = Date.now() - stepStart;
+          sendStepUpdate(i, 'passed', durationMs);
+          sendLog('assertion', i, `✅ Step ${i + 1} PASSED (${durationMs}ms)`);
 
-          case 'uploadFile': {
-            const loc = resolveLocator(step.target);
-            if (loc && step.value) await loc.setInputFiles(step.value, { timeout });
-            break;
-          }
+        } catch (err: any) {
+          const durationMs = Date.now() - stepStart;
+          const errorMessage = err.message || 'Unknown error';
 
-          case 'waitFor': {
-            const val = step.value || step.target;
-            if (val === 'networkIdle' || val === 'load') {
-              await currentPage.waitForLoadState(val === 'networkIdle' ? 'networkidle' : 'load', { timeout });
-            } else if (typeof val === 'number' || /^\d+$/.test(val)) {
-              await currentPage.waitForTimeout(Number(val));
-            } else {
-              await currentPage.waitForSelector(val, { timeout });
-            }
-            break;
-          }
+          const failArtifacts = await saveFailureArtifacts({
+            outputDir,
+            flowName,
+            stepIndex: i,
+            page: currentPage,
+            error: errorMessage,
+          });
 
-          case 'wait': {
-            const ms = Number(step.value || step.target || 1000);
-            await currentPage.waitForTimeout(ms);
-            break;
-          }
+          sendStepUpdate(i, 'failed', durationMs, errorMessage, {
+            healed: false,
+            artifacts: {
+              screenshotPath: failArtifacts.screenshotPath,
+              domSnapshotPath: failArtifacts.domSnapshotPath,
+            },
+          });
+          sendLog('error', i, `❌ Step ${i + 1} FAILED: ${errorMessage}`);
 
-          case 'waitForNetwork': {
-            await currentPage.waitForLoadState('networkidle', { timeout });
-            break;
-          }
-
-          case 'assertVisible': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.waitFor({ state: 'visible', timeout });
-            break;
-          }
-
-          case 'assertNotVisible': {
-            const loc = resolveLocator(step.target || step.value);
-            if (loc) await loc.waitFor({ state: 'hidden', timeout });
-            break;
-          }
-
-          case 'assertTitle': {
-            const expected = step.value || step.target || '';
-            const title = await currentPage.title();
-            if (!title.includes(expected)) {
-              throw new Error(`Title "${title}" does not contain "${expected}"`);
-            }
-            break;
-          }
-
-          case 'assertUrl': {
-            const expected = step.value || step.target || '';
-            const url = currentPage.url();
-            if (!url.includes(expected)) {
-              throw new Error(`URL "${url}" does not contain "${expected}"`);
-            }
-            break;
-          }
-
-          case 'assertTrue': {
-            const expr = step.value || step.target || 'true';
-            try {
-              const result = await currentPage.evaluate(expr);
-              if (!result) throw new Error(`Assertion failed for expression: ${expr}`);
-            } catch (evalErr: any) {
-              throw new Error(`assertTrue evaluation error: ${evalErr.message || String(evalErr)}`);
-            }
-            break;
-          }
-
-          case 'copyTextFrom': {
-            const loc = resolveLocator(step.target);
-            if (loc) {
-              const content = await loc.innerText({ timeout });
-              sendLog('info', i, `Copied text from element: "${content}"`);
-            }
-            break;
-          }
-
-          case 'scroll': {
-            const distance = Number(step.args?.distance || step.value || 300);
-            const direction = step.args?.direction || 'down';
-            const deltaY = direction === 'up' ? -distance : distance;
-            await currentPage.mouse.wheel(0, deltaY);
-            break;
-          }
-
-          case 'setViewport': {
-            const width = step.args?.width || 1280;
-            const height = step.args?.height || 720;
-            await currentPage.setViewportSize({ width, height });
-            break;
-          }
-
-          case 'takeScreenshot': {
-            await currentPage.screenshot({ type: 'png' });
-            break;
-          }
-
-          case 'clearCookies': {
-            if (context) await context.clearCookies();
-            break;
-          }
-
-          case 'clearStorage': {
-            await currentPage.evaluate(() => {
-              localStorage.clear();
-              sessionStorage.clear();
-            });
-            break;
-          }
-
-          case 'evalScript': {
-            const script = step.value || step.target || '';
-            await currentPage.evaluate(script);
-            break;
-          }
-
-          default:
-            sendLog('warn', i, `⚠ Step ${i + 1}: Command "${cmd}" not yet implemented — skipping`);
-            sendStepUpdate(i, 'skipped', Date.now() - stepStart);
-            continue;
+          // Stop on failure unless continueOnFailure is set
+          if (!flow.metadata?.continueOnFailure) break;
         }
 
-        const durationMs = Date.now() - stepStart;
-        sendStepUpdate(i, 'passed', durationMs);
-        sendLog('assertion', i, `✅ Step ${i + 1} PASSED (${durationMs}ms)`);
-
-      } catch (err: any) {
-        const durationMs = Date.now() - stepStart;
-        const errorMessage = err.message || 'Unknown error';
-
-        const failArtifacts = await saveFailureArtifacts({
-          outputDir,
-          flowName,
-          stepIndex: i,
-          page: currentPage,
-          error: errorMessage,
-        });
-
-        sendStepUpdate(i, 'failed', durationMs, errorMessage, {
-          healed: false,
-          artifacts: {
-            screenshotPath: failArtifacts.screenshotPath,
-            domSnapshotPath: failArtifacts.domSnapshotPath,
-          },
-        });
-        sendLog('error', i, `❌ Step ${i + 1} FAILED: ${errorMessage}`);
-
-        // Stop on failure unless continueOnFailure is set
-        if (!flow.metadata?.continueOnFailure) break;
+        // Inter-step delay
+        if (speedMs > 0) {
+          await new Promise(r => setTimeout(r, speedMs));
+        }
       }
-
-      // Inter-step delay
-      if (speedMs > 0) {
-        await new Promise(r => setTimeout(r, speedMs));
-      }
+    } finally {
+      await mockManager.cleanup();
     }
   });
 }
