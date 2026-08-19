@@ -1,4 +1,5 @@
-import { ipcMain, BrowserWindow, WebContentsView } from 'electron';
+import * as electron from 'electron';
+const { ipcMain, BrowserWindow, WebContentsView } = electron as any;
 import type { SelectorValidationPayload, SelectorValidationResult } from '../../src/types/skills';
 
 const MAX_LIVE_WEBVIEWS = 4;
