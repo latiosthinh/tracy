@@ -168,7 +168,7 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
 
 export function printHelp(): string {
   return `
-Usage: tracy run [paths...] [options]
+Usage: proqa run [paths...] [options]
 
 Commands:
   run [paths...]         Execute test flow YAML files or directories

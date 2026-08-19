@@ -16,7 +16,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     for (const err of errors) {
       process.stderr.write(`Error: ${err}\n`);
     }
-    process.stderr.write(`\nRun "tracy --help" for usage instructions.\n`);
+    process.stderr.write(`\nRun "proqa --help" for usage instructions.\n`);
     return 1;
   }
 
@@ -30,9 +30,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       const pkgJsonPath = path.resolve(import.meta.dirname, '../package.json');
       const pkgRaw = await fs.readFile(pkgJsonPath, 'utf-8');
       const pkg = JSON.parse(pkgRaw);
-      process.stdout.write(`tracy v${pkg.version || '1.0.0'}\n`);
+      process.stdout.write(`proqa v${pkg.version || '1.0.0'}\n`);
     } catch {
-      process.stdout.write(`tracy v1.0.0\n`);
+      process.stdout.write(`proqa v1.0.0\n`);
     }
     return 0;
   }

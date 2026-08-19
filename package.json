@@ -1,11 +1,12 @@
 {
-  "name": "tracy-automation-studio",
+  "name": "pro-qa",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
   "bin": {
-    "tracy": "./bin/tracy.js"
+    "proqa": "./bin/proqa.js",
+    "tracy": "./bin/proqa.js"
   },
   "scripts": {
     "dev": "vite",
@@ -13,8 +14,8 @@
     "build": "tsc && vite build && electron-builder",
     "build:web": "tsc --noEmit && vite build --config vite.web.config.ts",
     "server:web": "node src/server/index.js",
-    "cli": "node bin/tracy.js",
-    "test:ci": "node bin/tracy.js run --ci",
+    "cli": "node bin/proqa.js",
+    "test:ci": "node bin/proqa.js run --ci",
     "clean": "rimraf dist dist-electron dist-web release",
     "lint": "eslint . --max-warnings 0 && tsc --noEmit",
     "typecheck": "tsc --noEmit",

@@ -85,7 +85,7 @@ describe('parseCliArgs', () => {
 
   it('printHelp returns non-empty usage string', () => {
     const help = printHelp();
-    expect(help).toContain('Usage: tracy run');
+    expect(help).toContain('Usage: proqa run');
     expect(help).toContain('--heal');
     expect(help).toContain('--ci');
     expect(help).toContain('--browsers');

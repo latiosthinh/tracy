@@ -1,4 +1,4 @@
-# Tracy — E2E Browser Testing IDE & Autonomous QA Studio
+# ProQA — E2E Browser Testing IDE & Autonomous QA Studio
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-Electron%20+%20Web%20+%20CLI-cyan.svg)]()
 [![Tech Stack](https://img.shields.io/badge/stack-React%2019+Playwright+AI+Zustand-purple.svg)]()
 
-> **Desktop-first AI-powered testing IDE and autonomous QA studio** that lets you design, edit, crawl, profile, self-heal, and execute E2E browser tests through YAML flows. Run locally in Electron, headlessly in CI with `tracy` CLI, or in-browser for zero-install flow design.
+> **Desktop-first AI-powered testing IDE and autonomous QA studio** that lets you design, edit, crawl, profile, self-heal, and execute E2E browser tests through YAML flows. Run locally in Electron, headlessly in CI with `proqa` CLI, or in-browser for zero-install flow design.
 
 ---
 
@@ -16,13 +16,13 @@
 |-------------|-------------|------------|
 | ![Studio View](public/screenshots/studio-view.png) | ![YAML Editor](public/screenshots/yaml-editor.png) | ![AI Copilot](public/screenshots/ai-copilot.png) |
 
-> **Tip:** Run `pnpm capture-screenshots` to regenerate all screenshots from a live Tracy instance.
+> **Tip:** Run `pnpm capture-screenshots` to regenerate all screenshots from a live ProQA instance.
 
 ---
 
-## What is Tracy?
+## What is ProQA?
 
-Tracy bridges manual QA exploration, AI-driven test synthesis, autonomous site crawling, performance profiling, and enterprise CI execution. Instead of hand-coding brittle browser automation scripts, define tests declaratively in YAML, let AI synthesize flows from compressed DOM snapshots, crawl entire route trees autonomously, mock network APIs, simulate throttled devices, profile Core Web Vitals, and auto-heal broken selectors during execution.
+ProQA bridges manual QA exploration, AI-driven test synthesis, autonomous site crawling, performance profiling, and enterprise CI execution. Instead of hand-coding brittle browser automation scripts, define tests declaratively in YAML, let AI synthesize flows from compressed DOM snapshots, crawl entire route trees autonomously, mock network APIs, simulate throttled devices, profile Core Web Vitals, and auto-heal broken selectors during execution.
 
 ### Key Capabilities
 
@@ -32,14 +32,14 @@ Tracy bridges manual QA exploration, AI-driven test synthesis, autonomous site c
 - **Multi-Browser Matrix Runner** — Execute tests concurrently across Chromium, Firefox, and WebKit with configurable worker pools and per-step browser conditionals (`when` / `skip_if`).
 - **Declarative Network Mocking & HAR Replay** — Route mocking, fixture responses, latency simulation, and HAR recording/replay directly from frontmatter or inline steps.
 - **Core Web Vitals & Performance Profiling** — Harvest LCP, CLS, INP, FCP, TTFB, memory usage, and enforce strict performance budgets under CPU/network throttling.
-- **Headless CI CLI** — Run suites headlessly in CI pipelines with JUnit XML, JSON, and self-heal patch generation via `tracy run`.
+- **Headless CI CLI** — Run suites headlessly in CI pipelines with JUnit XML, JSON, and self-heal patch generation via `proqa run`.
 - **Live DOM Mining & Multi-Provider AI** — Token-compressed DOM extraction (`dom-miner`) paired with multi-turn AI providers (Google Gemini, OpenAI-compatible, Anthropic).
 
 ---
 
 ## Feature Matrix
 
-| Feature | Web Mode | Desktop Mode (Electron) | Headless CLI (`tracy`) |
+| Feature | Web Mode | Desktop Mode (Electron) | Headless CLI (`proqa`) |
 |---------|:--------:|:-----------------------:|:----------------------:|
 | YAML Flow Editing & Visual Builder | ✅ | ✅ | ❌ |
 | AI Flow Generation & QA Recipes | ✅ (HTTP) | ✅ (Direct / CLI Agents) | ❌ |
@@ -61,8 +61,8 @@ Tracy bridges manual QA exploration, AI-driven test synthesis, autonomous site c
 Full feature set including Playwright automation, live DOM mining, crawler, profiler, and matrix runner.
 
 ```bash
-git clone https://github.com/latiosthinh/tracy.git
-cd tracy
+git clone https://github.com/latiosthinh/pro-qa.git
+cd pro-qa
 pnpm install
 pnpm dev              # Launch Electron + Vite dev studio
 pnpm build            # Package production desktop app
@@ -81,7 +81,7 @@ pnpm cli run "flows/*.yaml" --browser chromium,firefox --workers 4 --heal --repo
 
 # Or link global binary
 pnpm link --global
-tracy run --ci --heal
+proqa run --ci --heal
 ```
 
 ### Web Studio (Zero-Install Authoring)
@@ -103,13 +103,13 @@ pnpm server:web       # (Optional) Launch AI proxy backend on port 3001
 3. **Generate Flows** — Use AI Copilot or built-in QA Recipes to synthesize test flows from DOM trees.
 4. **Refine & Mock** — Fine-tune selectors, add network mock rules, configure throttling, and set performance budgets.
 5. **Run Matrix & Profiler** — Execute across Chromium/Firefox/WebKit and inspect real-time logs, network waterfalls, and Web Vitals scorecards.
-6. **Automate in CI** — Commit YAML flows and run `tracy run --ci --heal` in your pipeline.
+6. **Automate in CI** — Commit YAML flows and run `proqa run --ci --heal` in your pipeline.
 
 ---
 
 ## CLI Reference
 
-`tracy [command] [options]`
+`proqa [command] [options]`
 
 | Command / Option | Description |
 |------------------|-------------|
@@ -167,7 +167,7 @@ For full syntax and step attributes, see [docs/FLOW_SCHEMA.md](docs/FLOW_SCHEMA.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                      Tracy Studio UI                     │
+│                      ProQA Studio UI                     │
 │  React 19 • Tailwind v4 • Zustand • @xyflow (React Flow) │
 │                                                          │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐  │
@@ -212,7 +212,7 @@ For full syntax and step attributes, see [docs/FLOW_SCHEMA.md](docs/FLOW_SCHEMA.
 | `pnpm test` | Run Vitest test suite |
 | `pnpm typecheck` | Run TypeScript compiler checks |
 | `pnpm lint` | Run ESLint verification |
-| `pnpm cli` | Run local Tracy CLI runner |
+| `pnpm cli` | Run local ProQA CLI runner |
 | `pnpm build` | Build full Electron installer package |
 | `pnpm build:web` | Build static web application |
 | `pnpm clean` | Clean all build output directories |
@@ -221,4 +221,4 @@ For full syntax and step attributes, see [docs/FLOW_SCHEMA.md](docs/FLOW_SCHEMA.
 
 ## License
 
-MIT © Tracy Authors
+MIT © ProQA Authors
