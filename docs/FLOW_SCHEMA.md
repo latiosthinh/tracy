@@ -45,6 +45,72 @@ Attributes define *how* or *where* an action occurs.
 - `key`: Keyboard key (e.g., 'Enter', 'Escape').
 - `timeout`: Maximum time in milliseconds to wait for the action to complete.
 
+## Declarative Network Mocking & HAR Replay
+
+Tracy allows mocking network requests and replaying HAR recordings directly in flow frontmatter or via inline flow steps.
+
+### Frontmatter Configuration
+
+```yaml
+# Flow with declarative network mocks & HAR replay
+url: https://example.com
+mocks:
+  - url: "**/api/v1/user"
+    method: GET
+    status: 200
+    headers:
+      content-type: application/json
+    body:
+      id: 42
+      name: "Mocked User"
+      role: "admin"
+  - url: "**/api/v1/slow-endpoint"
+    delayMs: 500
+    status: 204
+  - url: "**/api/v1/flake"
+    abort: connectionreset
+  - url: "**/api/v1/items"
+    fixture: fixtures/items.json
+har:
+  path: fixtures/session.har
+  notFound: fallback
+---
+- navigate: /dashboard
+- waitFor: networkIdle
+```
+
+### Inline Network Commands
+
+| Action | Description | Key Attributes |
+|---|---|---|
+| `mockRoute` | Dynamically register a route mock rule. | `url`, `method`, `status`, `body`, `headers`, `fixture`, `delayMs`, `abort`, `times` |
+| `unmockRoute` | Remove an active route mock rule by ID or URL. | `id` or `url` |
+| `recordHar` | Start recording network traffic to a HAR file. | `path`, `urlFilter` |
+| `replayHar` | Route network traffic from an existing HAR file. | `path`, `notFound`, `url` |
+| `assertRequest` | Assert intercepted HTTP requests matching criteria. | `url`, `method`, `count`, `minCount`, `maxCount`, `queryParams`, `bodyPattern` |
+
+#### Example Inline Mock & Assert Step
+
+```yaml
+- mockRoute: true
+  url: "**/api/checkout"
+  method: POST
+  status: 200
+  body:
+    orderId: "ORD-9999"
+    status: "confirmed"
+
+- leftClick: true
+  selector: button#checkout-btn
+
+- assertRequest: true
+  url: "**/api/checkout"
+  method: POST
+  count: 1
+  bodyPattern:
+    sku: "ITEM-101"
+```
+
 ## AI Autocomplete
 
 Tracy's YamlEditor is aware of this schema. When editing a YAML file, press `Ctrl+Space` to trigger the AI-assisted autocomplete menu, which will intelligently suggest Actions or Attributes based on your current cursor indentation!

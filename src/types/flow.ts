@@ -30,7 +30,48 @@ export type CommandType =
   | 'runFlow'
   | 'evalScript'
   | 'wait'
-  | 'takeScreenshot';
+  | 'takeScreenshot'
+  | 'mockRoute'
+  | 'unmockRoute'
+  | 'recordHar'
+  | 'replayHar'
+  | 'assertRequest';
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'ALL';
+
+export type AbortReason = 'failed' | 'timedout' | 'connectionreset' | 'accessdenied' | 'blockedbyclient';
+
+export interface NetworkMockRule {
+  id?: string;
+  url: string; // glob, regex pattern string, or exact URL
+  method?: HttpMethod;
+  status?: number;
+  headers?: Record<string, string>;
+  body?: any;
+  contentType?: string;
+  fixture?: string; // Path to fixture JSON or raw file
+  delayMs?: number;
+  abort?: boolean | AbortReason;
+  times?: number; // Max number of times to match before falling back
+}
+
+export interface RouteMockOptions extends NetworkMockRule {}
+
+export interface HarReplayOptions {
+  path: string;
+  notFound?: 'fallback' | 'abort';
+  url?: string;
+}
+
+export interface AssertRequestStep {
+  url: string;
+  method?: HttpMethod;
+  count?: number; // Exact count (default: >= 1)
+  minCount?: number;
+  maxCount?: number;
+  queryParams?: Record<string, string>;
+  bodyPattern?: string | Record<string, any>;
+}
 
 export interface YamlStep {
   action?: string;
@@ -74,6 +115,8 @@ export interface FlowMetadata {
   continueOnFailure?: boolean;
   video?: boolean;
   trace?: boolean;
+  mocks?: NetworkMockRule[];
+  har?: HarReplayOptions;
 }
 
 export type StepStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
