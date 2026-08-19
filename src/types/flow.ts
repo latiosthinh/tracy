@@ -55,7 +55,7 @@ export interface NetworkMockRule {
   times?: number; // Max number of times to match before falling back
 }
 
-export interface RouteMockOptions extends NetworkMockRule {}
+export type RouteMockOptions = NetworkMockRule;
 
 export interface HarReplayOptions {
   path: string;
