@@ -40,6 +40,7 @@ const ALLOWED_ON_CHANNELS = [
   'step-update',
   'execution-log',
   'ai-stream-chunk',
+  'agent_tool_trace',
 ];
 
 describe('IPC channel whitelists', () => {
@@ -48,7 +49,7 @@ describe('IPC channel whitelists', () => {
   });
 
   it('on whitelist has expected count', () => {
-    expect(ALLOWED_ON_CHANNELS).toHaveLength(5);
+    expect(ALLOWED_ON_CHANNELS).toHaveLength(6);
   });
 
   it('no overlap between invoke and on channels', () => {

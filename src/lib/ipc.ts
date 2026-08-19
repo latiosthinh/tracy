@@ -2,7 +2,7 @@
 export type UnlistenFn = () => void;
 
 import { Project, FlowFile } from '@/src/types/autoflow';
-import type { SkillDefinition, SelectorValidationPayload, SelectorValidationResult } from '@/src/types/skills';
+import type { SkillDefinition, SelectorValidationPayload, SelectorValidationResult, AgentToolTraceEvent } from '@/src/types/skills';
 
 export interface DetectedAgent {
   id: string;
@@ -111,6 +111,11 @@ export const tracyApi = {
   onAgentStreamChunk: async (callback: (payload: StreamChunkPayload) => void): Promise<UnlistenFn> => {
     if (!isElectronEnv()) return () => {};
     return listen<StreamChunkPayload>('ai-stream-chunk', callback);
+  },
+
+  onAgentToolTrace: async (callback: (payload: AgentToolTraceEvent) => void): Promise<UnlistenFn> => {
+    if (!isElectronEnv()) return () => {};
+    return listen<AgentToolTraceEvent>('agent_tool_trace', callback);
   },
 
   // AI Config Persistence

@@ -46,6 +46,7 @@ const ALLOWED_ON_CHANNELS = [
   'step-update',
   'execution-log',
   'ai-stream-chunk',
+  'agent_tool_trace',
 ];
 
 contextBridge.exposeInMainWorld('tracyAPI', {
