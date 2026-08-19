@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Modal & Shadow DOM Benchmark Fixture</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .hidden { display: none !important; }
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-dialog {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>User Settings & Profile</h2>
+    <button type="button" data-testid="open-modal-btn">Open Settings Modal</button>
+
+    <div style="margin-top: 30px;">
+      <h3>Custom Shadow DOM Component</h3>
+      <user-profile-badge data-testid="user-profile-badge"></user-profile-badge>
+    </div>
+
+    <!-- Modal Backdrop & Dialog -->
+    <div id="settings-modal-backdrop" class="modal-backdrop hidden">
+      <div
+        role="dialog"
+        id="settings-dialog"
+        class="modal-dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <h3 id="modal-title">Edit User Settings</h3>
+        <p>Modify your account notification preferences.</p>
+        <div>
+          <label>
+            <input type="checkbox" id="modal-email-pref" data-testid="modal-email-pref" checked />
+            Receive email digests
+          </label>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" data-testid="modal-save-btn">Save Changes</button>
+          <button type="button" data-testid="modal-close-btn" aria-label="Close">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <template id="user-badge-template">
+    <style>
+      .badge-card { border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #fafafa; }
+      .badge-header { font-weight: bold; margin-bottom: 6px; }
+      .badge-action-btn { background: #0066cc; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    </style>
+    <div class="badge-card">
+      <div class="badge-header">Shadow Badge: Active QA Tester</div>
+      <p>Role: Benchmark Evaluator</p>
+      <button type="button" class="badge-action-btn" data-testid="shadow-action-btn">Ping Shadow Component</button>
+      <div id="shadow-status" style="margin-top: 6px; font-size: 12px; color: green;"></div>
+    </div>
+  </template>
+
+  <script>
+    // Register custom element with open shadow root
+    class UserProfileBadge extends HTMLElement {
+      constructor() {
+        super();
+        const shadow = this.attachShadow({ mode: 'open' });
+        const template = document.getElementById('user-badge-template');
+        shadow.appendChild(template.content.cloneNode(true));
+
+        const actionBtn = shadow.querySelector('[data-testid="shadow-action-btn"]');
+        const statusDiv = shadow.querySelector('#shadow-status');
+        actionBtn.addEventListener('click', () => {
+          statusDiv.textContent = 'Shadow action triggered!';
+        });
+      }
+    }
+    customElements.define('user-profile-badge', UserProfileBadge);
+
+    // Modal triggers
+    const openBtn = document.querySelector('[data-testid="open-modal-btn"]');
+    const backdrop = document.getElementById('settings-modal-backdrop');
+    const closeBtn = document.querySelector('[data-testid="modal-close-btn"]');
+    const saveBtn = document.querySelector('[data-testid="modal-save-btn"]');
+
+    openBtn.addEventListener('click', () => backdrop.classList.remove('hidden'));
+    closeBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
+    saveBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
+  </script>
+</body>
+</html>

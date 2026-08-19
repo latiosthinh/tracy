@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Complex Form Benchmark Fixture</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .error-text { color: red; font-size: 12px; margin-top: 4px; }
+    .hidden { display: none; }
+    [role="combobox"] { border: 1px solid #ccc; padding: 8px; cursor: pointer; min-width: 200px; }
+    [role="listbox"] { border: 1px solid #aaa; margin-top: 4px; padding: 0; list-style: none; }
+    [role="option"] { padding: 6px 10px; cursor: pointer; }
+    [role="option"]:hover { background: #eee; }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>User Profile Survey</h2>
+    <form id="survey-form" novalidate>
+      <div class="form-group">
+        <label id="country-label" for="country-input">Country of Residence</label>
+        <div
+          role="combobox"
+          id="country-input"
+          data-testid="country-select"
+          tabindex="0"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-labelledby="country-label"
+          aria-invalid="false"
+        >
+          <span data-testid="selected-country-label">Select a country...</span>
+        </div>
+        <ul role="listbox" id="country-listbox" class="hidden" aria-labelledby="country-label">
+          <li role="option" data-testid="country-option-us" data-value="US">United States</li>
+          <li role="option" data-testid="country-option-ca" data-value="CA">Canada</li>
+          <li role="option" data-testid="country-option-uk" data-value="UK">United Kingdom</li>
+          <li role="option" data-testid="country-option-de" data-value="DE">Germany</li>
+          <li role="option" data-testid="country-option-vn" data-value="VN">Vietnam</li>
+        </ul>
+        <div id="country-error" role="alert" class="error-text hidden">Country selection is required.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="birthdate-input">Date of Birth</label>
+        <input
+          type="date"
+          id="birthdate-input"
+          name="birthdate"
+          data-testid="birthdate-input"
+          aria-invalid="false"
+          aria-describedby="birthdate-error"
+        />
+        <div id="birthdate-error" role="alert" class="error-text hidden">Please enter a valid date of birth.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="terms-checkbox">
+          <input type="checkbox" id="terms-checkbox" name="terms" data-testid="terms-checkbox" aria-invalid="false" />
+          I agree to the Terms of Service
+        </label>
+        <div id="terms-error" role="alert" class="error-text hidden">You must accept the terms.</div>
+      </div>
+
+      <button type="submit" data-testid="submit-survey-btn">Submit Survey</button>
+      <div id="form-summary-alert" role="alert" class="error-text hidden">Please correct the highlighted errors before submitting.</div>
+    </form>
+  </main>
+
+  <script>
+    const combobox = document.querySelector('[data-testid="country-select"]');
+    const listbox = document.getElementById('country-listbox');
+    let selectedCountry = null;
+
+    combobox.addEventListener('click', () => {
+      const isExpanded = combobox.getAttribute('aria-expanded') === 'true';
+      combobox.setAttribute('aria-expanded', !isExpanded);
+      listbox.classList.toggle('hidden', isExpanded);
+    });
+
+    listbox.querySelectorAll('[role="option"]').forEach(option => {
+      option.addEventListener('click', () => {
+        selectedCountry = option.getAttribute('data-value');
+        document.querySelector('[data-testid="selected-country-label"]').textContent = option.textContent;
+        combobox.setAttribute('aria-expanded', 'false');
+        listbox.classList.add('hidden');
+      });
+    });
+
+    document.getElementById('survey-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      let hasError = false;
+
+      const birthdateInput = document.getElementById('birthdate-input');
+      if (!birthdateInput.value) {
+        birthdateInput.setAttribute('aria-invalid', 'true');
+        document.getElementById('birthdate-error').classList.remove('hidden');
+        hasError = true;
+      } else {
+        birthdateInput.setAttribute('aria-invalid', 'false');
+        document.getElementById('birthdate-error').classList.add('hidden');
+      }
+
+      if (!selectedCountry) {
+        combobox.setAttribute('aria-invalid', 'true');
+        document.getElementById('country-error').classList.remove('hidden');
+        hasError = true;
+      } else {
+        combobox.setAttribute('aria-invalid', 'false');
+        document.getElementById('country-error').classList.add('hidden');
+      }
+
+      const termsCheck = document.getElementById('terms-checkbox');
+      if (!termsCheck.checked) {
+        termsCheck.setAttribute('aria-invalid', 'true');
+        document.getElementById('terms-error').classList.remove('hidden');
+        hasError = true;
+      } else {
+        termsCheck.setAttribute('aria-invalid', 'false');
+        document.getElementById('terms-error').classList.add('hidden');
+      }
+
+      document.getElementById('form-summary-alert').classList.toggle('hidden', !hasError);
+    });
+  </script>
+</body>
+</html>

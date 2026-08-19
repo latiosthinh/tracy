@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auth & 2FA Flow Benchmark Fixture</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .cookie-banner { background: #f0f0f0; padding: 10px; border: 1px solid #ccc; margin-bottom: 20px; }
+    .hidden { display: none; }
+    .mfa-inputs { display: flex; gap: 8px; margin-top: 10px; }
+    .mfa-inputs input { width: 36px; height: 36px; text-align: center; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div id="cookie-banner" class="cookie-banner" role="region" aria-label="Cookie Consent">
+    <p>We use cookies to improve your experience.</p>
+    <button type="button" data-testid="accept-cookies">Accept All Cookies</button>
+  </div>
+
+  <main>
+    <h2>Sign In</h2>
+    <form id="login-form">
+      <div>
+        <label for="email-input">Email Address</label>
+        <input id="email-input" type="email" name="email" data-testid="login-email" required />
+      </div>
+      <div>
+        <label for="password-input">Password</label>
+        <input id="password-input" type="password" name="password" data-testid="login-password" required />
+      </div>
+      <button type="submit" data-testid="login-submit">Sign In</button>
+    </form>
+
+    <section id="mfa-container" class="hidden" role="region" aria-label="Two-Factor Authentication">
+      <h3>Enter 6-digit Verification Code</h3>
+      <p>A verification code was sent to your authentication app.</p>
+      <div class="mfa-inputs">
+        <input type="text" maxlength="1" data-testid="mfa-digit-1" aria-label="Digit 1" />
+        <input type="text" maxlength="1" data-testid="mfa-digit-2" aria-label="Digit 2" />
+        <input type="text" maxlength="1" data-testid="mfa-digit-3" aria-label="Digit 3" />
+        <input type="text" maxlength="1" data-testid="mfa-digit-4" aria-label="Digit 4" />
+        <input type="text" maxlength="1" data-testid="mfa-digit-5" aria-label="Digit 5" />
+        <input type="text" maxlength="1" data-testid="mfa-digit-6" aria-label="Digit 6" />
+      </div>
+      <button type="button" data-testid="mfa-verify-btn">Verify MFA</button>
+    </section>
+  </main>
+
+  <script>
+    document.querySelector('[data-testid="accept-cookies"]').addEventListener('click', () => {
+      document.getElementById('cookie-banner').classList.add('hidden');
+    });
+
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('login-form').classList.add('hidden');
+      document.getElementById('mfa-container').classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Table Benchmark Fixture</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    .pagination { display: flex; gap: 8px; align-items: center; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main id="users-table-container">
+    <h2>User Directory</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>
+            User ID
+            <button type="button" data-testid="sort-id" aria-label="Sort by ID">↕</button>
+          </th>
+          <th>
+            Name
+            <button type="button" data-testid="sort-name" aria-label="Sort by Name">↕</button>
+          </th>
+          <th>
+            Role
+            <button type="button" data-testid="sort-role" aria-label="Sort by Role">↕</button>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- Page 1 Rows -->
+        <tr data-testid="user-row-1" data-page="1">
+          <td>USR-001</td>
+          <td>Alice Johnson</td>
+          <td>Admin</td>
+          <td>
+            <button type="button" data-testid="edit-user-1" aria-label="Edit Alice Johnson">Edit</button>
+            <button type="button" data-testid="delete-user-1" aria-label="Delete Alice Johnson">Delete</button>
+          </td>
+        </tr>
+        <tr data-testid="user-row-2" data-page="1">
+          <td>USR-002</td>
+          <td>Bob Smith</td>
+          <td>Editor</td>
+          <td>
+            <button type="button" data-testid="edit-user-2" aria-label="Edit Bob Smith">Edit</button>
+            <button type="button" data-testid="delete-user-2" aria-label="Delete Bob Smith">Delete</button>
+          </td>
+        </tr>
+        <!-- Page 2 Rows -->
+        <tr data-testid="user-row-3" data-page="2" class="hidden">
+          <td>USR-003</td>
+          <td>Charlie Brown</td>
+          <td>Viewer</td>
+          <td>
+            <button type="button" data-testid="edit-user-3" aria-label="Edit Charlie Brown">Edit</button>
+            <button type="button" data-testid="delete-user-3" aria-label="Delete Charlie Brown">Delete</button>
+          </td>
+        </tr>
+        <tr data-testid="user-row-4" data-page="2" class="hidden">
+          <td>USR-004</td>
+          <td>Diana Prince</td>
+          <td>Admin</td>
+          <td>
+            <button type="button" data-testid="edit-user-4" aria-label="Edit Diana Prince">Edit</button>
+            <button type="button" data-testid="delete-user-4" aria-label="Delete Diana Prince">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      <button type="button" data-testid="pagination-prev" disabled>Previous</button>
+      <span data-testid="pagination-page-indicator">Page 1 of 2</span>
+      <button type="button" data-testid="pagination-next">Next</button>
+    </div>
+
+    <div id="action-notification" role="status" class="hidden" style="margin-top: 10px; color: green;"></div>
+  </main>
+
+  <script>
+    let currentPage = 1;
+    const prevBtn = document.querySelector('[data-testid="pagination-prev"]');
+    const nextBtn = document.querySelector('[data-testid="pagination-next"]');
+    const indicator = document.querySelector('[data-testid="pagination-page-indicator"]');
+    const notification = document.getElementById('action-notification');
+
+    function updatePage(page) {
+      currentPage = page;
+      document.querySelectorAll('#table-body tr').forEach(tr => {
+        if (tr.getAttribute('data-page') === String(page)) {
+          tr.classList.remove('hidden');
+        } else {
+          tr.classList.add('hidden');
+        }
+      });
+      indicator.textContent = `Page ${page} of 2`;
+      prevBtn.disabled = page === 1;
+      nextBtn.disabled = page === 2;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) updatePage(currentPage - 1);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < 2) updatePage(currentPage + 1);
+    });
+
+    document.querySelectorAll('[data-testid^="edit-user-"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        notification.textContent = `Editing user ${e.target.getAttribute('data-testid')}`;
+        notification.classList.remove('hidden');
+      });
+    });
+
+    document.querySelectorAll('[data-testid^="delete-user-"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        notification.textContent = `Deleted user ${e.target.getAttribute('data-testid')}`;
+        notification.classList.remove('hidden');
+      });
+    });
+  </script>
+</body>
+</html>
