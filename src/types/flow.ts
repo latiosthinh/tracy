@@ -37,6 +37,15 @@ export type CommandType =
   | 'replayHar'
   | 'assertRequest';
 
+export type SupportedBrowser = 'chromium' | 'firefox' | 'webkit';
+
+export type BrowserCondition = SupportedBrowser | SupportedBrowser[];
+
+export interface StepWhenCondition {
+  browser?: BrowserCondition;
+  env?: Record<string, string>;
+}
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'ALL';
 
 export type AbortReason = 'failed' | 'timedout' | 'connectionreset' | 'accessdenied' | 'blockedbyclient';
@@ -107,6 +116,12 @@ export interface FlowMetadata {
   tags?: string[];
   env?: Record<string, string>;
   browser?: 'chromium' | 'firefox' | 'webkit';
+  browsers?: SupportedBrowser[];
+  matrix?: {
+    browsers?: SupportedBrowser[];
+    workers?: number;
+    stopOnFirstFailure?: boolean;
+  };
   headless?: boolean;
   viewport?: { width: number; height: number };
   device?: string;
@@ -142,6 +157,8 @@ export interface FlowStep {
   args?: Record<string, any>;
   timeout?: number;
   optional?: boolean;
+  when?: StepWhenCondition;
+  skip_if?: StepWhenCondition;
   status: StepStatus;
   durationMs?: number;
   errorMessage?: string;

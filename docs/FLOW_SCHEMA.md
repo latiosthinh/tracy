@@ -45,6 +45,53 @@ Attributes define *how* or *where* an action occurs.
 - `key`: Keyboard key (e.g., 'Enter', 'Escape').
 - `timeout`: Maximum time in milliseconds to wait for the action to complete.
 
+## Multi-Browser Matrix & Step Conditionals
+
+Tracy supports running test flows across multiple browser engines (`chromium`, `firefox`, `webkit`) in parallel, along with step-level browser filtering.
+
+### Frontmatter Configuration
+
+```yaml
+# Flow configured for cross-browser matrix execution
+url: https://example.com
+browsers:
+  - chromium
+  - firefox
+  - webkit
+matrix:
+  browsers: [chromium, firefox, webkit]
+  workers: 4
+  stopOnFirstFailure: false
+---
+- navigate: /login
+- fill: test@example.com
+  selector: '#email'
+```
+
+### Step Conditionals (`when` and `skip_if`)
+
+Steps can conditionally execute or skip based on the active browser engine:
+
+```yaml
+# Step only runs on Chromium
+- leftClick: true
+  selector: button.chrome-only-feature
+  when:
+    browser: chromium
+
+# Step runs on Chromium and Firefox, but skipped on WebKit
+- assertVisible: true
+  selector: .modern-dialog
+  when:
+    browser: [chromium, firefox]
+
+# Step skipped on Firefox
+- hover: true
+  selector: .firefox-unsupported-element
+  skip_if:
+    browser: firefox
+```
+
 ## Declarative Network Mocking & HAR Replay
 
 Tracy allows mocking network requests and replaying HAR recordings directly in flow frontmatter or via inline flow steps.
