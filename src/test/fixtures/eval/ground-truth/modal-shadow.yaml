@@ -1,0 +1,26 @@
+# Modal & Shadow DOM Canonical Flow
+url: http://localhost:3000/modal-shadow.html
+tags:
+  - modal
+  - shadow-dom
+  - components
+---
+# 1. Open Settings Modal
+- leftClick:
+    selector: 'button[data-testid="open-modal-btn"]'
+
+# 2. Wait for Modal Dialog
+- waitFor:
+    selector: 'div[role="dialog"]#settings-dialog'
+
+# 3. Toggle Email Preference Inside Modal
+- leftClick:
+    selector: 'input[data-testid="modal-email-pref"]'
+
+# 4. Save and Close Modal
+- leftClick:
+    selector: 'button[data-testid="modal-save-btn"]'
+
+# 5. Access Shadow Root Element
+- leftClick:
+    selector: 'user-profile-badge[data-testid="user-profile-badge"]'

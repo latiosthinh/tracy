@@ -1,0 +1,26 @@
+# Data Table Directory Canonical Flow
+url: http://localhost:3000/data-table.html
+tags:
+  - table
+  - pagination
+  - sorting
+---
+# 1. Sort by Name Column
+- leftClick:
+    selector: 'th button[data-testid="sort-name"]'
+
+# 2. Trigger Row Action on First User
+- leftClick:
+    selector: 'button[data-testid="edit-user-1"]'
+
+# 3. Navigate to Page 2
+- leftClick:
+    selector: 'button[data-testid="pagination-next"]'
+
+# 4. Assert Row Visible on Page 2
+- assertVisible:
+    selector: 'tr[data-testid="user-row-3"]'
+
+# 5. Delete Action on Second Page User
+- leftClick:
+    selector: 'button[data-testid="delete-user-3"]'

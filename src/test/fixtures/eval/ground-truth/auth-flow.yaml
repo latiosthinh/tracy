@@ -1,0 +1,48 @@
+# Auth & 2FA Canonical Flow
+url: http://localhost:3000/auth-flow.html
+tags:
+  - auth
+  - 2fa
+  - security
+---
+# 1. Accept Cookie Banner
+- leftClick:
+    selector: 'button[data-testid="accept-cookies"]'
+
+# 2. Fill Credentials
+- fill:
+    selector: 'input[name="email"]'
+    text: "user@example.com"
+- fill:
+    selector: 'input[name="password"]'
+    text: "Password123!"
+
+# 3. Submit Login Form
+- leftClick:
+    selector: 'button[type="submit"]'
+
+# 4. Wait for MFA Container and Fill Digits
+- waitFor:
+    selector: '#mfa-container'
+- fill:
+    selector: 'input[data-testid="mfa-digit-1"]'
+    text: "1"
+- fill:
+    selector: 'input[data-testid="mfa-digit-2"]'
+    text: "2"
+- fill:
+    selector: 'input[data-testid="mfa-digit-3"]'
+    text: "3"
+- fill:
+    selector: 'input[data-testid="mfa-digit-4"]'
+    text: "4"
+- fill:
+    selector: 'input[data-testid="mfa-digit-5"]'
+    text: "5"
+- fill:
+    selector: 'input[data-testid="mfa-digit-6"]'
+    text: "6"
+
+# 5. Verify MFA
+- leftClick:
+    selector: 'button[data-testid="mfa-verify-btn"]'

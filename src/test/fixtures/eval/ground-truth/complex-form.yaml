@@ -1,0 +1,29 @@
+# Complex Form Survey Canonical Flow
+url: http://localhost:3000/complex-form.html
+tags:
+  - forms
+  - validation
+  - dynamic
+---
+# 1. Open Country Combobox and Select Option
+- leftClick:
+    selector: 'div[role="combobox"][data-testid="country-select"]'
+- leftClick:
+    selector: 'li[role="option"][data-testid="country-option-us"]'
+
+# 2. Fill Date of Birth
+- fill:
+    selector: 'input[type="date"][data-testid="birthdate-input"]'
+    text: "1995-05-15"
+
+# 3. Check Terms & Conditions
+- leftClick:
+    selector: 'input[data-testid="terms-checkbox"]'
+
+# 4. Submit Form
+- leftClick:
+    selector: 'button[data-testid="submit-survey-btn"]'
+
+# 5. Assert Form State
+- assertVisible:
+    selector: 'form#survey-form'
