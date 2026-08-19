@@ -25,15 +25,16 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 20-declarative-network-route-mocking-and-har-replay-engine
-Plan: 20-01
-Status: Plan 20-01 Complete, ready for Plan 20-02
-Last activity: 2026-08-19 — Executed 20-01-PLAN.md (NetworkMockManager core engine)
+Plan: 20-02
+Status: Plan 20-02 Complete
+Last activity: 2026-08-19 — Executed 20-02-PLAN.md (NetworkMockManager integration into PlaywrightEngine & CLI Runner)
 
 ## Decisions
 
 - Normalized glob and regex pattern matching in NetworkMockManager to support matching URL paths independently of query strings.
 - Implemented ring-buffer logging for captured requests capped at 500 entries to prevent memory growth.
 - Guaranteed route fallback and unroute cleanup on context shutdown to avoid hung sockets and test leakage.
+- Attached NetworkMockManager per flow run in both Electron Studio engine and Headless CLI runner with cleanup in finally blocks.
 
 
 

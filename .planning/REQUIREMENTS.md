@@ -1,68 +1,65 @@
-# Requirements: Milestone v4.0 (Autonomous Multi-Flow Agent & Self-Healing CI)
+# Requirements: Milestone v5.0 (Performance, Mocking & Multi-Browser Grid)
 
 ## Overview
 
-Milestone v4.0 equips Tracy with autonomous test generation across complete web applications and self-healing test execution capabilities in local and CI environments.
+Milestone v5.0 equips Tracy with declarative network and API request mocking, a multi-browser parallel execution matrix (Chromium, Firefox, WebKit), in-flight Core Web Vitals telemetry, and dedicated Studio diagnostic panels.
 
 ## Requirements
 
-### Self-Healing Test Runner & Auto-Repair (HEAL)
+### Network & API Mocking Engine (MOCK)
 
-- [ ] **HEAL-01**: Playwright execution loop intercepts step locator timeouts and triggers heuristic DOM fallback ranking before failing.
-- [ ] **HEAL-02**: GenAI fallback locator synthesizer is invoked if local heuristic matching confidence is below threshold (< 0.75).
-- [ ] **HEAL-03**: Semantic role and action verb invariants prevent healing into contrary actions (e.g. Save -> Cancel) or mutating assertion expectations.
-- [ ] **HEAL-04**: In-place YAML AST patcher updates selector values in disk files preserving all comments, indentation, and structure using `yaml` AST (`doc.setIn()`).
-- [ ] **HEAL-05**: Step execution reports display heal badges with previous selector, replacement selector, heal confidence score, and diff preview.
+- [x] **MOCK-01**: Flow YAML schema supports declarative `mockRoute` steps with URL patterns (glob/regex), status codes, synthetic JSON bodies, headers, and simulated delay.
+- [x] **MOCK-02**: Flow YAML schema supports network fault injection (e.g. `action: abortRoute`, `action: delayRoute`, `error: "ConnectionReset"`).
+- [x] **MOCK-03**: Playwright execution engine supports HAR recording and deterministic offline HAR replay via `routeFromHAR`.
+- [x] **MOCK-04**: Flow steps can assert network request counts, payload contents, and query parameters via `assertRequest` action.
+- [x] **MOCK-05**: Mock rules automatically scope to active test context and cleanly unregister without memory/handler leaks.
 
-### Headless CI Runner & Reporting (CI)
+### Multi-Browser Matrix & Parallel Grid (GRID)
 
-- [ ] **CI-01**: Standalone CLI entry point (`tracy run [path] [flags]`) executes YAML flows without Electron GUI dependencies.
-- [ ] **CI-02**: CLI supports `--ci`, `--heal`, `--timeout`, `--reporter`, and `--output` options via native `node:util.parseArgs`.
-- [ ] **CI-03**: Built-in JUnit XML reporter generates CI-compatible test results schema with step timings and failure details.
-- [ ] **CI-04**: Headless runner captures failure screenshots, traces, and DOM snapshot artifacts into configurable output directory.
-- [ ] **CI-05**: Self-healing in CI mode produces standard `.patch` file or auto-commits repaired YAML files with clear summary logs.
+- [ ] **GRID-01**: Playwright execution engine supports launching flows against `chromium`, `firefox`, and `webkit` browser types.
+- [ ] **GRID-02**: CLI (`tracy run`) and Studio support `--browsers chromium,firefox,webkit` matrix execution flag with worker concurrency throttling.
+- [ ] **GRID-03**: Steps support browser-specific conditional execution (e.g. `when: { browser: "webkit" }`).
+- [ ] **GRID-04**: Headless and Studio test runners output unified matrix reports displaying pass/fail/duration status per browser engine.
+- [ ] **GRID-05**: Headless runner aggregates multi-browser results into consolidated JUnit XML matrix suites and artifact directories.
 
-### Autonomous Sitemap & Journey Crawler (CRAWL)
+### Performance & Core Web Vitals Engine (PERF)
 
-- [ ] **CRAWL-01**: Graph-based BFS crawler explores internal routes starting from target URL within origin boundaries.
-- [ ] **CRAWL-02**: Structural DOM skeleton hashing identifies unique SPA dynamic views and detects cyclic states.
-- [ ] **CRAWL-03**: Destructive action safety filter blocks dangerous keywords (`/logout|delete|remove|destroy|signout/i`) from autonomous invocation.
-- [ ] **CRAWL-04**: Interactive form explorer fills forms using contextual safe synthetic mock inputs.
-- [ ] **CRAWL-05**: Auto-flow generator compiles discovered journey paths into executable, lint-compliant YAML test suites.
+- [ ] **PERF-01**: Execution engine injects lightweight `web-vitals` observer to capture LCP, CLS, INP, FCP, and TTFB metrics.
+- [ ] **PERF-02**: Chromium runs support CDP-based CPU throttling (e.g. 4x slowdown) and Network throttling presets (Fast 3G, Slow 3G, Offline).
+- [ ] **PERF-03**: YAML flow schema supports `assertPerformance` step to validate metric thresholds (e.g. `lcp: <= 2500ms`, `cls: <= 0.1`).
+- [ ] **PERF-04**: Test execution reports and artifacts include detailed performance telemetry graphs and metric breakdown tables.
 
-### Journey & Coverage Visualizer UI (VIS)
+### Studio Network & Matrix UI (UI)
 
-- [ ] **VIS-01**: Interactive `@xyflow/react` canvas displays discovered routes, pages, and interconnecting actions as graph nodes and edges.
-- [ ] **VIS-02**: Graph nodes indicate test coverage status (covered by existing flow, partially tested, unvisited).
-- [ ] **VIS-03**: Clicking a route or edge allows one-click generation or execution of linked YAML flows directly in Studio.
-- [ ] **VIS-04**: Live crawl progress overlay streams newly discovered nodes, active crawler worker position, and queue count.
+- [ ] **UI-01**: Studio UI provides a dedicated Network Inspector tab showing live HTTP requests, status codes, timings, and active mock overrides.
+- [ ] **UI-02**: Studio UI provides a Matrix Runner panel allowing one-click execution across selected browser engines with parallel progress cards.
+- [ ] **UI-03**: Test Report and Studio views display interactive Core Web Vitals scorecards with color-coded good/needs-improvement/poor indicators.
+- [ ] **UI-04**: All user-facing strings, tooltips, and accessibility labels mapped to `src/a11y/en.json`.
 
 ## Out of Scope
 
-- **Cloud / SaaS dashboard sync**: All reports, graphs, and artifacts remain 100% local or exported to standard files.
-- **Unconstrained LLM vision fuzzing**: Visual pixel-level monkey testing without selector grounding is avoided to eliminate cost and non-deterministic flakiness.
-- **Modifying custom application backend data**: Synthetic inputs only target client-side forms without destructive backend mutations.
+- **Cloud browser farm streaming**: Browser engines execute locally or on CI runners via Playwright binaries; external SaaS browser clouds are out of scope.
+- **Full Chrome DevTools protocol emulation in Firefox/WebKit**: CDP network/CPU throttling is strictly gated to Chromium; Firefox and WebKit use W3C PerformanceObserver without CDP emulation.
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HEAL-01 | Phase 15 | Pending |
-| HEAL-02 | Phase 15 | Pending |
-| HEAL-03 | Phase 15 | Pending |
-| HEAL-04 | Phase 16 | Pending |
-| HEAL-05 | Phase 16 | Pending |
-| CI-01 | Phase 17 | Pending |
-| CI-02 | Phase 17 | Pending |
-| CI-03 | Phase 17 | Pending |
-| CI-04 | Phase 17 | Pending |
-| CI-05 | Phase 17 | Pending |
-| CRAWL-01 | Phase 18 | Pending |
-| CRAWL-02 | Phase 18 | Pending |
-| CRAWL-03 | Phase 18 | Pending |
-| CRAWL-04 | Phase 18 | Pending |
-| CRAWL-05 | Phase 18 | Pending |
-| VIS-01 | Phase 19 | Pending |
-| VIS-02 | Phase 19 | Pending |
-| VIS-03 | Phase 19 | Pending |
-| VIS-04 | Phase 19 | Pending |
+| MOCK-01 | Phase 20 | Complete |
+| MOCK-02 | Phase 20 | Complete |
+| MOCK-03 | Phase 20 | Complete |
+| MOCK-04 | Phase 20 | Complete |
+| MOCK-05 | Phase 20 | Complete |
+| GRID-01 | Phase 21 | Pending |
+| GRID-02 | Phase 21 | Pending |
+| GRID-03 | Phase 21 | Pending |
+| GRID-04 | Phase 21 | Pending |
+| GRID-05 | Phase 21 | Pending |
+| PERF-01 | Phase 22 | Pending |
+| PERF-02 | Phase 22 | Pending |
+| PERF-03 | Phase 22 | Pending |
+| PERF-04 | Phase 22 | Pending |
+| UI-01 | Phase 23 | Pending |
+| UI-02 | Phase 23 | Pending |
+| UI-03 | Phase 23 | Pending |
+| UI-04 | Phase 23 | Pending |
