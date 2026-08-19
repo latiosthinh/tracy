@@ -52,13 +52,38 @@ export function generateJUnitXML(
         );
 
         if (step.status === 'failed') {
+          const failureDetail = step.perfResult
+            ? `${step.error || 'Performance assertion failed'}\n\n${step.perfResult.summary}\n${step.perfResult.failedAssertions.map((f) => `- ${f.message}`).join('\n')}`
+            : (step.error || 'Step failed');
+
           lines.push(
-            `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(step.error || 'Step failed')}</failure>`
+            `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(failureDetail)}</failure>`
           );
         } else if (step.status === 'skipped') {
           lines.push(
             `      <skipped message="${escapeXml(step.skippedReason || 'Step skipped')}"/>`
           );
+        }
+
+        if (step.perfResult) {
+          lines.push(`      <properties>`);
+          lines.push(`        <property name="perfPassed" value="${step.perfResult.passed}"/>`);
+          if (step.perfResult.metrics.lcp !== undefined) {
+            lines.push(`        <property name="lcp" value="${step.perfResult.metrics.lcp}"/>`);
+          }
+          if (step.perfResult.metrics.cls !== undefined) {
+            lines.push(`        <property name="cls" value="${step.perfResult.metrics.cls}"/>`);
+          }
+          if (step.perfResult.metrics.inp !== undefined) {
+            lines.push(`        <property name="inp" value="${step.perfResult.metrics.inp}"/>`);
+          }
+          if (step.perfResult.metrics.fcp !== undefined) {
+            lines.push(`        <property name="fcp" value="${step.perfResult.metrics.fcp}"/>`);
+          }
+          if (step.perfResult.metrics.ttfb !== undefined) {
+            lines.push(`        <property name="ttfb" value="${step.perfResult.metrics.ttfb}"/>`);
+          }
+          lines.push(`      </properties>`);
         }
 
         if (step.healResult) {
@@ -140,13 +165,38 @@ export function generateMatrixJUnitXML(
         );
 
         if (step.status === 'failed') {
+          const failureDetail = step.perfResult
+            ? `${step.error || 'Performance assertion failed'}\n\n${step.perfResult.summary}\n${step.perfResult.failedAssertions.map((f) => `- ${f.message}`).join('\n')}`
+            : (step.error || 'Step failed');
+
           lines.push(
-            `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(step.error || 'Step failed')}</failure>`
+            `      <failure message="${escapeXml(step.error || 'Step failed')}">${escapeXml(failureDetail)}</failure>`
           );
         } else if (step.status === 'skipped') {
           lines.push(
             `      <skipped message="${escapeXml(step.skippedReason || 'Step skipped')}"/>`
           );
+        }
+
+        if (step.perfResult) {
+          lines.push(`      <properties>`);
+          lines.push(`        <property name="perfPassed" value="${step.perfResult.passed}"/>`);
+          if (step.perfResult.metrics.lcp !== undefined) {
+            lines.push(`        <property name="lcp" value="${step.perfResult.metrics.lcp}"/>`);
+          }
+          if (step.perfResult.metrics.cls !== undefined) {
+            lines.push(`        <property name="cls" value="${step.perfResult.metrics.cls}"/>`);
+          }
+          if (step.perfResult.metrics.inp !== undefined) {
+            lines.push(`        <property name="inp" value="${step.perfResult.metrics.inp}"/>`);
+          }
+          if (step.perfResult.metrics.fcp !== undefined) {
+            lines.push(`        <property name="fcp" value="${step.perfResult.metrics.fcp}"/>`);
+          }
+          if (step.perfResult.metrics.ttfb !== undefined) {
+            lines.push(`        <property name="ttfb" value="${step.perfResult.metrics.ttfb}"/>`);
+          }
+          lines.push(`      </properties>`);
         }
 
         if (step.healResult) {

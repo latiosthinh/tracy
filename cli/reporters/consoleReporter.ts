@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import type { CliSuiteResult, CliMatrixResult, CliTestResult } from '../types.js';
+import type { WebVitalsMetrics, PerformanceAssertionResult, MetricRating } from '../../electron/core/perf/types.js';
 
 // ANSI escape codes for basic formatting
 const RESET = '\x1b[0m';
@@ -9,6 +10,134 @@ const RED = '\x1b[31m';
 const YELLOW = '\x1b[33m';
 const CYAN = '\x1b[36m';
 const GRAY = '\x1b[90m';
+
+function getRatingBadge(rating: MetricRating): string {
+  switch (rating) {
+    case 'good':
+      return `${GREEN}GOOD${RESET}`;
+    case 'needs-improvement':
+      return `${YELLOW}NEEDS IMP${RESET}`;
+    case 'poor':
+      return `${RED}POOR${RESET}`;
+    default:
+      return `${GRAY}-${RESET}`;
+  }
+}
+
+/**
+ * Formats a terminal Core Web Vitals and Performance Telemetry Scorecard table.
+ */
+export function formatPerfScorecard(
+  metrics: WebVitalsMetrics,
+  assertions?: PerformanceAssertionResult[]
+): string {
+  const lines: string[] = [];
+
+  const colMetric = 18;
+  const colVal = 14;
+  const colBudget = 14;
+  const colRating = 12;
+
+  const totalInnerWidth = colMetric + colVal + colBudget + colRating + 3; // 61 chars
+
+  const tableTop = `┌${'─'.repeat(totalInnerWidth)}┐`;
+  lines.push(tableTop);
+
+  const fallbackAnnotation = metrics.syntheticFallback ? ` [synthetic fallback: ${metrics.browserEngine}]` : '';
+  const titleText = `Core Web Vitals & Telemetry${fallbackAnnotation}`;
+  const titlePadded = titleText.padEnd(totalInnerWidth);
+  lines.push(`│ ${BOLD}${titlePadded.slice(0, totalInnerWidth - 1)}${RESET}│`);
+
+  const headerSep = `├${'─'.repeat(colMetric)}┬${'─'.repeat(colVal)}┬${'─'.repeat(colBudget)}┬${'─'.repeat(colRating)}┤`;
+  lines.push(headerSep);
+
+  const hMetric = 'Metric'.padEnd(colMetric - 2);
+  const hVal = 'Value'.padEnd(colVal - 2);
+  const hBudget = 'Budget'.padEnd(colBudget - 2);
+  const hRating = 'Rating'.padEnd(colRating - 2);
+  lines.push(`│ ${BOLD}${hMetric}${RESET} │ ${BOLD}${hVal}${RESET} │ ${BOLD}${hBudget}${RESET} │ ${BOLD}${hRating}${RESET} │`);
+
+  const rowSep = `├${'─'.repeat(colMetric)}┼${'─'.repeat(colVal)}┼${'─'.repeat(colBudget)}┼${'─'.repeat(colRating)}┤`;
+  lines.push(rowSep);
+
+  // Collect assertion details map
+  const assertionMap = new Map<string, { thresholdStr: string; rating: MetricRating; passed: boolean }>();
+  if (assertions) {
+    for (const a of assertions) {
+      for (const d of a.assertions) {
+        assertionMap.set(d.metric, {
+          thresholdStr: `${d.operator} ${d.threshold}${d.unit}`,
+          rating: d.rating,
+          passed: d.passed
+        });
+      }
+    }
+  }
+
+  const metricRows: Array<{
+    name: string;
+    key: string;
+    valueStr: string;
+    defaultBudget: string;
+    rating: MetricRating;
+  }> = [
+    {
+      name: 'LCP',
+      key: 'lcp',
+      valueStr: metrics.lcp !== undefined ? `${metrics.lcp.toLocaleString()} ms` : '-',
+      defaultBudget: '<= 2500ms',
+      rating: metrics.lcp !== undefined ? (metrics.lcp <= 2500 ? 'good' : metrics.lcp <= 4000 ? 'needs-improvement' : 'poor') : 'good'
+    },
+    {
+      name: 'CLS',
+      key: 'cls',
+      valueStr: metrics.cls !== undefined ? `${metrics.cls.toFixed(3)}` : '-',
+      defaultBudget: '<= 0.100',
+      rating: metrics.cls !== undefined ? (metrics.cls <= 0.1 ? 'good' : metrics.cls <= 0.25 ? 'needs-improvement' : 'poor') : 'good'
+    },
+    {
+      name: 'INP',
+      key: 'inp',
+      valueStr: metrics.inp !== undefined ? `${metrics.inp.toLocaleString()} ms` : '-',
+      defaultBudget: '<= 200ms',
+      rating: metrics.inp !== undefined ? (metrics.inp <= 200 ? 'good' : metrics.inp <= 500 ? 'needs-improvement' : 'poor') : 'good'
+    },
+    {
+      name: 'FCP',
+      key: 'fcp',
+      valueStr: metrics.fcp !== undefined ? `${metrics.fcp.toLocaleString()} ms` : '-',
+      defaultBudget: '<= 1800ms',
+      rating: metrics.fcp !== undefined ? (metrics.fcp <= 1800 ? 'good' : metrics.fcp <= 3000 ? 'needs-improvement' : 'poor') : 'good'
+    },
+    {
+      name: 'TTFB',
+      key: 'ttfb',
+      valueStr: metrics.ttfb !== undefined ? `${metrics.ttfb.toLocaleString()} ms` : '-',
+      defaultBudget: '<= 800ms',
+      rating: metrics.ttfb !== undefined ? (metrics.ttfb <= 800 ? 'good' : metrics.ttfb <= 1800 ? 'needs-improvement' : 'poor') : 'good'
+    }
+  ];
+
+  for (const r of metricRows) {
+    const asserted = assertionMap.get(r.key);
+    const budgetStr = asserted ? asserted.thresholdStr : r.defaultBudget;
+    const finalRating = asserted ? asserted.rating : r.rating;
+
+    const cMetric = r.name.padEnd(colMetric - 2);
+    const cVal = r.valueStr.padEnd(colVal - 2);
+    const cBudget = budgetStr.padEnd(colBudget - 2);
+    const badge = getRatingBadge(finalRating);
+    const rawBadgeLength = finalRating === 'good' ? 4 : finalRating === 'needs-improvement' ? 9 : 4;
+    const badgePad = Math.max(0, colRating - 2 - rawBadgeLength);
+
+    lines.push(`│ ${cMetric} │ ${cVal} │ ${cBudget} │ ${badge}${' '.repeat(badgePad)} │`);
+  }
+
+  const tableBot = `└${'─'.repeat(colMetric)}┴${'─'.repeat(colVal)}┴${'─'.repeat(colBudget)}┴${'─'.repeat(colRating)}┘`;
+  lines.push(tableBot);
+
+  return lines.join('\n');
+}
 
 export function formatConsoleReport(suite: CliSuiteResult): string {
   const lines: string[] = [];
@@ -39,13 +168,25 @@ export function formatConsoleReport(suite: CliSuiteResult): string {
         healDetail = ` ${YELLOW}[⚡ Auto-Healed -> "${step.healResult.healedSelector}" (confidence: ${step.healResult.confidence})]${RESET}`;
       }
 
+      let perfDetail = '';
+      if (step.perfResult) {
+        perfDetail = ` ${step.perfResult.passed ? GREEN : RED}[${step.perfResult.summary}]${RESET}`;
+      }
+
       lines.push(
-        `  ${stepBadge} Step ${step.index + 1}: ${step.command} ${GRAY}(${step.durationMs}ms)${RESET}${healDetail}`
+        `  ${stepBadge} Step ${step.index + 1}: ${step.command} ${GRAY}(${step.durationMs}ms)${RESET}${healDetail}${perfDetail}`
       );
 
       if (step.error) {
         lines.push(`    ${RED}Error: ${step.error}${RESET}`);
       }
+    }
+
+    if (test.metrics) {
+      lines.push('');
+      const scorecard = formatPerfScorecard(test.metrics, test.perfAssertions);
+      lines.push(scorecard.split('\n').map((l) => `  ${l}`).join('\n'));
+      lines.push('');
     }
 
     if (test.artifacts) {
@@ -153,6 +294,16 @@ export function formatMatrixConsoleReport(matrixResult: CliMatrixResult): string
   const footerBot = `└${'─'.repeat(flowColWidth)}┴${browsers.map(() => '─'.repeat(browserColWidth)).join('┴')}┘`;
   lines.push(footerBot);
   lines.push('');
+
+  // Performance telemetry tables for flows having metrics
+  for (const res of matrixResult.results) {
+    if (res.metrics) {
+      lines.push(`${BOLD}Scorecard [${res.browser || 'default'}] -> ${res.flowName}:${RESET}`);
+      const sc = formatPerfScorecard(res.metrics, res.perfAssertions);
+      lines.push(sc);
+      lines.push('');
+    }
+  }
 
   const passStr = `${GREEN}${matrixResult.passedExecutions} passed${RESET}`;
   const failStr =

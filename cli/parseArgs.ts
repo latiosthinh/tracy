@@ -1,8 +1,10 @@
 import { parseArgs } from 'node:util';
 import type { CliOptions } from './types.js';
+import type { ThrottlingPreset } from '../electron/core/perf/types.js';
 
 const VALID_REPORTERS = ['junit', 'console', 'json', 'all'] as const;
 const VALID_BROWSERS = ['chromium', 'firefox', 'webkit'] as const;
+const VALID_THROTTLING_PRESETS: readonly ThrottlingPreset[] = ['slow3g', 'fast3g', 'offline', 'none'] as const;
 
 export function parseCliArgs(argv: string[]): { options: CliOptions; errors: string[] } {
   const errors: string[] = [];
@@ -23,6 +25,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
         browsers: { type: 'string', short: 'B', default: 'chromium' },
         workers: { type: 'string', short: 'w' },
         'patch-file': { type: 'string', short: 'p' },
+        throttle: { type: 'string', short: 'T' },
+        'cpu-slowdown': { type: 'string' },
         help: { type: 'boolean', short: 'h', default: false },
         version: { type: 'boolean', short: 'v', default: false }
       },
@@ -42,6 +46,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
         concurrency: 1,
         browsers: ['chromium'],
         workers: undefined,
+        throttle: undefined,
+        cpuThrottlingRate: undefined,
         help: false,
         version: false,
         paths: []
@@ -102,6 +108,26 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
     }
   }
 
+  let throttle: ThrottlingPreset | undefined;
+  if (values.throttle !== undefined) {
+    const rawThrottle = String(values.throttle).trim().toLowerCase() as ThrottlingPreset;
+    if (VALID_THROTTLING_PRESETS.includes(rawThrottle)) {
+      throttle = rawThrottle;
+    } else {
+      errors.push(`Invalid throttle preset: "${values.throttle}". Must be one of: ${VALID_THROTTLING_PRESETS.join(', ')}.`);
+    }
+  }
+
+  let cpuThrottlingRate: number | undefined;
+  if (values['cpu-slowdown'] !== undefined) {
+    const parsedRate = Number(values['cpu-slowdown']);
+    if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+      errors.push(`Invalid cpu-slowdown rate: "${values['cpu-slowdown']}". Must be a positive number.`);
+    } else {
+      cpuThrottlingRate = parsedRate;
+    }
+  }
+
   const rawReporter = values.reporter as string;
   let reporter: CliOptions['reporter'] = 'console';
   if (rawReporter) {
@@ -130,6 +156,8 @@ export function parseCliArgs(argv: string[]): { options: CliOptions; errors: str
     browsers,
     workers,
     patchFile: values['patch-file'] as string | undefined,
+    throttle,
+    cpuThrottlingRate,
     help: Boolean(values.help),
     version: Boolean(values.version),
     paths
@@ -157,6 +185,8 @@ Options:
   -B, --browsers <list>  Comma-separated list of browser targets: chromium, firefox, webkit [default: chromium]
   -w, --workers <n>      Number of parallel matrix workers (auto from CPU count by default)
   -p, --patch-file <path> File path to write unified diff patch for healed flows
+  -T, --throttle <preset> Network throttling preset: slow3g, fast3g, offline, none
+      --cpu-slowdown <n> Rate of CPU slowdown factor (e.g. 4 for 4x CPU slowdown)
   -h, --help             Show command line help
   -v, --version          Show version number
 `.trim();

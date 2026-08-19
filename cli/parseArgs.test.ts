@@ -17,6 +17,8 @@ describe('parseCliArgs', () => {
       browsers: ['chromium'],
       workers: undefined,
       patchFile: undefined,
+      throttle: undefined,
+      cpuThrottlingRate: undefined,
       help: false,
       version: false,
       paths: []
@@ -88,6 +90,32 @@ describe('parseCliArgs', () => {
     expect(help).toContain('--ci');
     expect(help).toContain('--browsers');
     expect(help).toContain('--workers');
+    expect(help).toContain('--throttle');
+    expect(help).toContain('--cpu-slowdown');
+  });
+
+  it('parses --throttle and -T flag with validation', () => {
+    const { options: o1, errors: e1 } = parseCliArgs(['--throttle', 'slow3g']);
+    expect(e1).toHaveLength(0);
+    expect(o1.throttle).toBe('slow3g');
+
+    const { options: o2, errors: e2 } = parseCliArgs(['-T', 'fast3g']);
+    expect(e2).toHaveLength(0);
+    expect(o2.throttle).toBe('fast3g');
+
+    const { errors: e3 } = parseCliArgs(['--throttle', 'invalid-speed']);
+    expect(e3.length).toBeGreaterThan(0);
+    expect(e3[0]).toContain('Invalid throttle preset');
+  });
+
+  it('parses --cpu-slowdown flag with validation', () => {
+    const { options: o1, errors: e1 } = parseCliArgs(['--cpu-slowdown', '4']);
+    expect(e1).toHaveLength(0);
+    expect(o1.cpuThrottlingRate).toBe(4);
+
+    const { errors: e2 } = parseCliArgs(['--cpu-slowdown', '-1']);
+    expect(e2.length).toBeGreaterThan(0);
+    expect(e2[0]).toContain('Invalid cpu-slowdown rate');
   });
 
   it('parses --browsers comma-separated list and -B flag', () => {

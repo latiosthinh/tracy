@@ -233,4 +233,66 @@ describe('generateMatrixJUnitXML', () => {
     expect(xml).toContain('<skipped message="Skipped: when.browser does not match &apos;chromium&apos;"/>');
     expect(xml).toContain('<failure message="Timeout waiting for #firefox-btn">Timeout waiting for #firefox-btn</failure>');
   });
+
+  it('formats assertPerformance step failures with detailed metric summaries', () => {
+    const perfFailingSuite: CliSuiteResult = {
+      totalTests: 1,
+      passedTests: 0,
+      failedTests: 1,
+      healedTests: 0,
+      totalDurationMs: 1000,
+      startTime: '2026-08-19T10:00:00.000Z',
+      endTime: '2026-08-19T10:00:01.000Z',
+      results: [
+        {
+          flowPath: 'flows/perf.yaml',
+          flowName: 'Perf Test',
+          status: 'failed',
+          durationMs: 1000,
+          healedCount: 0,
+          steps: [
+            {
+              index: 0,
+              command: 'assertPerformance',
+              status: 'failed',
+              durationMs: 50,
+              error: 'Performance assertions failed: LCP: 3200ms (expected <= 2500ms)',
+              perfResult: {
+                passed: false,
+                metrics: {
+                  lcp: 3200,
+                  cls: 0.05,
+                  inp: 50,
+                  fcp: 900,
+                  ttfb: 150,
+                  syntheticFallback: false,
+                  browserEngine: 'chromium',
+                  timestamp: 12345678,
+                },
+                assertions: [],
+                failedAssertions: [
+                  {
+                    metric: 'lcp',
+                    actual: 3200,
+                    threshold: 2500,
+                    operator: '<=',
+                    passed: false,
+                    unit: 'ms',
+                    rating: 'needs-improvement',
+                    message: 'LCP: 3200ms exceeds threshold <= 2500ms (needs-improvement)',
+                  }
+                ],
+                summary: 'Performance assertions failed: LCP: 3200ms (expected <= 2500ms)',
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    const xml = generateJUnitXML(perfFailingSuite);
+    expect(xml).toContain('<property name="perfPassed" value="false"/>');
+    expect(xml).toContain('<property name="lcp" value="3200"/>');
+    expect(xml).toContain('LCP: 3200ms exceeds threshold &lt;= 2500ms');
+  });
 });

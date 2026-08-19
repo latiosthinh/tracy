@@ -1,3 +1,5 @@
+import type { WebVitalsMetrics, PerformanceAssertionResult, ThrottlingPreset } from '../electron/core/perf/types.js';
+
 export interface CliOptions {
   ci: boolean;
   heal: boolean;
@@ -10,6 +12,8 @@ export interface CliOptions {
   browsers?: Array<'chromium' | 'firefox' | 'webkit'>;
   workers?: number;
   patchFile?: string;
+  throttle?: ThrottlingPreset;
+  cpuThrottlingRate?: number;
   help: boolean;
   version: boolean;
   paths: string[];
@@ -22,6 +26,7 @@ export interface CliStepResult {
   durationMs: number;
   error?: string;
   skippedReason?: string;
+  perfResult?: PerformanceAssertionResult;
   healResult?: {
     healedSelector: string;
     confidence: number;
@@ -40,6 +45,8 @@ export interface CliTestResult {
   steps: CliStepResult[];
   error?: string;
   healedCount: number;
+  metrics?: WebVitalsMetrics;
+  perfAssertions?: PerformanceAssertionResult[];
   artifacts?: {
     screenshotPath?: string;
     domSnapshotPath?: string;
