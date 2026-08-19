@@ -169,5 +169,34 @@ describe('cli/runner', () => {
       expect(result.steps[1].status).toBe('skipped');
       expect(result.artifacts?.screenshotPath).toBeDefined();
     });
+
+    it('attaches NetworkMockManager, applies top-level mocks/har, handles network steps and request assertion', async () => {
+      const flowPath = path.join(tempDir, 'network-mock.yaml');
+      await fs.writeFile(
+        flowPath,
+        `name: NetworkFlow\nurl: http://localhost:3000\nmocks:\n  - url: "**/api/items"\n    status: 200\n    body: { items: [1, 2] }\nhar:\n  path: "fixtures/app.har"\nsteps:\n  - mockRoute:\n      url: "**/api/user"\n      status: 200\n      body: { name: "Bob" }\n  - assertRequest:\n      url: "**/api/user"\n      count: 0\n  - unmockRoute: "**/api/user"\n  - replayHar: "fixtures/extra.har"`
+      );
+
+      const result = await executeSingleFlow(flowPath, defaultOptions, mockBrowser);
+      expect(result.status).toBe('passed');
+      expect(result.steps).toHaveLength(4);
+      expect(result.steps[0].status).toBe('passed');
+      expect(result.steps[1].status).toBe('passed');
+      expect(result.steps[2].status).toBe('passed');
+      expect(result.steps[3].status).toBe('passed');
+    });
+
+    it('fails flow when assertRequest fails in CLI mode', async () => {
+      const flowPath = path.join(tempDir, 'failing-assert.yaml');
+      await fs.writeFile(
+        flowPath,
+        `name: FailAssertFlow\nurl: http://localhost:3000\nsteps:\n  - assertRequest:\n      url: "**/api/never-called"\n      count: 1`
+      );
+
+      const result = await executeSingleFlow(flowPath, defaultOptions, mockBrowser);
+      expect(result.status).toBe('failed');
+      expect(result.steps[0].status).toBe('failed');
+      expect(result.steps[0].error).toContain("Expected exactly 1 requests matching '**/api/never-called'");
+    });
   });
 });
