@@ -82,4 +82,40 @@ export interface SelectorValidationResult {
   durationMs: number;
 }
 
+export type SelectorPresenceStatus =
+  | 'UniquePresent'
+  | 'AmbiguousMultiple'
+  | 'NotPresent'
+  | 'DeferredDynamic';
+
+export type SelectorResilienceTier =
+  | 'TestId'
+  | 'AriaRole'
+  | 'VisibleText'
+  | 'StandardCss'
+  | 'DeepXPath';
+
+export interface SelectorScoreReport {
+  selector: string;
+  score: number; // 0 to 100
+  tier: SelectorResilienceTier;
+  status: SelectorPresenceStatus;
+  isReliable: boolean;
+  warnings: string[];
+  suggestions?: string[];
+  details: {
+    matchCount: number;
+    visibleCount: number;
+    isClickable?: boolean;
+    isInShadowRoot?: boolean;
+    isDynamicDeferred?: boolean;
+  };
+}
+
+export interface PrecedingStepContext {
+  action: string;
+  selector?: string;
+  targetUrl?: string;
+}
+
 
