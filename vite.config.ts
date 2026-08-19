@@ -11,6 +11,7 @@ const MAIN_PROCESS_EXTERNALS = [
   /^chromium-bidi($|\/)/,
   /^playwright($|\/)/,
   /^js-yaml($|\/)/,
+  /^yaml($|\/)/,
   /^@google\/genai($|\/)/,
 ];
 
@@ -56,7 +57,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     ssr: {
-      external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml', '@google/genai'],
+      external: ['playwright-core', 'chromium-bidi', 'playwright', 'js-yaml', 'yaml', '@google/genai'],
     }
   };
 });
