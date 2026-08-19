@@ -47,7 +47,9 @@
   1. Developers can define agent skills with system prompt modifiers, parameter schemas, and tool definitions matching Zod contract
   2. Skills can be serialized to and parsed from `.skill.json` and `.skill.yaml` formats with validation errors reported
   3. `agentStore` provides active skill states, preset selection ("Standard QA", "Form Specialist", "Data Table Deep-Dive", "Full Power"), and dynamic project skill discovery
-**Plans**: TBD
+**Plans**: 2 plans
+- [x] 09-01-PLAN.md — Zod Skill Schema, TypeScript Types, Validation & Serializer
+- [x] 09-02-PLAN.md — Skill Registry, Built-ins Catalog Scaffolding, and agentStore Integration
 
 ### Phase 10: Live DOM Selector Pre-Validation Engine
 **Goal**: Enable real-time probing of CSS, XPath, Text, and ARIA selectors directly against live embedded webviews in isolated context
@@ -113,7 +115,7 @@
 | 06. YAML Diff & TS Exporter | v2.0 | 3/3 | Complete | 2026-08-16 |
 | 07. AI Recipes & Diff Preview | v2.0 | 3/3 | Complete | 2026-08-16 |
 | 08. HTML Reports & Flamechart | v2.0 | 2/2 | Complete | 2026-08-16 |
-| 09. Skills Runtime & Registry | v3.0 | 0/TBD | Not started | - |
+| 09. Skills Runtime & Registry | v3.0 | 2/2 | Complete | 2026-08-19 |
 | 10. DOM Selector Pre-Validation | v3.0 | 0/TBD | Not started | - |
 | 11. Tool Calling & Self-Healing | v3.0 | 0/TBD | Not started | - |
 | 12. QA Domain Skills Catalog | v3.0 | 0/TBD | Not started | - |

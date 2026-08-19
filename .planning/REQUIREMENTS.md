@@ -117,8 +117,8 @@ Acceptance:
 
 | Requirement | Phase | Status |
 |---|---|---|
-| SKILL-01 | Phase 09 | Pending |
-| SKILL-02 | Phase 09 | Pending |
+| SKILL-01 | Phase 09 | Complete |
+| SKILL-02 | Phase 09 | Complete |
 | VERIFY-01 | Phase 10 | Pending |
 | VERIFY-02 | Phase 10 | Pending |
 | TOOL-01 | Phase 11 | Pending |
