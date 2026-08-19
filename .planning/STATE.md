@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-08-19)
 ## Current Position
 
 Phase: Phase 22: Core Web Vitals & Performance Assertion Engine
-Plan: 22-01 Complete, Ready for 22-02
-Status: In progress
-Last activity: 2026-08-19 — Completed 22-01 Core Performance Telemetry, Assertion Evaluator & Throttling Core
+Plan: 22-02 Complete
+Status: Complete
+Last activity: 2026-08-19 — Completed 22-02 CLI Runner, Console/JUnit Reporters & Playwright Engine Performance Integration
 
 ## Progress Bar
 
