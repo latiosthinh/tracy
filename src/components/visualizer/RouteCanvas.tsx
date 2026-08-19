@@ -38,14 +38,15 @@ export const RouteCanvas: React.FC = () => {
     () => projects.find((p) => p.id === activeProjectId) || projects[0],
     [projects, activeProjectId]
   );
-  const projectFlows = activeProject?.flows || [];
+  const projectFlows = useMemo(() => activeProject?.flows || [], [activeProject?.flows]);
 
   // Transform crawlerStore nodes to ReactFlow nodes with computed coordinates
   const nodes: Node<VisualizerNodeData>[] = useMemo(() => {
-    // Map hierarchy/depth levels
+    // Map hierarchy levels based on pathname depth
     const depthBuckets = new Map<number, typeof crawlNodes>();
     crawlNodes.forEach((node) => {
-      const d = node.depth ?? 0;
+      const segments = node.pathname.split('/').filter(Boolean);
+      const d = segments.length;
       if (!depthBuckets.has(d)) {
         depthBuckets.set(d, []);
       }
@@ -92,8 +93,8 @@ export const RouteCanvas: React.FC = () => {
 
   // Transform crawlerStore edges to ReactFlow edges
   const edges: Edge<VisualizerEdgeData>[] = useMemo(() => {
-    return crawlEdges.map((edge) => ({
-      id: edge.id,
+    return crawlEdges.map((edge, index) => ({
+      id: `edge-${edge.sourceNodeId}-${edge.targetNodeId}-${index}`,
       source: edge.sourceNodeId,
       target: edge.targetNodeId,
       type: 'routeEdge',

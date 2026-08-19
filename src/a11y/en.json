@@ -163,6 +163,7 @@
     "tabReports": "Reports",
     "tabCli": "CLI Agents",
     "tabConfig": "Config",
+    "tabVisualizer": "Visualizer",
     "miningDomToast": "Mining DOM via Playwright...",
     "miningDomFailed": "DOM mining failed: No tree returned.",
     "miningDomError": "DOM mining failed. Try again.",
@@ -901,7 +902,17 @@
     "terminalNode": "Terminal Route (No outgoing links)",
     "actionClick": "Click Interaction",
     "actionNavigate": "Navigation Transition",
-    "actionFillSubmit": "Form Fill & Submit"
+    "actionFillSubmit": "Form Fill & Submit",
+    "runFlow": "Run Flow",
+    "noMatchedFlows": "No existing E2E test flows cover this specific route yet.",
+    "uncovered": "Uncovered",
+    "coveredBadge": "Covered ({count} {count, plural, one {flow} other {flows}})",
+    "partialBadge": "Partial ({count} {count, plural, one {flow} other {flows}})",
+    "interactivesCount": "{count} interactives",
+    "crawlSettings": "Crawl Settings",
+    "maxPagesLabel": "Max Pages:",
+    "maxDepthLabel": "Max Depth:",
+    "constrainToOrigin": "Constrain to Origin"
   },
   "crawler": {
     "phaseDiscovering": "Discovering interactive elements...",

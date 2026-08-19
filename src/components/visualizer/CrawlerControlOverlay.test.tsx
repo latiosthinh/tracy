@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CrawlerControlOverlay } from './CrawlerControlOverlay';
@@ -72,7 +71,7 @@ describe('CrawlerControlOverlay', () => {
     await waitFor(() => {
       expect(startCrawlSpy).toHaveBeenCalledWith(
         'http://localhost:3000',
-        expect.objectContaining({ maxPages: 25, maxDepth: 3, originConstraint: true })
+        expect.objectContaining({ maxPages: 25, maxDepth: 3, originBoundary: true })
       );
     });
   });
@@ -98,17 +97,16 @@ describe('NodeActionModal', () => {
     pathname: '/checkout',
     title: 'Checkout Page',
     skeletonHash: 'sk_checkout_123',
+    visitedAt: Date.now(),
     interactiveElements: [
       {
         selector: 'button#pay-now',
         tagName: 'button',
         type: 'submit',
         text: 'Pay Now',
-        actionType: 'click',
-        isInteractive: true,
+        isSafe: true,
       },
     ],
-    depth: 1,
   };
 
   beforeEach(() => {
@@ -176,12 +174,13 @@ describe('NodeActionModal', () => {
   it('synthesizes new flow and adds to project when synthesize button is clicked', async () => {
     const mockDiscoveredFlow: DiscoveredFlow = {
       id: 'disc_1',
-      title: 'Journey to Checkout',
-      sourceRoute: '/',
-      targetRoute: '/checkout',
-      yamlContent: '# Journey to Checkout\n- navigate: /checkout\n- click: button#pay-now\n',
-      stepsCount: 2,
-      confidence: 0.9,
+      name: 'Journey to Checkout',
+      startUrl: 'http://localhost:3000/',
+      targetUrl: 'http://localhost:3000/checkout',
+      steps: [
+        { navigate: '/checkout' },
+        { leftClick: 'button#pay-now' },
+      ],
     };
 
     const generateFlowsSpy = vi.fn().mockResolvedValue([mockDiscoveredFlow]);

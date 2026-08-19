@@ -10,7 +10,8 @@ import {
   Pause,
   Copy,
   Check,
-  Pencil
+  Pencil,
+  Network
 } from 'lucide-react';
 
 import { YamlEditor } from '@/src/components/editor/YamlEditor';
@@ -20,6 +21,7 @@ import { TestReports } from '@/src/components/reports/TestReports';
 import { CliTerminal } from '@/src/components/reports/CliTerminal';
 import { FlowCategorySelector } from '@/src/components/editor/FlowCategorySelector';
 import { StepTimeline } from '@/src/components/studio/StepTimeline';
+import { RouteVisualizerView } from '@/src/components/visualizer/RouteVisualizerView';
 import { getFlowCategory } from '@/src/utils/flowUtils';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -180,6 +182,22 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
       {/* Side Tabs Header */}
       <div className="bg-stone-950 border-b border-stone-800 px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto text-xs shrink-0" role="tablist">
         <div className="flex items-center space-x-1">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'visualizer'}
+            onClick={() => setActiveTab('visualizer')}
+            title={t('studio.tabVisualizer') || 'Visualizer'}
+            aria-label={t('studio.tabVisualizer') || 'Visualizer'}
+            className={`p-2 sm:px-2.5 sm:py-1.5 rounded-[6px] font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${activeTab === 'visualizer'
+              ? 'bg-amber-800 text-amber-100 border border-amber-600/80 shadow-xs'
+              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-transparent'
+              }`}
+          >
+            <Network className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+            {activeTab === 'visualizer' && <span>{t('studio.tabVisualizer') || 'Visualizer'}</span>}
+          </button>
+
           <button
             type="button"
             role="tab"
@@ -361,6 +379,10 @@ export const StudioRightSidebar: React.FC<StudioRightSidebarProps> = ({
 
       {activeTab === 'reports' && (
         <TestReports lastResult={lastResult} />
+      )}
+
+      {activeTab === 'visualizer' && (
+        <RouteVisualizerView />
       )}
 
       {activeTab === 'cli' && (

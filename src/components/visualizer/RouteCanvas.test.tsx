@@ -1,5 +1,4 @@
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RouteCanvas } from './RouteCanvas';
 import { useCrawlerStore } from '@/src/stores/crawlerStore';
@@ -14,24 +13,26 @@ vi.mock('@xyflow/react', async (importOriginal) => {
       <div data-testid="react-flow-canvas">
         <div data-testid="nodes-list">
           {nodes.map((node: any) => (
-            <div
+            <button
+              type="button"
               key={node.id}
               data-testid={`node-${node.id}`}
               onClick={() => onNodeClick?.({}, node)}
             >
               {node.data?.pathname || node.id}
-            </div>
+            </button>
           ))}
         </div>
         <div data-testid="edges-list">
           {edges.map((edge: any) => (
-            <div
+            <button
+              type="button"
               key={edge.id}
               data-testid={`edge-${edge.id}`}
               onClick={() => onEdgeClick?.({}, edge)}
             >
               {edge.data?.actionType || edge.id}
-            </div>
+            </button>
           ))}
         </div>
         {children}
@@ -57,8 +58,8 @@ describe('RouteCanvas', () => {
       pathname: '/',
       title: 'Home',
       skeletonHash: 'sk_1',
+      visitedAt: Date.now(),
       interactiveElements: [],
-      depth: 0,
     },
     {
       id: 'node_login',
@@ -66,14 +67,13 @@ describe('RouteCanvas', () => {
       pathname: '/login',
       title: 'Login',
       skeletonHash: 'sk_2',
+      visitedAt: Date.now(),
       interactiveElements: [],
-      depth: 1,
     },
   ];
 
   const mockEdges: CrawlEdge[] = [
     {
-      id: 'edge_1',
       sourceNodeId: 'node_root',
       targetNodeId: 'node_login',
       actionType: 'click',
@@ -93,7 +93,7 @@ describe('RouteCanvas', () => {
     expect(screen.getByTestId('react-flow-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('node-node_root')).toHaveTextContent('/');
     expect(screen.getByTestId('node-node_login')).toHaveTextContent('/login');
-    expect(screen.getByTestId('edge-edge_1')).toHaveTextContent('click');
+    expect(screen.getByTestId('edge-edge-node_root-node_login-0')).toHaveTextContent('click');
   });
 
   it('updates selected node in crawlerStore when a node is clicked', () => {

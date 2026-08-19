@@ -7,6 +7,7 @@ import {
   BarChart3,
   Terminal,
   Sliders,
+  Network,
 } from 'lucide-react';
 import type { ActiveTab } from '@/src/types/ui';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -20,6 +21,7 @@ export const StudioTabs: React.FC<StudioTabsProps> = ({ activeTab, onTabChange }
   const { t } = useTranslation();
 
   const TABS: { id: ActiveTab; labelKey: string; icon: React.FC<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }> }[] = [
+    { id: 'visualizer', labelKey: 'studio.tabVisualizer', icon: Network },
     { id: 'editor', labelKey: 'studio.tabYaml', icon: Code },
     { id: 'steps', labelKey: 'studio.tabSteps', icon: ListOrdered },
     { id: 'timeline', labelKey: 'studio.tabTimeline', icon: Activity },

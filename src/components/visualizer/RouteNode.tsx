@@ -1,9 +1,11 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Globe, FileCode, CheckCircle2, AlertCircle, CircleDashed } from 'lucide-react';
+import { useTranslation } from '@/src/hooks/useTranslation';
 import type { VisualizerNodeData } from '@/src/types/crawler';
 
 export const RouteNode: React.FC<NodeProps> = memo((props) => {
+  const { t } = useTranslation();
   const data = (props.data || {}) as unknown as VisualizerNodeData;
   const isTarget = !!data.isCurrentCrawlTarget;
   const status = data.coverageStatus || 'unvisited';
@@ -30,7 +32,7 @@ export const RouteNode: React.FC<NodeProps> = memo((props) => {
         return (
           <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-stone-950/80 border border-stone-700/80 text-stone-400">
             <CircleDashed className="w-2.5 h-2.5" aria-hidden="true" />
-            <span>Uncovered</span>
+            <span>{t('visualizer.uncovered')}</span>
           </span>
         );
     }
@@ -72,7 +74,7 @@ export const RouteNode: React.FC<NodeProps> = memo((props) => {
       )}
 
       <div className="flex items-center justify-between text-[10px] text-stone-500 pt-1 border-t border-stone-800/80">
-        <span>{data.interactiveCount ?? 0} interactives</span>
+        <span>{t('visualizer.interactivesCount', { count: data.interactiveCount ?? 0 })}</span>
         {data.skeletonHash && (
           <span className="inline-flex items-center space-x-0.5 text-stone-600">
             <FileCode className="w-2.5 h-2.5" aria-hidden="true" />

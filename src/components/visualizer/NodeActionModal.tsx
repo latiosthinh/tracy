@@ -7,9 +7,8 @@ import {
   FileCode,
   Globe,
   MousePointer,
-  ExternalLink,
-  Layers,
 } from 'lucide-react';
+import { stringify as stringifyYaml } from 'yaml';
 import { useCrawlerStore } from '@/src/stores/crawlerStore';
 import { useProjectStore } from '@/src/stores/projectStore';
 import { useExecutionStore } from '@/src/stores/executionStore';
@@ -56,9 +55,9 @@ export const NodeActionModal: React.FC = () => {
       if (generated && generated.length > 0) {
         batchAddFlows(
           generated.map((gf) => ({
-            name: `${gf.title || 'Journey'}-${Date.now().toString(36)}`,
-            yaml: gf.yamlContent,
-            description: `Auto-generated test flow for route ${node.pathname}`,
+            name: `${gf.name || 'Journey'}-${Date.now().toString(36)}`,
+            yaml: `# ${gf.name}\nurl: ${gf.startUrl}\n---\n${stringifyYaml(gf.steps)}`,
+            description: gf.description || `Auto-generated test flow for route ${node.pathname}`,
           }))
         );
         setSuccessToast(t('visualizer.flowGeneratedSuccess', { count: generated.length }) || `Generated ${generated.length} E2E flows!`);
@@ -151,14 +150,14 @@ export const NodeActionModal: React.FC = () => {
                     className="px-2 py-1 bg-amber-700 hover:bg-amber-600 text-amber-50 rounded text-[10px] font-bold flex items-center space-x-1 shrink-0 cursor-pointer"
                   >
                     <Play className="w-2.5 h-2.5 fill-current" aria-hidden="true" />
-                    <span>Run Flow</span>
+                    <span>{t('visualizer.runFlow')}</span>
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-[11px] text-stone-500 italic p-2 bg-stone-950/40 rounded border border-stone-800/40">
-              No existing E2E test flows cover this specific route yet.
+              {t('visualizer.noMatchedFlows')}
             </div>
           )}
         </div>
@@ -184,7 +183,7 @@ export const NodeActionModal: React.FC = () => {
                     <span className="text-stone-300 truncate">{el.text || el.selector}</span>
                   </div>
                   <span className="text-[10px] text-stone-500 px-1 py-0.5 bg-stone-900 rounded">
-                    {el.actionType || el.tagName}
+                    {el.type || el.tagName}
                   </span>
                 </div>
               ))}

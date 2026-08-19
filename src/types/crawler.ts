@@ -21,7 +21,7 @@ export type {
 
 export type RouteCoverageStatus = 'covered' | 'partial' | 'unvisited';
 
-export interface VisualizerNodeData {
+export interface VisualizerNodeData extends Record<string, unknown> {
   label: string;
   url: string;
   pathname: string;
@@ -35,7 +35,7 @@ export interface VisualizerNodeData {
   visitedAt?: number;
 }
 
-export interface VisualizerEdgeData {
+export interface VisualizerEdgeData extends Record<string, unknown> {
   actionType: 'click' | 'navigate' | 'fill_submit';
   selector?: string;
   triggerText?: string;

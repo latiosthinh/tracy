@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import {
   Play,
   Square,
-  Activity,
   Layers,
-  ListTree,
   AlertTriangle,
   Globe,
   SlidersHorizontal,
@@ -25,7 +23,7 @@ export const CrawlerControlOverlay: React.FC = () => {
   const [targetUrl, setTargetUrl] = useState<string>(activeProject?.targetUrl || 'http://localhost:3000');
   const [maxPages, setMaxPages] = useState<number>(25);
   const [maxDepth, setMaxDepth] = useState<number>(3);
-  const [originConstraint, setOriginConstraint] = useState<boolean>(true);
+  const [originBoundary, setOriginBoundary] = useState<boolean>(true);
   const [showConfig, setShowConfig] = useState<boolean>(false);
 
   const handleStart = async (e: React.FormEvent) => {
@@ -34,7 +32,7 @@ export const CrawlerControlOverlay: React.FC = () => {
     await startCrawl(targetUrl.trim(), {
       maxPages,
       maxDepth,
-      originConstraint,
+      originBoundary,
     });
   };
 
@@ -68,8 +66,8 @@ export const CrawlerControlOverlay: React.FC = () => {
                   ? 'bg-amber-950/80 border-amber-500 text-amber-300'
                   : 'bg-stone-950 border-stone-800 text-stone-400 hover:text-stone-200'
               }`}
-              title="Crawl Settings"
-              aria-label="Crawl Settings"
+              title={t('visualizer.crawlSettings')}
+              aria-label={t('visualizer.crawlSettings')}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
@@ -130,7 +128,7 @@ export const CrawlerControlOverlay: React.FC = () => {
       {showConfig && !isCrawling && (
         <div className="bg-stone-900/95 backdrop-blur-md border border-stone-800 rounded-lg p-3 shadow-xl pointer-events-auto font-mono text-xs flex flex-wrap gap-4 text-stone-300">
           <div className="flex items-center space-x-2">
-            <label htmlFor="maxPagesInput" className="text-stone-400">Max Pages:</label>
+            <label htmlFor="maxPagesInput" className="text-stone-400">{t('visualizer.maxPagesLabel')}</label>
             <input
               id="maxPagesInput"
               type="number"
@@ -143,7 +141,7 @@ export const CrawlerControlOverlay: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <label htmlFor="maxDepthInput" className="text-stone-400">Max Depth:</label>
+            <label htmlFor="maxDepthInput" className="text-stone-400">{t('visualizer.maxDepthLabel')}</label>
             <input
               id="maxDepthInput"
               type="number"
@@ -158,11 +156,11 @@ export const CrawlerControlOverlay: React.FC = () => {
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={originConstraint}
-              onChange={(e) => setOriginConstraint(e.target.checked)}
+              checked={originBoundary}
+              onChange={(e) => setOriginBoundary(e.target.checked)}
               className="rounded bg-stone-950 border-stone-800 text-amber-500 focus:ring-0"
             />
-            <span>Constrain to Origin</span>
+            <span>{t('visualizer.constrainToOrigin')}</span>
           </label>
         </div>
       )}
